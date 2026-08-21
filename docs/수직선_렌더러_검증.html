@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수직선 렌더러 검증</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16202b;
+    --ink-soft:#5b6b7c;
+    --paper:#fbfaf7;
+    --rule:#d8dde3;
+    --grid:#e9edf1;
+    --mark:#1d4ed8;
+    --band:#93b4fd;
+    --warn:#b45309;
+    --ok:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans KR',system-ui,sans-serif; font-weight:300;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:48px 24px 80px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:8px}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px
+  }
+  h1{font-size:30px;font-weight:700;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{font-size:14.5px;color:var(--ink-soft);margin:0;max-width:62ch;line-height:1.6}
+  .verdict{
+    display:flex;gap:10px;align-items:baseline;margin:22px 0 34px;padding:14px 16px;
+    background:#fff;border:1px solid var(--rule);border-left:3px solid var(--ok)
+  }
+  .verdict b{color:var(--ok);font-weight:600;font-size:14px;white-space:nowrap}
+  .verdict span{font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+  .bar{display:flex;gap:10px;align-items:center;margin-bottom:26px;flex-wrap:wrap}
+  button{
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:13.5px;font-weight:600;
+    background:var(--ink);color:#fff;border:none;padding:10px 18px;cursor:pointer;
+    letter-spacing:-.01em;transition:opacity .15s
+  }
+  button:hover{opacity:.82}
+  button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+  .hint{font-size:12.5px;color:var(--ink-soft)}
+  .case{background:#fff;border:1px solid var(--rule);margin-bottom:18px}
+  .case-head{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:11px 16px;border-bottom:1px solid var(--rule);flex-wrap:wrap
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft)
+  }
+  .prompt{font-size:14.5px;font-weight:400;flex:1;min-width:220px;line-height:1.5}
+  .case-body{padding:6px 16px 14px}
+  svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto}
+  details{border-top:1px dashed var(--rule);margin-top:6px}
+  summary{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);
+    padding:9px 0;cursor:pointer;letter-spacing:.06em
+  }
+  summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+  pre{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.65;
+    background:#f4f6f8;padding:12px 14px;margin:0 0 12px;overflow-x:auto;color:#334
+  }
+  .answer{font-size:13px;color:var(--ok);font-weight:600;padding:0 0 10px}
+  footer{
+    margin-top:38px;padding-top:18px;border-top:1px solid var(--rule);
+    font-size:13px;color:var(--ink-soft);line-height:1.65
+  }
+  footer b{font-weight:600;color:var(--ink)}
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;margin-top:4px}
+  .opt{position:relative;padding-left:20px}
+  .opt-no{
+    position:absolute;left:0;top:20px;font-family:'IBM Plex Mono',monospace;
+    font-size:13px;color:var(--ink-soft)
+  }
+  .opt svg{max-width:100%}
+  .choices{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0 10px}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);
+    border:1px solid var(--rule);padding:5px 11px;background:#f7f9fb
+  }
+  @media (max-width:640px){.grid4{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">T2 · 수직선 ↔ 범위 · 6수01-02</p>
+  <h1>수직선 렌더러 검증</h1>
+  <p class="sub">파라미터 다섯 개(<code>min · max · step · 점 위치 · 화살표</code>)만으로 SVG를 그린다. 이미지 파일이 없고, 자동 생성한 스펙이 그대로 그림이 되는지 확인하기 위한 문서다.</p>
+</header>
+
+<div class="verdict">
+  <b>결론</b>
+  <span>가능하다. 렌더러는 아래 <code>drawNumberLine()</code> 하나이고 60줄이 안 된다. 아래 "무작위로 다시 생성"을 눌러 보면, 사람이 손대지 않은 스펙에서도 눈금과 점이 제자리에 찍히는지 볼 수 있다.</span>
+</div>
+
+<div class="bar">
+  <button id="regen">무작위로 다시 생성</button>
+  <span class="hint">누를 때마다 아래 6개 문항의 수치·경계·형태가 새로 뽑힌다</span>
+</div>
+
+<div id="cases"></div>
+
+<footer>
+  <b>검수 기준.</b> 점이 눈금 위에 정확히 놓였는지, ●과 ○이 발문과 일치하는지, 화살표 방향이 맞는지 — 이 셋만 보면 된다. 도형 문항과 달리 "이상하게 생긴 결과"가 나올 수 없는 구조다.<br><br>
+  <b>어휘.</b> 학생 화면에는 <i>경곗값</i> 같은 교사용 해설 어휘를 쓰지 않는다. 교과서 발문에 실제로 등장하는 말(이상·이하·초과·미만, 속하는 수, 나타낸 것)만 사용한다.
+</footer>
+
+</div>
+
+<script>
+// ─── 렌더러 ─────────────────────────────────────────────
+// spec = { min, max, step, marks:[{at, type:'filled'|'hollow'}], ray:'left'|'right'|null }
+function drawNumberLine(spec){
+  const W=640,H=88,PAD=44,Y=46;
+  const {min,max,step,marks,ray}=spec;
+  const x=v=>PAD+(v-min)/(max-min)*(W-PAD*2);
+  const p=[];
+
+  // 범위 띠
+  if(marks.length===2){
+    p.push(`<line x1="${x(marks[0].at)}" y1="${Y}" x2="${x(marks[1].at)}" y2="${Y}" stroke="var(--band)" stroke-width="7"/>`);
+  } else if(ray==='right'){
+    p.push(`<line x1="${x(marks[0].at)}" y1="${Y}" x2="${W-PAD+18}" y2="${Y}" stroke="var(--band)" stroke-width="7"/>`);
+  } else if(ray==='left'){
+    p.push(`<line x1="${PAD-18}" y1="${Y}" x2="${x(marks[0].at)}" y2="${Y}" stroke="var(--band)" stroke-width="7"/>`);
+  }
+
+  // 축 + 양끝 화살표
+  p.push(`<line x1="${PAD-26}" y1="${Y}" x2="${W-PAD+26}" y2="${Y}" stroke="var(--ink)" stroke-width="1.4"/>`);
+  p.push(`<path d="M${W-PAD+26} ${Y} l-8 -4 v8 z" fill="var(--ink)"/>`);
+  p.push(`<path d="M${PAD-26} ${Y} l8 -4 v8 z" fill="var(--ink)"/>`);
+
+  // 눈금 + 숫자
+  const dec=(String(step).split('.')[1]||'').length;
+  for(let v=min; v<=max+1e-9; v+=step){
+    const vx=x(v), lab=v.toFixed(dec);
+    p.push(`<line x1="${vx}" y1="${Y-6}" x2="${vx}" y2="${Y+6}" stroke="var(--ink)" stroke-width="1.2"/>`);
+    p.push(`<text x="${vx}" y="${Y+26}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--ink-soft)">${lab}</text>`);
+  }
+
+  // 경계점
+  for(const m of marks){
+    const fill = m.type==='filled' ? 'var(--mark)' : '#fff';
+    p.push(`<circle cx="${x(m.at)}" cy="${Y}" r="6.5" fill="${fill}" stroke="var(--mark)" stroke-width="2.2"/>`);
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">${p.join('')}</svg>`;
+}
+
+// ─── 문항 생성기 (T2 파라미터 공간) ──────────────────────
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+function oneSided(){
+  const term=pick(['이상','이하','초과','미만']);
+  const start=R(10,60), step=pick([5,10]);
+  const min=start, max=start+step*6;
+  const at=min+step*R(1,5);
+  const type=(term==='이상'||term==='이하')?'filled':'hollow';
+  const ray=(term==='이상'||term==='초과')?'right':'left';
+  return {
+    spec:{min,max,step,marks:[{at,type}],ray},
+    prompt:`수직선에 나타낸 수의 범위를 바르게 말한 것은?`,
+    answer:`${at} ${term}인 수`
+  };
+}
+function twoSided(){
+  const lo=pick(['이상','초과']), hi=pick(['이하','미만']);
+  const start=R(10,50), step=pick([5,10]);
+  const min=start, max=start+step*6;
+  const i=R(1,2), j=i+R(2,3);
+  const a=min+step*i, b=min+step*j;
+  return {
+    spec:{min,max,step,marks:[{at:a,type:lo==='이상'?'filled':'hollow'},{at:b,type:hi==='이하'?'filled':'hollow'}],ray:null},
+    prompt:`수직선에 나타낸 수의 범위를 바르게 말한 것은?`,
+    answer:`${a} ${lo} ${b} ${hi}인 수`
+  };
+}
+function decimalCase(){
+  const base=R(2,8), step=0.5;
+  const min=base, max=base+3;
+  const at=min+step*R(1,5);
+  const term=pick(['이상','초과']);
+  return {
+    spec:{min,max,step,marks:[{at,type:term==='이상'?'filled':'hollow'}],ray:'right'},
+    prompt:`수직선에 나타낸 범위에 속하는 수를 모두 고르세요.`,
+    answer:`${at.toFixed(1)} ${term}인 수`
+  };
+}
+function countCase(){
+  const start=R(10,40), step=5;
+  const min=start, max=start+step*6;
+  const a=min+step*R(1,2), b=a+step*R(2,3);
+  const lo=pick(['이상','초과']), hi=pick(['이하','미만']);
+  const from=lo==='이상'?a:a+1, to=hi==='이하'?b:b-1;
+  return {
+    spec:{min,max,step,marks:[{at:a,type:lo==='이상'?'filled':'hollow'},{at:b,type:hi==='이하'?'filled':'hollow'}],ray:null},
+    prompt:`수직선에 나타낸 범위에 속하는 자연수는 모두 몇 개인가요?`,
+    answer:`${to-from+1}개 (${from}부터 ${to}까지)`
+  };
+}
+function includeCase(){
+  const start=R(20,60), step=10;
+  const min=start, max=start+step*6;
+  const at=min+step*R(1,5);
+  const term=pick(['이상','초과']);
+  const opts=[at-step, at, at+step, at+step*2].filter(v=>v>=min&&v<=max);
+  return {
+    spec:{min,max,step,marks:[{at,type:term==='이상'?'filled':'hollow'}],ray:'right'},
+    prompt:`수직선에 나타낸 범위에 속하는 수를 모두 고르세요.`,
+    choices:opts.map(v=>String(v)),
+    answer:opts.filter(v=>term==='이상'?v>=at:v>at).join(', ')
+  };
+}
+function reverseCase(){
+  const start=R(10,40), step=5;
+  const min=start, max=start+step*6;
+  const a=min+step*R(1,2), b=a+step*R(2,3);
+  const lo=pick(['이상','초과']), hi=pick(['이하','미만']);
+  const t=(w)=>(w==='이상'||w==='이하')?'filled':'hollow';
+  const mk=(x,y)=>({min,max,step,marks:[{at:a,type:x},{at:b,type:y}],ray:null});
+  // 오답은 ●/○ 조합을 뒤집어 만든다 — 네 개가 반드시 서로 다르다 (가드 G4)
+  const all=[['filled','filled'],['filled','hollow'],['hollow','filled'],['hollow','hollow']];
+  const correct=[t(lo),t(hi)];
+  const order=all.slice().sort(()=>Math.random()-0.5);
+  const idx=order.findIndex(o=>o[0]===correct[0]&&o[1]===correct[1]);
+  return {
+    multi:order.map(o=>mk(o[0],o[1])),
+    prompt:`"${a} ${lo} ${b} ${hi}인 수"를 수직선에 바르게 나타낸 것은?`,
+    answer:`${'①②③④'[idx]}번`
+  };
+}
+
+const BUILDERS=[
+  ['한쪽 열림 · 이상/이하/초과/미만',oneSided],
+  ['양쪽 닫힘 · 두 경계 조합',twoSided],
+  ['소수 눈금 · 0.5 단위',decimalCase],
+  ['범위 안 자연수 개수 세기',countCase],
+  ['범위에 속하는 수 고르기',includeCase],
+  ['말 → 수직선 · 4지선다',reverseCase]
+];
+
+function render(){
+  document.getElementById('cases').innerHTML = BUILDERS.map(([label,fn],i)=>{
+    const c=fn();
+    let body;
+    if(c.multi){
+      body = `<div class="grid4">` + c.multi.map((sp,k)=>
+        `<div class="opt"><span class="opt-no">${'①②③④'[k]}</span>${drawNumberLine(sp)}</div>`
+      ).join('') + `</div>`;
+    } else {
+      body = drawNumberLine(c.spec)
+        + (c.choices ? `<div class="choices">${c.choices.map((v,k)=>`<span class="chip">${'①②③④'[k]} ${v}</span>`).join('')}</div>` : '');
+    }
+    const specDump = c.multi ? JSON.stringify(c.multi[0]) + '  … ×4' : JSON.stringify(c.spec);
+    return `<section class="case">
+      <div class="case-head">
+        <span class="tag">${String(i+1).padStart(2,'0')} · ${label}</span>
+        <span class="prompt">${c.prompt}</span>
+      </div>
+      <div class="case-body">
+        ${body}
+        <div class="answer">정답 · ${c.answer}</div>
+        <details>
+          <summary>생성된 스펙 보기</summary>
+          <pre>${specDump}</pre>
+        </details>
+      </div>
+    </section>`;
+  }).join('');
+}
+document.getElementById('regen').addEventListener('click',render);
+render();
+</script>
+</body>
+</html>

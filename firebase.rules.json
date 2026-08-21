@@ -1,0 +1,31 @@
+{
+  "_설명": [
+    "Realtime Database 보안 규칙입니다.",
+    "Firebase 콘솔 → Realtime Database → 규칙 탭에 이 내용을 붙여넣고 '게시'를 누르세요.",
+    "(맨 위 _설명 항목은 지우고 붙여넣으세요. 주석을 지원하지 않습니다.)",
+    "",
+    "원칙: 익명 로그인한 사람만 읽고 쓸 수 있다. 학번·생년월일 같은 개인정보는 저장하지 않으므로",
+    "학급 단위로는 이 정도가 적절하다. 세션 코드를 모르면 어차피 찾을 수 없다."
+  ],
+  "rules": {
+    "sessions": {
+      "$sessionId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "problems": {
+          ".validate": "newData.hasChildren() || !newData.exists()"
+        }
+      }
+    },
+    "codes": {
+      ".read": "auth != null",
+      "$code": {
+        ".write": "auth != null && (!data.exists() || newData.val() == data.val() || !newData.exists())"
+      }
+    },
+    "archive": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
