@@ -37,7 +37,9 @@ export function BoardView() {
       .catch((e) => setEnterError(readableError(e)))
   }, [code])
 
-  const joinUrl = `${location.origin}${location.pathname}#/play/${code.toUpperCase()}`
+  // QR 에는 '#' 을 넣지 않는다. 크롬북 QR 앱 중에 '#' 이 있으면 못 여는 것들이 있다.
+  // 앱이 시작할 때 ?c= 를 보고 알아서 학생 화면으로 보낸다 (App.tsx)
+  const joinUrl = `${location.origin}${location.pathname}?c=${code.toUpperCase()}`
   const roster = useMemo(() => Object.values(session?.roster ?? {}), [session?.roster])
   const joined = roster.filter((r) => r.joinedAt > 0)
   const submitted = Object.values(session?.quiz ?? {}).filter((q) => q.submittedAt).length

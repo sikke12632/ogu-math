@@ -32,7 +32,7 @@ export function TeacherConsole() {
   const advancedRef = useRef<Set<number>>(new Set())
 
   const boardUrl = session ? `${location.origin}${location.pathname}#/board/${session.meta.code}` : ''
-  const playUrl = session ? `${location.origin}${location.pathname}#/play/${session.meta.code}` : ''
+  const playUrl = session ? `${location.origin}${location.pathname}?c=${session.meta.code}` : ''
 
   const roster = useMemo(() => Object.entries(session?.roster ?? {}), [session?.roster])
   // 자리를 잡았거나 지금 붙어 있으면 '들어온 학생' 으로 본다.

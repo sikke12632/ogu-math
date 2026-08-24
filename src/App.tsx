@@ -5,6 +5,23 @@
  */
 
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+
+/**
+ * QR 로 들어온 학생 받기.
+ *
+ * QR 에는 `?c=ABC123` 형태로 넣고 **`#` 을 넣지 않는다.**
+ * 크롬북 카메라·QR 앱 중에 주소에 `#` 이 있으면 못 여는 것들이 있어서,
+ * 찍어도 빈 화면만 뜨는 일이 생긴다. 여기서 `?c=` 를 해시 주소로 바꿔 준다.
+ */
+function redirectFromQr(): void {
+  const code = new URLSearchParams(location.search).get('c')
+  if (!code) return
+  const clean = code.trim().toUpperCase().slice(0, 6)
+  if (clean.length !== 6) return
+  // 주소창에서 ?c= 를 지워 둔다. 새로고침해도 같은 자리로 돌아오게
+  history.replaceState(null, '', `${location.pathname}#/play/${clean}`)
+}
+redirectFromQr()
 import { BoardView } from './screens/board/BoardView'
 import { StageLab } from './screens/dev/StageLab'
 import { Review } from './screens/review/Review'
