@@ -41,7 +41,13 @@ export type SessionMeta = {
 }
 
 export type RosterEntry = {
+  /** 명단에 적힌 실제 이름. 교사 화면과 오답 기록에 쓴다 */
   name: string
+  /**
+   * 학생이 그날 정한 별명. 칠판과 친구들 화면에는 이게 보인다.
+   * 매 수업 새로 정할 수 있고, 안 정하면 실제 이름이 그대로 보인다.
+   */
+  nickname?: string
   joinedAt: number
   connected: boolean
   lastSeen: number

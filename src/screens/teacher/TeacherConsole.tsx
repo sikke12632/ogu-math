@@ -10,13 +10,13 @@ import { Link, useParams } from 'react-router-dom'
 import { getGame } from '../../games'
 import { josaRo } from '../../units/_helpers'
 import {
-  addTime, archive, releaseSeat, saveRound, saveScores, saveTeams, setPaused, setPhase,
+  addTime, archive, clearNickname, releaseSeat, saveRound, saveScores, saveTeams, setPaused, setPhase,
 } from '../../session/api'
 import { grade } from '../../session/grade'
 import { assignTeams, makeMatches, moveMember, mvpOf, suggestTeamCount } from '../../session/teams'
 import { PHASE_LABEL, PHASE_ORDER, type ArchiveEntry, type Phase, type StudentId, type TeamRecord } from '../../session/types'
 import {
-  fmtClock, nameOf, quizTimeLeft, roundMatches, teamList, useSession, useTeamScores, useTick,
+  fmtClock, quizTimeLeft, realNameOf, roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
 
 export function TeacherConsole() {
@@ -227,7 +227,19 @@ export function TeacherConsole() {
           <ul className="namelist">
             {roster.map(([sid, r]) => (
               <li key={sid} className={r.connected ? 'on' : r.joinedAt ? 'dropped' : ''}>
-                <span>{r.name}</span>
+                <span>
+                  {r.name}
+                  {r.nickname && <em className="nick">{r.nickname}</em>}
+                </span>
+                {r.nickname && (
+                  <button
+                    className="tiny"
+                    title="별명을 지웁니다. 이상한 별명을 썼을 때 쓰세요. 그 학생은 다시 실제 이름으로 보입니다."
+                    onClick={() => void clearNickname(id, sid)}
+                  >
+                    별명 지우기
+                  </button>
+                )}
                 {r.joinedAt > 0 && (
                   <button
                     className="tiny"
@@ -288,7 +300,7 @@ export function TeacherConsole() {
                   <ul>
                     {t.members.map((m) => (
                       <li key={m}>
-                        <span>{nameOf(session, m)}</span>
+                        <span>{realNameOf(session, m)}</span>
                         <select
                           value={t.id}
                           onChange={(e) => {
@@ -322,14 +334,14 @@ export function TeacherConsole() {
             <ul className="matchlist">
               {roundMatches(session, session.game?.round ?? 1).map((m) => (
                 <li key={m.id}>
-                  <span>{nameOf(session, m.players[0])} vs {nameOf(session, m.players[1])}</span>
+                  <span>{realNameOf(session, m.players[0])} vs {realNameOf(session, m.players[1])}</span>
                   <span className={m.winner ? 'done' : 'playing'}>
                     {m.forfeit
-                      ? `${nameOf(session, m.forfeit)} 끊김`
+                      ? `${realNameOf(session, m.forfeit)} 끊김`
                       : m.winner === 'draw'
                         ? '무승부'
                         : m.winner
-                          ? `${nameOf(session, m.winner)} 승`
+                          ? `${realNameOf(session, m.winner)} 승`
                           : '진행 중'}
                   </span>
                 </li>
@@ -339,7 +351,7 @@ export function TeacherConsole() {
               <p className="hint">
                 응원단장:{' '}
                 {(session.game?.rounds?.[String(session.game?.round ?? 1)]?.cheerleaders ?? [])
-                  .map((c) => nameOf(session, c))
+                  .map((c) => realNameOf(session, c))
                   .join(', ')}
               </p>
             )}
@@ -356,7 +368,7 @@ export function TeacherConsole() {
               {teams.map((t) => (
                 <li key={t.id}>
                   <b>{t.name}팀</b> {scores.find((s) => s.teamId === t.id)?.wins ?? 0}승
-                  <span className="dim"> · MVP {mvpOf(t, session.game?.mvp ?? {}) ? nameOf(session, mvpOf(t, session.game?.mvp ?? {})!) : '없음'}</span>
+                  <span className="dim"> · MVP {mvpOf(t, session.game?.mvp ?? {}) ? realNameOf(session, mvpOf(t, session.game?.mvp ?? {})!) : '없음'}</span>
                 </li>
               ))}
             </ul>

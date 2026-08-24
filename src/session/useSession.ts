@@ -124,5 +124,19 @@ export function useTeamScores(session: Session | null): TeamScore[] {
   }, [session])
 }
 
-export const nameOf = (session: Session | null, id: StudentId): string =>
+/**
+ * 화면에 보여 줄 이름. 별명이 있으면 별명, 없으면 실제 이름.
+ * 칠판·친구 화면·게임에서 쓴다.
+ */
+export const nameOf = (session: Session | null, id: StudentId): string => {
+  const r = session?.roster?.[id]
+  if (!r) return '학생'
+  return r.nickname && r.nickname.trim() ? r.nickname : r.name
+}
+
+/**
+ * 명단에 적힌 실제 이름. **교사 화면과 오답 기록은 반드시 이걸 쓴다.**
+ * 누가 냈고 누가 뭘 틀렸는지는 별명이 아니라 실명으로 알아야 한다.
+ */
+export const realNameOf = (session: Session | null, id: StudentId): string =>
   session?.roster?.[id]?.name ?? '학생'

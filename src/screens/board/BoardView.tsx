@@ -76,8 +76,9 @@ export function BoardView() {
               .slice()
               .sort((a, b) => b.joinedAt - a.joinedAt)
               .map((r) => (
+                // 칠판에는 그날 정한 별명이 보인다. 실명은 교사 화면에만
                 <li key={r.name} className="pop">
-                  {r.name}
+                  {r.nickname && r.nickname.trim() ? r.nickname : r.name}
                 </li>
               ))}
           </ul>

@@ -238,3 +238,41 @@ a.ghost { text-decoration: none; display: inline-block; background: var(--card);
 .duel-ctrl .pick:active:not(:disabled) { box-shadow: 0 1px 0 #966d13; transform: translateY(3px); }
 .duel-ctrl .hold { background: linear-gradient(180deg, #6b7c90, #4a5a6d); color: #fff; box-shadow: 0 4px 0 #2f3b49; }
 .duel-ctrl .hold:active:not(:disabled) { box-shadow: 0 1px 0 #2f3b49; transform: translateY(3px); }
+
+/* ── 별명 정하기 ─────────────────────────── */
+
+.nickpreview {
+  display: flex; align-items: center; gap: 14px; justify-content: center;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 18px 20px; margin-bottom: 16px;
+}
+.nicklabel { font-size: 12px; color: var(--ink-soft); letter-spacing: .08em; }
+.nickvalue { font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+
+.nickinput { display: grid; gap: 6px; margin-bottom: 18px; }
+.nickinput > span { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.nickinput input {
+  font: inherit; font-size: 20px; padding: 13px 15px; border: 1px solid var(--rule);
+  border-radius: 8px; background: var(--card); color: var(--ink); width: 100%;
+}
+.nickinput input:focus { outline: 2px solid var(--mark); outline-offset: 1px; }
+
+.nicksection { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin: 0 0 8px; }
+.emojigrid {
+  list-style: none; margin: 0 0 20px; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 7px;
+}
+.emoji {
+  width: 100%; aspect-ratio: 1; font-size: 28px; line-height: 1;
+  background: var(--card); border: 1px solid var(--rule); color: var(--ink-soft);
+  display: grid; place-items: center; border-radius: 10px; padding: 0;
+}
+.emoji:hover { border-color: var(--mark); background: #eff4ff; }
+.emoji.on { border-color: var(--mark); border-width: 2px; background: #eff4ff; }
+li:first-child > .emoji { font-size: 13px; font-weight: 600; }
+
+/* 교사 화면에서 실명 옆에 붙는 별명 */
+.namelist .nick {
+  font-style: normal; font-size: 12px; color: var(--mark);
+  background: #eff4ff; padding: 1px 7px; border-radius: 999px; margin-left: 7px;
+}

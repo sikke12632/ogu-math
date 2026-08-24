@@ -148,7 +148,13 @@ export function TeacherHome() {
             spellCheck={false}
           />
         </label>
-        <p className="hint">한 번 넣으면 이 컴퓨터에 저장됩니다. 다음 수업부터는 그대로 씁니다.</p>
+        <p className="hint">
+          한 번 넣으면 이 컴퓨터에 저장됩니다. 다음 수업부터는 그대로 씁니다.
+          <br />
+          학생은 이 명단에서 <b>자기 이름을 골라</b> 들어오고, 들어온 뒤
+          <b> 그날 쓸 별명</b>을 따로 정합니다. 칠판과 친구들 화면에는 별명이,
+          선생님 화면과 오답 기록에는 <b>실제 이름</b>이 나옵니다.
+        </p>
       </div>
 
       <button className="primary big" onClick={() => void start()} disabled={busy}>

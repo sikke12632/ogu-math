@@ -16,9 +16,10 @@ import { grade, shuffleChoices, type Answer } from '../../session/grade'
 import { mvpOf } from '../../session/teams'
 import type { StudentId } from '../../session/types'
 import {
-  fmtClock, isCheerleader, myMatch, nameOf, quizTimeLeft, roundMatches, teamList,
+  fmtClock, isCheerleader, myMatch, nameOf, quizTimeLeft, realNameOf, roundMatches, teamList,
   useSession, useTeamScores, useTick,
 } from '../../session/useSession'
+import { NicknamePicker } from './NicknamePicker'
 import { QuestionCard } from './QuestionCard'
 
 export function PlayView() {
@@ -35,6 +36,9 @@ export function PlayView() {
   const [cursor, setCursor] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [showWrong, setShowWrong] = useState(false)
+  // 자리를 잡은 뒤 딱 한 번, 그날 쓸 별명을 고르는 화면을 띄운다
+  const [nickDone, setNickDone] = useState(false)
+  const [editNick, setEditNick] = useState(false)
 
   /* ── 코드 → 세션 ─────────────────────────────────── */
   useEffect(() => {
@@ -53,6 +57,8 @@ export function PlayView() {
     setSubmitted(false)
     setCursor(0)
     setShowWrong(false)
+    setNickDone(false)
+    setEditNick(false)
   }, [sessionId])
 
   /* ── 지난번에 앉았던 자리로 바로 복귀 ───────────────── */
@@ -174,6 +180,24 @@ export function PlayView() {
 
   const phase = session.meta.phase
   const myName = nameOf(session, me)
+  const myRealName = realNameOf(session, me)
+
+  /* 별명 정하기 — 대기실에서 한 번, 그리고 원할 때 다시 */
+  const nickSet = Boolean(session.roster?.[me]?.nickname)
+  if (editNick || (phase === 'lobby' && !nickDone && !nickSet)) {
+    return (
+      <NicknamePicker
+        sessionId={sessionId!}
+        me={me}
+        realName={myRealName}
+        current={session.roster?.[me]?.nickname}
+        onDone={() => {
+          setNickDone(true)
+          setEditNick(false)
+        }}
+      />
+    )
+  }
   const result = grade(problems, answers)
   const teams = teamList(session)
   const myTeam = teams.find((t) => t.members.includes(me)) ?? null
@@ -185,6 +209,7 @@ export function PlayView() {
         <h1>들어왔어요</h1>
         <p className="sub">선생님이 시작할 때까지 기다려 주세요.</p>
         <div className="waitdots"><span /><span /><span /></div>
+        <button className="ghost" onClick={() => setEditNick(true)}>별명 바꾸기</button>
       </div>
     )
   }

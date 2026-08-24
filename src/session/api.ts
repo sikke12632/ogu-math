@@ -227,6 +227,41 @@ export async function claimSeat(
   return true
 }
 
+/** 이름 비교용 정리. 공백과 대소문자 차이는 같은 이름으로 본다 */
+const normalizeName = (s: string): string => s.trim().replace(/s+/g, ' ').toLowerCase()
+
+/**
+ * 학생이 그날 쓸 별명을 정한다.
+ * **실제 이름은 그대로 남는다.** 교사 화면과 오답 기록은 실명을 쓰고,
+ * 칠판과 친구들 화면에만 별명이 보인다.
+ */
+export async function setNickname(
+  sessionId: string,
+  studentId: StudentId,
+  raw: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const nickname = raw.trim().replace(/s+/g, ' ')
+  if (nickname.length > 14) return { ok: false, reason: '너무 길어요. 14글자 안으로 해 주세요.' }
+
+  const snap = await get(ref(getDb(), sessionPath(sessionId, 'roster')))
+  const roster = (snap.val() ?? {}) as Record<StudentId, RosterEntry>
+  const clash = Object.entries(roster).some(
+    ([id, r]) => id !== studentId && r.nickname && normalizeName(r.nickname) === normalizeName(nickname),
+  )
+  if (nickname && clash) return { ok: false, reason: '친구가 벌써 쓰고 있어요. 다른 걸로 해 주세요.' }
+
+  await update(ref(getDb(), sessionPath(sessionId, `roster/${studentId}`)), {
+    nickname: nickname || null,
+  })
+  save(`nickname:${sessionId}`, nickname)
+  return { ok: true }
+}
+
+/** 교사가 부적절한 별명을 지운다. 그 학생은 다시 실명으로 보인다 */
+export async function clearNickname(sessionId: string, studentId: StudentId): Promise<void> {
+  await update(ref(getDb(), sessionPath(sessionId, `roster/${studentId}`)), { nickname: null })
+}
+
 export function rememberedSeat(sessionId: string): StudentId | null {
   return load<StudentId | null>(`seat:${sessionId}`, null)
 }
