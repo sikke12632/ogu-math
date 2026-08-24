@@ -1,6 +1,7 @@
 node_modules
 dist
 out
-.env
-.env.local
 tsconfig.tsbuildinfo
+
+# 내 컴퓨터에서만 쓰는 설정. .env 로 올라간 값을 덮어쓴다
+.env.local

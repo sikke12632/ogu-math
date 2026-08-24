@@ -1,0 +1,60 @@
+# GitHub 이 알아서 빌드해서 사이트에 올려 준다.
+# 파일을 웹에서 고치거나 올리기만 하면 1~2분 뒤 사이트가 갱신된다.
+# 내 컴퓨터에서 명령어를 칠 일이 없다.
+
+name: 사이트 올리기
+
+on:
+  push:
+    branches: [main]
+  # Actions 탭에서 손으로 다시 돌릴 수도 있게
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 여러 번 올려도 마지막 것만 반영되게
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 프로그램 설치
+        run: npm ci
+
+      - name: 문제 생성기 검사
+        run: npm run check
+
+      - name: 게임 규칙 검사
+        run: npm run check:game
+
+      - name: 사이트 만들기
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
