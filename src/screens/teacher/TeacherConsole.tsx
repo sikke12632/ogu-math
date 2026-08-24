@@ -11,6 +11,7 @@ import { getGame } from '../../games'
 import { josaRo } from '../../units/_helpers'
 import {
   addTime, archive, clearNickname, releaseSeat, saveRound, saveScores, saveTeams, setPaused, setPhase,
+  writeForfeit, writeMatchResult,
 } from '../../session/api'
 import { grade } from '../../session/grade'
 import { assignTeams, makeMatches, moveMember, mvpOf, suggestTeamCount } from '../../session/teams'
@@ -18,6 +19,9 @@ import { PHASE_LABEL, PHASE_ORDER, type ArchiveEntry, type Phase, type StudentId
 import {
   fmtClock, quizTimeLeft, realNameOf, roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
+
+/** 판이 끝나고 다음 판까지 쉬는 시간. 결과를 볼 만큼만 짧게 */
+const ROUND_GAP_MS = 2500
 
 export function TeacherConsole() {
   const { id = '' } = useParams()
@@ -106,21 +110,61 @@ export function TeacherConsole() {
     if (!session.game?.rounds?.[String(round)]) buildRound(round)
   }, [session, buildRound])
 
+  /* ── 끊긴 학생 때문에 판이 안 끝나는 것 막기 ──────────
+     크롬북 덮개를 닫거나 창을 닫으면 그 대전은 영영 안 끝난다.
+     상대가 15초 넘게 안 보이면 교사 쪽에서 그 판을 정리한다. */
+  useEffect(() => {
+    if (!session || session.meta.phase !== 'game') return
+    const round = session.game?.round ?? 1
+    const conn = new Set(connected.map(([sid]) => sid))
+    const stuck = roundMatches(session, round).filter(
+      (m) => !m.winner && m.players.some((p) => !conn.has(p)),
+    )
+    if (stuck.length === 0) return
+    const t = setTimeout(() => {
+      for (const m of stuck) {
+        const goneList = m.players.filter((p) => !conn.has(p))
+        const gone = goneList[0]!
+        const alive = m.players.find((p) => conn.has(p))
+        if (goneList.length === m.players.length) {
+          // 둘 다 나갔다. 무승부로 닫는다
+          void writeMatchResult(id, round, m.id, 'draw')
+        } else if (alive) {
+          void writeForfeit(id, round, m.id, gone, alive)
+        }
+      }
+    }, 15_000)
+    return () => clearTimeout(t)
+  }, [session, connected, id])
+
   /* ── 판이 다 끝나면 자동으로 다음 판 ──────────────────
-     결과를 잠깐 보여 준 뒤 넘어간다. 바로 넘기면 누가 이겼는지 못 본다 */
+     결과를 잠깐 보여 준 뒤 넘어간다. 바로 넘기면 누가 이겼는지 못 본다.
+     setTimeout 은 배경 탭에서 늘어지므로, **넘길 시각을 적어 두고**
+     화면이 다시 그려질 때마다 지났는지 본다. 교사가 칠판 창을 보고 있어도 넘어간다. */
+  const advanceAtRef = useRef<{ round: number; at: number } | null>(null)
   useEffect(() => {
     if (!session || session.meta.phase !== 'game') return
     const round = session.game?.round ?? 1
     const ms = roundMatches(session, round)
-    if (ms.length === 0 || !ms.every((m) => m.winner)) return
+    const done = ms.length > 0 && ms.every((m) => m.winner)
+
+    if (!done) {
+      if (advanceAtRef.current?.round === round) advanceAtRef.current = null
+      return
+    }
     if (advancedRef.current.has(round)) return
+
+    if (advanceAtRef.current?.round !== round) {
+      advanceAtRef.current = { round, at: Date.now() + ROUND_GAP_MS }
+      return
+    }
+    if (Date.now() < advanceAtRef.current.at) return
+
     advancedRef.current.add(round)
-    const t = setTimeout(() => {
-      if (round >= session.meta.rounds) void setPhase(id, 'result')
-      else buildRound(round + 1)
-    }, 4000)
-    return () => clearTimeout(t)
-  }, [session, id, buildRound])
+    advanceAtRef.current = null
+    if (round >= session.meta.rounds) void setPhase(id, 'result')
+    else buildRound(round + 1)
+  }, [session, id, buildRound, now])
 
   /* ── 풀이 시간이 다 되면 자동 마감 ──────────────────── */
   useEffect(() => {
@@ -355,9 +399,18 @@ export function TeacherConsole() {
                   .join(', ')}
               </p>
             )}
-            <button className="ghost small" onClick={() => buildRound((session.game?.round ?? 1) + 1, true)}>
-              다음 판 강제로 시작
-            </button>
+            <div className="row">
+              <button className="primary" onClick={() => buildRound((session.game?.round ?? 1) + 1, true)}>
+                지금 다음 판 시작
+              </button>
+              <button className="ghost" onClick={() => void setPhase(id, 'result')}>
+                게임 끝내고 결과로
+              </button>
+            </div>
+            <p className="hint">
+              모든 대전이 끝나면 {ROUND_GAP_MS / 1000}초 뒤에 저절로 다음 판으로 갑니다.
+              기다리기 답답하면 위 버튼을 누르세요.
+            </p>
           </section>
         )}
 

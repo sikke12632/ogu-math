@@ -391,7 +391,8 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
 
   const opp = match.players.find((p) => p !== me)!
   return (
-    <div className="wrap">
+    // 게임 화면은 넓게 쓴다. 통과 점수를 좌우로 놓아야 글씨를 키울 수 있다
+    <div className="wrap wide">
       <DrawDuel
         match={match}
         me={me}

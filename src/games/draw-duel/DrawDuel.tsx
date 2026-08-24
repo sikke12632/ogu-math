@@ -205,18 +205,19 @@ export function DrawDuel(props: Props) {
   const risk = riskOf(state)
   const left = deadline && deadline.key === turnKey ? Math.max(0, deadline.at - now) : 0
   const timePct = deadline ? (left / (TURN_LIMIT_SEC * 1000)) * 100 : 0
+  // 지금 뭘 해야 하는지 한 줄로. 5학년이 화면만 보고 알 수 있어야 한다
   const message = state.over
     ? state.winner === 'draw'
-      ? `비겼다 · ${state.reason}`
+      ? `비겼다 — ${state.reason}`
       : state.winner === me
-        ? `이겼다 · ${state.reason}`
-        : `졌다 · ${state.reason}`
+        ? `이겼다! ${state.reason}`
+        : `졌다 — ${state.reason}`
     : state.turn === 1
-      ? '내 공은 보이고 상대 공은 가려져 있어. 첫 턴엔 꽝이 없어.'
+      ? '첫 판에는 꽝이 없어. 마음 놓고 뽑아!'
       : myTurn
-        ? `${state.turn}턴 — 지금 뽑으면 꽝이 나올 확률 ${Math.round(risk * 100)}%`
+        ? '뽑을까, 그만할까?'
         : mine.stopped
-          ? '접었어. 상대가 끝낼 때까지 기다리자.'
+          ? '그만했어. 상대가 끝낼 때까지 기다리자'
           : '상대가 고르는 중…'
 
   const outcome = state.over
@@ -225,71 +226,84 @@ export function DrawDuel(props: Props) {
 
   return (
     <div className={`duel${cheer ? ' cheered' : ''}`}>
-      <div className="duel-head">
-        <span className="duel-round">{props.roundLabel}</span>
-        {!opponentConnected && !state.over && <span className="duel-warn">상대 연결 확인 중</span>}
-      </div>
-
-      <PlayerRow
-        label={nameOf(opp)}
-        sum={theirs.sum}
-        hidden={state.revealed ? theirs.hidden : null}
-        cards={theirs.cards}
-        stopped={theirs.stopped}
-        dead={theirs.dead}
-        showHiddenChip={state.revealed}
-      />
-
-      <div className="duel-stage">
-        <canvas ref={canvasRef} />
-        {cheer && <div className="cheer-pop">응원이 도착했어! 힘내!</div>}
-      </div>
-
-      <PlayerRow
-        me
-        label="나"
-        sum={mine.sum}
-        hidden={mine.hidden}
-        cards={mine.cards}
-        stopped={mine.stopped}
-        dead={mine.dead}
-        showHiddenChip
-      />
-
-      <div className="duel-info">
-        <span className="duel-count">
-          통에 남은 공 <b>{state.pool.length}개</b> · 그중 꽝 <b className="bad">{blanksLeft(state)}개</b>
-        </span>
-        <div className="duel-gauge" aria-hidden>
-          {Array.from({ length: state.pool.length }, (_, i) => (
-            <span key={i} className={i < state.pool.length - blanksLeft(state) ? 'g ok' : 'g bad'} />
-          ))}
+      {/* 왼쪽은 통, 오른쪽은 점수와 버튼.
+          크롬북은 가로가 넓고 세로가 짧다. 위아래로 쌓으면 글씨를 키울 수가 없다 */}
+      <div className="duel-grid">
+        <div className="duel-stage">
+          <canvas ref={canvasRef} />
+          {cheer && <div className="cheer-pop">응원이 왔어! 힘내!</div>}
         </div>
-        <span className="duel-pct">{Math.round(risk * 100)}%</span>
-      </div>
 
-      <div className="duel-timer">
-        <div
-          className={`duel-timer-fill${timePct < 25 ? ' hot' : timePct < 50 ? ' warm' : ''}`}
-          style={{ width: `${timePct}%` }}
-        />
+        <div className="duel-side">
+          <p className="duel-round">
+            {props.roundLabel}
+            {!opponentConnected && !state.over && <span className="duel-warn">상대 연결 확인 중</span>}
+          </p>
+
+          <Score
+            label={nameOf(opp)}
+            sum={theirs.sum}
+            hidden={state.revealed ? theirs.hidden : null}
+            cards={theirs.cards}
+            stopped={theirs.stopped}
+            dead={theirs.dead}
+          />
+
+          <p className="duel-vs">vs</p>
+
+          <Score
+            me
+            label="나"
+            sum={mine.sum}
+            hidden={mine.hidden}
+            cards={mine.cards}
+            stopped={mine.stopped}
+            dead={mine.dead}
+          />
+
+          <div className="duel-risk">
+            <div className="duel-risk-top">
+              <span>
+                남은 공 <b>{state.pool.length}</b>개 · 꽝 <b className="bad">{blanksLeft(state)}</b>개
+              </span>
+              <span className={`duel-pct${risk >= 0.4 ? ' hot' : ''}`}>{Math.round(risk * 100)}%</span>
+            </div>
+            <div className="duel-gauge" aria-hidden>
+              {Array.from({ length: state.pool.length }, (_, i) => (
+                <span key={i} className={i < state.pool.length - blanksLeft(state) ? 'g ok' : 'g bad'} />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <p className={`duel-msg${outcome ? ' ' + outcome : ''}`}>{message}</p>
 
+      {!state.over && (
+        <div className="duel-timer">
+          <div
+            className={`duel-timer-fill${timePct < 25 ? ' hot' : timePct < 50 ? ' warm' : ''}`}
+            style={{ width: `${timePct}%` }}
+          />
+        </div>
+      )}
+
       <div className="duel-ctrl">
         <button className="pick" onClick={() => choose('draw')} disabled={!myTurn}>
           뽑기
+          <em>{myTurn ? `꽝 ${Math.round(risk * 100)}%` : '기다리는 중'}</em>
         </button>
         <button className="hold" onClick={() => choose('stop')} disabled={!myTurn}>
           스탑
+          <em>여기서 그만</em>
         </button>
       </div>
     </div>
   )
 }
 
-function PlayerRow(p: {
+/** 한 사람의 점수 한 덩어리. 이름·점수·뽑은 공을 크게 */
+function Score(p: {
   label: string
   sum: number
   hidden: number | null
@@ -297,21 +311,26 @@ function PlayerRow(p: {
   stopped: boolean
   dead: boolean
   me?: boolean
-  showHiddenChip: boolean
 }) {
   return (
-    <div className={`duel-row${p.me ? ' me' : ''}`}>
-      <div className="duel-who">
+    <div className={`duel-score${p.me ? ' me' : ''}`}>
+      <div className="duel-score-head">
         <span className="duel-name">{p.label}</span>
-        {p.dead && <span className="duel-flag dead">꽝</span>}
+        {p.dead && <span className="duel-flag dead">꽝! 졌어</span>}
         {!p.dead && p.stopped && <span className="duel-flag stop">스탑</span>}
       </div>
-      <div className="duel-score">
-        <b>{p.sum}</b>
-        <span className="duel-hidden">{p.hidden === null ? '+ ?' : `+ ${p.hidden}`}</span>
+      <div className="duel-num">
+        <b>{p.hidden === null ? p.sum : p.sum + p.hidden}</b>
+        <span className="duel-num-note">
+          {p.hidden === null ? (
+            <>보이는 점수 · 숨은 공 <i>?</i></>
+          ) : (
+            <>보이는 점수 {p.sum} · 숨은 공 {p.hidden}</>
+          )}
+        </span>
       </div>
       <div className="duel-chips">
-        <span className={`chip hid${p.showHiddenChip ? '' : ' unknown'}`}>
+        <span className={`chip hid${p.hidden === null ? ' unknown' : ''}`}>
           {p.hidden === null ? '?' : p.hidden}
         </span>
         {p.cards.map((c, i) => (
@@ -327,3 +346,4 @@ function PlayerRow(p: {
     </div>
   )
 }
+
