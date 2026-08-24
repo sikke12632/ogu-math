@@ -16,8 +16,8 @@ import { grade, shuffleChoices, type Answer } from '../../session/grade'
 import { mvpOf } from '../../session/teams'
 import type { StudentId } from '../../session/types'
 import {
-  fmtClock, isCheerleader, myMatch, nameOf, quizTimeLeft, realNameOf, roundMatches, teamList,
-  useSession, useTeamScores, useTick,
+  fmtClock, isCheerleader, myMatch, nameOf, quizTimeLeft, readableError, realNameOf, roundMatches,
+  teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
 import { NicknamePicker } from './NicknamePicker'
 import { QuestionCard } from './QuestionCard'
@@ -29,7 +29,8 @@ export function PlayView() {
   const [notFound, setNotFound] = useState(false)
   const [me, setMe] = useState<StudentId | null>(null)
   const [seatError, setSeatError] = useState<string | null>(null)
-  const { session } = useSession(sessionId ?? undefined)
+  const { session, error: sessionError } = useSession(sessionId ?? undefined)
+  const [enterError, setEnterError] = useState<string | null>(null)
   const now = useTick(400)
 
   const [answers, setAnswers] = useState<Record<string, Answer>>({})
@@ -42,10 +43,13 @@ export function PlayView() {
 
   /* ── 코드 → 세션 ─────────────────────────────────── */
   useEffect(() => {
-    void codeToSessionId(code).then((id) => {
-      if (id) setSessionId(id)
-      else setNotFound(true)
-    })
+    codeToSessionId(code)
+      .then((id) => {
+        if (id) setSessionId(id)
+        else setNotFound(true)
+      })
+      // 조용히 멈추면 원인을 못 찾는다. 왜 못 들어갔는지 화면에 띄운다
+      .catch((e) => setEnterError(readableError(e)))
   }, [code])
 
   /* ── 다른 수업으로 옮기면 앉았던 자리를 놓는다 ────────
@@ -131,6 +135,15 @@ export function PlayView() {
         <h1>코드를 찾을 수 없어요</h1>
         <p className="sub">칠판의 6자리 코드를 다시 확인해 주세요.</p>
         <button className="ghost" onClick={() => nav('/join')}>코드 다시 넣기</button>
+      </div>
+    )
+  }
+  if (enterError ?? sessionError) {
+    return (
+      <div className="wrap play-center">
+        <h1>못 들어갔어요</h1>
+        <p className="notice error">{enterError ?? sessionError}</p>
+        <button className="ghost" onClick={() => location.reload()}>다시 해보기</button>
       </div>
     )
   }

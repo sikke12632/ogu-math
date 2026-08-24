@@ -7,6 +7,21 @@ import { watchSession } from './api'
 import { tallyTeamWins } from './teams'
 import type { MatchRecord, Session, StudentId, TeamRecord } from './types'
 
+/** 학교에서 자주 나는 오류를 사람이 읽을 수 있는 말로 바꾼다 */
+export function readableError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e)
+  if (/permission[_ ]denied/i.test(msg)) {
+    return '서버가 접근을 막았습니다. Firebase 의 Realtime Database 규칙과 Authentication 승인된 도메인을 확인하세요.'
+  }
+  if (/api-key-not-valid/i.test(msg)) {
+    return 'Firebase 설정값(API 키)이 올바르지 않습니다.'
+  }
+  if (/network|offline|unavailable/i.test(msg)) {
+    return '인터넷 연결이 끊겼습니다. 와이파이를 확인해 주세요.'
+  }
+  return msg
+}
+
 export function useSession(sessionId: string | undefined): {
   session: Session | null
   loading: boolean
@@ -21,11 +36,19 @@ export function useSession(sessionId: string | undefined): {
     setLoading(true)
     let stop = (): void => {}
     try {
-      stop = watchSession(sessionId, (s) => {
-        if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__session = s
-        setSession(s)
-        setLoading(false)
-      })
+      stop = watchSession(
+        sessionId,
+        (s) => {
+          if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__session = s
+          setSession(s)
+          setLoading(false)
+          setError(null)
+        },
+        (e) => {
+          setError(readableError(e))
+          setLoading(false)
+        },
+      )
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
       setLoading(false)

@@ -34,7 +34,15 @@ function randomCode(): string {
   return s
 }
 
+/**
+ * 코드로 세션을 찾는다.
+ *
+ * **읽기 전에 반드시 익명 로그인을 먼저 한다.** 데이터베이스 규칙이
+ * 로그인한 사람만 읽게 되어 있어서, 로그인 없이 읽으면 조용히 막힌다.
+ * 학생 화면은 이게 첫 동작이라 빠뜨리면 '들어가는 중…' 에서 멈춘다.
+ */
 export async function codeToSessionId(code: string): Promise<string | null> {
+  await ensureSignedIn()
   const snap = await get(ref(getDb(), `${CODES}/${code.toUpperCase()}`))
   return snap.exists() ? (snap.val() as string) : null
 }
@@ -97,20 +105,45 @@ export async function createSession(o: CreateOptions): Promise<{ sessionId: stri
 
 /* ── 구독 ──────────────────────────────────────────── */
 
-export function watchSession(sessionId: string, cb: (s: Session | null) => void): () => void {
-  return onValue(ref(getDb(), `${SESSIONS}/${sessionId}`), (snap) => {
-    if (!snap.exists()) return cb(null)
-    const v = snap.val() as Session
-    // RTDB 는 빈 객체를 지운다. 화면에서 매번 ?? 를 붙이지 않게 여기서 채워 준다
-    cb({
-      ...v,
-      problems: v.problems ?? [],
-      roster: v.roster ?? {},
-      quiz: v.quiz ?? {},
-      teams: v.teams ?? {},
-      game: v.game ?? null,
+/**
+ * 세션 구독. 여기도 **로그인이 먼저다.**
+ * 규칙에 막히면 조용히 아무것도 안 오므로, 막힌 것을 onError 로 알려 준다.
+ */
+export function watchSession(
+  sessionId: string,
+  cb: (s: Session | null) => void,
+  onError?: (e: Error) => void,
+): () => void {
+  let stop: (() => void) | null = null
+  let cancelled = false
+
+  void ensureSignedIn()
+    .then(() => {
+      if (cancelled) return
+      stop = onValue(
+        ref(getDb(), `${SESSIONS}/${sessionId}`),
+        (snap) => {
+          if (!snap.exists()) return cb(null)
+          const v = snap.val() as Session
+          // RTDB 는 빈 객체를 지운다. 화면에서 매번 ?? 를 붙이지 않게 여기서 채워 준다
+          cb({
+            ...v,
+            problems: v.problems ?? [],
+            roster: v.roster ?? {},
+            quiz: v.quiz ?? {},
+            teams: v.teams ?? {},
+            game: v.game ?? null,
+          })
+        },
+        (e) => onError?.(e),
+      )
     })
-  })
+    .catch((e) => onError?.(e instanceof Error ? e : new Error(String(e))))
+
+  return () => {
+    cancelled = true
+    stop?.()
+  }
 }
 
 export function watchPath<T>(path: string, cb: (v: T | null) => void): () => void {
@@ -240,6 +273,7 @@ export async function setNickname(
   studentId: StudentId,
   raw: string,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  await ensureSignedIn()
   const nickname = raw.trim().replace(/s+/g, ' ')
   if (nickname.length > 14) return { ok: false, reason: '너무 길어요. 14글자 안으로 해 주세요.' }
 
@@ -390,6 +424,7 @@ export async function archive(entries: Record<string, ArchiveEntry>): Promise<vo
 }
 
 export async function loadArchive(): Promise<Record<string, ArchiveEntry>> {
+  await ensureSignedIn()
   const snap = await get(ref(getDb(), 'archive'))
   return snap.exists() ? (snap.val() as Record<string, ArchiveEntry>) : {}
 }

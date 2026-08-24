@@ -14,7 +14,9 @@ import { Qr } from '../../components/Qr'
 import { getGame } from '../../games'
 import { codeToSessionId } from '../../session/api'
 import { mvpOf } from '../../session/teams'
-import { fmtClock, nameOf, quizTimeLeft, teamList, useSession, useTeamScores, useTick } from '../../session/useSession'
+import {
+  fmtClock, nameOf, quizTimeLeft, readableError, teamList, useSession, useTeamScores, useTick,
+} from '../../session/useSession'
 
 const CHEER = ['좋아, 침착하게', '천천히 읽어도 돼', '거의 다 왔어', '끝까지 해 보자']
 
@@ -22,14 +24,17 @@ export function BoardView() {
   const { code = '' } = useParams()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const { session } = useSession(sessionId ?? undefined)
+  const { session, error } = useSession(sessionId ?? undefined)
+  const [enterError, setEnterError] = useState<string | null>(null)
   const now = useTick(300)
 
   useEffect(() => {
-    void codeToSessionId(code).then((id) => {
-      if (id) setSessionId(id)
-      else setNotFound(true)
-    })
+    codeToSessionId(code)
+      .then((id) => {
+        if (id) setSessionId(id)
+        else setNotFound(true)
+      })
+      .catch((e) => setEnterError(readableError(e)))
   }, [code])
 
   const joinUrl = `${location.origin}${location.pathname}#/play/${code.toUpperCase()}`
@@ -44,6 +49,14 @@ export function BoardView() {
       <div className="board board-center">
         <h1 className="board-huge">코드를 찾을 수 없어요</h1>
         <p className="board-sub">선생님 화면의 6자리 코드를 다시 확인해 주세요.</p>
+      </div>
+    )
+  }
+  if (enterError ?? error) {
+    return (
+      <div className="board board-center">
+        <h1 className="board-huge">열 수 없어요</h1>
+        <p className="board-sub">{enterError ?? error}</p>
       </div>
     )
   }
