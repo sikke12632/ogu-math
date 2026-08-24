@@ -5,6 +5,15 @@
  */
 
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BoardView } from './screens/board/BoardView'
+import { CheckView } from './screens/CheckView'
+import { StageLab } from './screens/dev/StageLab'
+import { Review } from './screens/review/Review'
+import { JoinView } from './screens/student/JoinView'
+import { PlayView } from './screens/student/PlayView'
+import { Practice } from './screens/student/Practice'
+import { TeacherConsole } from './screens/teacher/TeacherConsole'
+import { TeacherHome } from './screens/teacher/TeacherHome'
 
 /**
  * QR 로 들어온 학생 받기.
@@ -22,14 +31,6 @@ function redirectFromQr(): void {
   history.replaceState(null, '', `${location.pathname}#/play/${clean}`)
 }
 redirectFromQr()
-import { BoardView } from './screens/board/BoardView'
-import { StageLab } from './screens/dev/StageLab'
-import { Review } from './screens/review/Review'
-import { JoinView } from './screens/student/JoinView'
-import { PlayView } from './screens/student/PlayView'
-import { Practice } from './screens/student/Practice'
-import { TeacherConsole } from './screens/teacher/TeacherConsole'
-import { TeacherHome } from './screens/teacher/TeacherHome'
 
 function Landing() {
   return (
@@ -72,6 +73,8 @@ export default function App() {
         <Route path="/play/:code" element={<PlayView />} />
         <Route path="/practice" element={<Practice />} />
         <Route path="/review" element={<Review />} />
+        {/* 학교에서 뭐가 막혔는지 확인하는 화면 */}
+        <Route path="/check" element={<CheckView />} />
         {/* 무대 렌더링 확인용. 수업에서는 안 쓴다 */}
         <Route path="/stage" element={<StageLab />} />
         <Route path="*" element={<Navigate to="/" replace />} />

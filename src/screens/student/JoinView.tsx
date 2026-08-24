@@ -59,6 +59,8 @@ export function JoinView() {
 
       <p className="foot">
         <Link to="/practice">혼자 연습하기</Link> · <Link to="/review">내 오답 보기</Link>
+        <br />
+        <Link to="/check">안 들어가지면 여기를 눌러 확인</Link>
       </p>
     </div>
   )

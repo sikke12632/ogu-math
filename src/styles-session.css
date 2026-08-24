@@ -391,3 +391,26 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 /* 점수는 큰 숫자 한 줄, 설명은 그 아래 한 줄 */
 .duel-num { display: grid; gap: 1px; }
 .duel-num-note { font-size: 14px; color: var(--ink-soft); }
+
+/* ── 연결 진단 화면 ─────────────────────────── */
+
+.checkverdict { font-size: 17px; line-height: 1.6; padding: 14px 16px; border-radius: 10px; margin: 0 0 16px; }
+.checkverdict.ok { background: #ecfdf5; border: 1px solid var(--ok); color: var(--ok); font-weight: 700; }
+.checkverdict.bad { background: #fef2f2; border: 1px solid var(--bad); color: var(--bad); }
+.checkverdict b { font-weight: 900; }
+
+.checklist { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 6px; }
+.check { display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; background: #f7f9fb; border: 1px solid var(--rule); border-radius: 9px; }
+.check.ok { background: #ecfdf5; border-color: #a7f3d0; }
+.check.fail { background: #fef2f2; border-color: #fecaca; }
+.check-mark { font-size: 20px; font-weight: 900; line-height: 1.2; width: 22px; text-align: center; flex: none; color: var(--ink-soft); }
+.check.ok .check-mark { color: var(--ok); }
+.check.fail .check-mark { color: var(--bad); }
+.check-body { display: grid; gap: 3px; min-width: 0; }
+.check-body b { font-size: 16px; }
+.check-why { font-size: 13.5px; color: var(--bad); line-height: 1.5; }
+.check-detail { font-size: 12px; color: var(--ink-soft); font-family: ui-monospace, monospace; word-break: break-all; }
+
+.checkinfo { background: #f4f6f8; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+.checkinfo p { margin: 0 0 3px; font-size: 12.5px; color: var(--ink-soft); word-break: break-all; }
+.checkinfo b { color: var(--ink); }

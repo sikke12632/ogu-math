@@ -143,7 +143,10 @@ export function PlayView() {
       <div className="wrap play-center">
         <h1>못 들어갔어요</h1>
         <p className="notice error">{enterError ?? sessionError}</p>
-        <button className="ghost" onClick={() => location.reload()}>다시 해보기</button>
+        <div className="row">
+          <button className="ghost" onClick={() => location.reload()}>다시 해보기</button>
+          <button className="ghost" onClick={() => nav('/check')}>무엇이 막혔는지 확인</button>
+        </div>
       </div>
     )
   }
