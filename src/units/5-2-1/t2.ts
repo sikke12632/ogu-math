@@ -146,7 +146,9 @@ function wordsToLine(rng: Rng, difficulty: Difficulty): Draft {
 
 export const T2: Template = {
   id: 'T2',
-  name: '수직선 ↔ 범위',
+  name: "수직선으로 나타내기",
+  description: "수직선 그림을 보고 말로 옮기거나, 말을 보고 알맞은 수직선을 고릅니다.",
+  topic: "수의 범위",
   supports: [1, 2],
   family: 'range',
   generate(rng, difficulty) {

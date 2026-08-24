@@ -83,9 +83,24 @@ export type Problem = {
 export type SetConfig = {
   unit: string
   counts: { easy: number; mid: number; hard: number }
+  /**
+   * 낼 유형만 골라 쓴다. 비어 있거나 없으면 단원 전체.
+   * 예를 들어 '이상·이하·초과·미만' 만 배운 날은 T1 하나만 넣는다.
+   */
+  templateIds?: string[]
 }
 
 /* ── 단원 모듈 계약 ────────────────────────────────────────── */
+
+/** 교사 화면이 출제 범위를 그릴 때 쓰는 정보 */
+export type TopicInfo = {
+  id: string
+  name: string
+  description: string
+  topic: Topic
+  /** 이 유형이 낼 수 있는 난이도 */
+  levels: Difficulty[]
+}
 
 export type UnitModule = {
   /** '5-2-1' — 학년-학기-단원 */
@@ -100,6 +115,10 @@ export type UnitModule = {
    */
   mode: 'generated' | 'banked'
   generate(seed: string, config: SetConfig): Problem[]
+  /** 출제 범위 목록. 교사 화면이 체크박스를 그리는 데 쓴다 */
+  topics(): TopicInfo[]
+  /** 미리보기용 예시 한 문항. 교사가 '이런 게 나옵니다' 를 볼 수 있게 */
+  sample(templateId: string, seed: string): Problem | null
 }
 
 /* ── 템플릿 내부 계약 (단원 모듈 안에서만 씀) ──────────────── */
@@ -107,9 +126,19 @@ export type UnitModule = {
 /** id 와 points 는 세트 조립 단계에서 붙인다 */
 export type Draft = Omit<Problem, 'id' | 'points'>
 
+/** 교사 화면에서 출제 범위를 고를 때 묶는 갈래 */
+export type Topic = '수의 범위' | '어림하기' | '범위 + 어림'
+
 export type Template = {
   id: string
   name: string
+  /**
+   * 교사가 읽을 한 줄 설명.
+   * 'T1' 같은 부호만 보고는 무엇을 내는 것인지 알 수 없다.
+   */
+  description: string
+  /** 갈래 */
+  topic: Topic
   /** 이 템플릿이 만들 수 있는 난이도 */
   supports: Difficulty[]
   /** 범위 계열인지 어림 계열인지. 세트의 성취기준 균형을 맞추는 데 쓴다 */

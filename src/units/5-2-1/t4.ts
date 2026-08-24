@@ -35,7 +35,9 @@ function placeOptions(difficulty: Difficulty, decimal: boolean): PlaceChoice[] {
 
 export const T4: Template = {
   id: 'T4',
-  name: '어림하기',
+  name: "올림·버림·반올림 하기",
+  description: "'3428을 올림하여 백의 자리까지' 처럼 실제로 어림해 보는 문제입니다.",
+  topic: "어림하기",
   supports: [1, 2],
   family: 'estimate',
   generate(rng, difficulty) {

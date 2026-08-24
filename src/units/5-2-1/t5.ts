@@ -47,7 +47,9 @@ const PLACE_SET: { name: PlaceName; place: number }[] = [
 
 export const T5: Template = {
   id: 'T5',
-  name: '어림 역방향',
+  name: "어림한 결과로 원래 수 찾기",
+  description: "'반올림했더니 2700이 되었다. 원래 수는?' 범위와 어림을 함께 써야 풀립니다.",
+  topic: "범위 + 어림",
   supports: [2, 3],
   family: 'both',
   generate(rng, difficulty) {

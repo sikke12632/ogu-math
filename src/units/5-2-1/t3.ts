@@ -174,7 +174,9 @@ function decimalCount(rng: Rng, difficulty: Difficulty): Draft | null {
 
 export const T3: Template = {
   id: 'T3',
-  name: '범위 안 개수 세기',
+  name: "범위 안 개수 세기",
+  description: "'20 이상 32 이하인 자연수는 몇 개인가' 류. 홀수·배수·두 범위 겹침 조건이 붙기도 합니다.",
+  topic: "수의 범위",
   supports: [1, 2, 3],
   family: 'range',
   generate(rng, difficulty) {

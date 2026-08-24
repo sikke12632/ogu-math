@@ -276,3 +276,46 @@ li:first-child > .emoji { font-size: 13px; font-weight: 600; }
   font-style: normal; font-size: 12px; color: var(--mark);
   background: #eff4ff; padding: 1px 7px; border-radius: 999px; margin-left: 7px;
 }
+
+/* ── 출제 범위 고르기 ─────────────────────── */
+
+fieldset.pick { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px 14px; margin: 0; }
+fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft); padding: 0 6px; }
+
+.topicbar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.topicgroup { margin-bottom: 12px; }
+.topicgroup-name {
+  font-size: 11px; letter-spacing: .1em; color: var(--ink-soft);
+  margin: 0 0 5px; font-weight: 600;
+}
+.topiclist { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.topic {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+  background: #f7f9fb; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 11px;
+}
+.topic.on { background: #eff4ff; border-color: var(--band); }
+.topic-main { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; min-width: 0; }
+.topic-main input { margin-top: 3px; width: 17px; height: 17px; flex: none; accent-color: var(--mark); }
+.topic-text { display: grid; gap: 2px; min-width: 0; }
+.topic-text b { font-size: 15px; }
+.topic-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+.topic-levels {
+  font-size: 11px; color: var(--ink-soft); font-weight: 600; white-space: nowrap;
+  background: #fff; border: 1px solid var(--rule); border-radius: 999px; padding: 2px 8px;
+}
+
+.samplebox {
+  background: var(--card); border: 1px solid var(--band); border-radius: 10px;
+  padding: 14px 16px; margin-top: 10px;
+}
+.samplehead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.samplebox .prompt { font-size: 16px; }
+.samplebox .choices { margin-bottom: 10px; }
+
+.planbox {
+  display: grid; gap: 2px; align-content: center;
+  background: #f7f9fb; border: 1px solid var(--rule); border-radius: 8px; padding: 9px 12px;
+}
+.planbox > span { font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; }
+.planbox b { font-size: 15px; }
+.planmix { font-size: 12px; color: var(--ink-soft); }

@@ -6,8 +6,10 @@
  */
 
 import { makeRng, type Rng } from '../../lib/rng'
-import { G7_MAX_PER_TEMPLATE } from '../_guards'
-import type { Difficulty, Draft, Problem, SetConfig, Template, UnitModule } from '../_types'
+import { maxPerTemplate, POINTS } from '../_plan'
+import type {
+  Difficulty, Draft, Problem, SetConfig, Template, TopicInfo, UnitModule,
+} from '../_types'
 import { T1 } from './t1'
 import { T2 } from './t2'
 import { T3 } from './t3'
@@ -17,8 +19,6 @@ import { T6 } from './t6'
 import { T7 } from './t7'
 
 export const TEMPLATES: Template[] = [T1, T2, T3, T4, T5, T6, T7]
-
-const POINTS: Record<Difficulty, number> = { 1: 1, 2: 2, 3: 3 }
 
 /** 성취기준 균형 목표 — 범위 5 : 어림 4 (설계보고서 1.7 발견 4) */
 const TARGET = { range: 5, estimate: 4 }
@@ -46,16 +46,19 @@ function shapeOf(d: Draft): string {
 }
 
 /**
- * 한 문항 뽑기. 가드를 못 맞추면 50회까지 재시도한다.
- * usedShapes 를 주면 이미 나온 성격과 겹치는 문항은 돌려주지 않는다(엄격 모드).
+ * 한 문항 뽑기. 가드를 못 맞추면 재시도한다.
+ * accept 로 "이건 받겠다" 는 조건을 넘긴다 — 성격이 새로운지, 발문이 새로운지 등.
  */
+type Accept = (d: Draft) => boolean
+
 function tryTemplate(
   t: Template,
   rng: Rng,
   difficulty: Difficulty,
-  usedShapes: Set<string> | null,
+  accept: Accept,
+  tries = 60,
 ): Draft | null {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < tries; i++) {
     let d: Draft | null = null
     try {
       d = t.generate(rng, difficulty)
@@ -63,7 +66,7 @@ function tryTemplate(
       d = null // 독립 검산 불일치 등 — 버리고 다시 뽑는다
     }
     if (!d || !isSane(d)) continue
-    if (usedShapes && usedShapes.has(shapeOf(d))) continue
+    if (!accept(d)) continue
     return d
   }
   return null
@@ -92,14 +95,27 @@ export function generateSet(seed: string, config: SetConfig): Problem[] {
   const used: Record<string, number> = {}
   const family = { range: 0, estimate: 0 }
   const usedShapes = new Set<string>()
+  const usedPrompts = new Set<string>()
   const out: Problem[] = []
 
+  // 교사가 고른 출제 범위만 쓴다. 안 고르면 단원 전체
+  const wanted = config.templateIds && config.templateIds.length > 0 ? config.templateIds : null
+  const allowed = wanted ? TEMPLATES.filter((t) => wanted.includes(t.id)) : TEMPLATES
+  if (allowed.length === 0) throw new Error(`${config.unit}: 출제할 유형을 하나 이상 골라야 합니다.`)
+  // 유형을 적게 고르면 같은 유형이 여러 번 나올 수밖에 없다. 그만큼 한도를 올린다
+  const perTemplate = maxPerTemplate(allowed.length, slots.length)
+
   slots.forEach((slot, i) => {
-    // 이 난이도를 만들 수 있고, G7(같은 템플릿 2회 초과 금지)에 걸리지 않는 것만
-    let pool = TEMPLATES.filter(
-      (t) => t.supports.includes(slot.difficulty) && (used[t.id] ?? 0) < G7_MAX_PER_TEMPLATE,
+    // 이 난이도를 낼 수 있고, 한 유형이 너무 많이 나오지 않는 것만
+    let pool = allowed.filter(
+      (t) => t.supports.includes(slot.difficulty) && (used[t.id] ?? 0) < perTemplate,
     )
-    if (pool.length === 0) pool = TEMPLATES.filter((t) => t.supports.includes(slot.difficulty))
+    if (pool.length === 0) pool = allowed.filter((t) => t.supports.includes(slot.difficulty))
+    if (pool.length === 0) {
+      throw new Error(
+        `${config.unit}: 고른 유형으로는 난이도 ${slot.difficulty} 문항을 만들 수 없습니다.`,
+      )
+    }
 
     // 성취기준 균형 — 목표에서 더 많이 모자란 쪽 계열을 먼저 쓴다
     const needRange = TARGET.range - family.range
@@ -109,41 +125,46 @@ export function generateSet(seed: string, config: SetConfig): Problem[] {
     const finalPool = preferred.length > 0 ? preferred : pool
 
     const t = rng.pick(finalPool)
+    const alt = rng.shuffle(allowed.filter((x) => x.supports.includes(slot.difficulty) && x.id !== t.id))
 
-    // ① 이 템플릿에서 아직 안 나온 성격의 문항
-    const draft = tryTemplate(t, rng, slot.difficulty, usedShapes)
-    if (draft) {
-      push(draft, t)
-      return
-    }
+    // 받아들이는 기준을 세 단계로 느슨하게 푼다.
+    // **발문이 같은 문항은 마지막까지 막는다** — 학생 눈에 그게 제일 티가 난다.
+    const freshShape: Accept = (d) => !usedShapes.has(shapeOf(d)) && !usedPrompts.has(d.prompt)
+    const freshPrompt: Accept = (d) => !usedPrompts.has(d.prompt)
+    const anything: Accept = () => true
 
-    // ② 안 되면 같은 난이도의 다른 템플릿으로 (같은 난이도 전체를 훑는다)
-    const alt = rng.shuffle(TEMPLATES.filter((x) => x.supports.includes(slot.difficulty) && x.id !== t.id))
+    // ① 이 유형에서 성격도 발문도 새로운 문항
+    const d1 = tryTemplate(t, rng, slot.difficulty, freshShape)
+    if (d1) return push(d1, t)
+
+    // ② 같은 난이도의 다른 유형에서
     for (const a of alt) {
-      if ((used[a.id] ?? 0) >= G7_MAX_PER_TEMPLATE) continue
-      const d2 = tryTemplate(a, rng, slot.difficulty, usedShapes)
-      if (d2) {
-        push(d2, a)
-        return
-      }
+      if ((used[a.id] ?? 0) >= perTemplate) continue
+      const d2 = tryTemplate(a, rng, slot.difficulty, freshShape)
+      if (d2) return push(d2, a)
     }
 
-    // ③ 그래도 안 되면 성격 중복을 허용한다. 문항 수를 줄이지는 않는다
+    // ③ 성격이 겹쳐도 좋다. 발문만 새로우면 받는다
+    //    (출제 범위를 하나만 골랐을 때는 성격이 겹칠 수밖에 없다)
     for (const a of [t, ...alt]) {
-      const d3 = tryTemplate(a, rng, slot.difficulty, null)
-      if (d3) {
-        push(d3, a)
-        return
-      }
+      const d3 = tryTemplate(a, rng, slot.difficulty, freshPrompt, 160)
+      if (d3) return push(d3, a)
+    }
+
+    // ④ 마지막 수단. 문항 수를 조용히 줄이지는 않는다
+    for (const a of [t, ...alt]) {
+      const d4 = tryTemplate(a, rng, slot.difficulty, anything)
+      if (d4) return push(d4, a)
     }
 
     throw new Error(
       `${config.unit}: 난이도 ${slot.difficulty} 문항을 만들지 못했습니다 (${i + 1}번째). 가드 조건을 확인하세요.`,
     )
 
-    function push(d: Draft, tpl: Template) {
+    function push(d: Draft, tpl: Template): void {
       used[tpl.id] = (used[tpl.id] ?? 0) + 1
       usedShapes.add(shapeOf(d))
+      usedPrompts.add(d.prompt)
       if (tpl.family === 'both') {
         if (needRange >= needEstimate) family.range++
         else family.estimate++
@@ -168,6 +189,33 @@ export const unit521: UnitModule = {
   unit: 1,
   mode: 'generated',
   generate: generateSet,
+
+  topics(): TopicInfo[] {
+    return TEMPLATES.map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      topic: t.topic,
+      levels: [...t.supports],
+    }))
+  },
+
+  /** 교사가 '이런 게 나옵니다' 를 볼 수 있게 한 문항만 뽑아 준다 */
+  sample(templateId: string, seed: string): Problem | null {
+    const t = TEMPLATES.find((x) => x.id === templateId)
+    if (!t) return null
+    for (let i = 0; i < 40; i++) {
+      const rng = makeRng(['sample', templateId, seed, i].join('|'))
+      const level = t.supports[i % t.supports.length]!
+      try {
+        const d = t.generate(rng, level)
+        if (d && isSane(d)) return { ...d, id: 'sample', points: POINTS[d.difficulty] }
+      } catch {
+        /* 다음 시도 */
+      }
+    }
+    return null
+  },
 }
 
 export default unit521

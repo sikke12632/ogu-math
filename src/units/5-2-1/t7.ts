@@ -40,7 +40,9 @@ function allSame(n: number, place: number, methods: Method[]): boolean {
 
 export const T7: Template = {
   id: 'T7',
-  name: '어림 방법 간 결과 비교',
+  name: "세 방법 결과 비교",
+  description: "'올림과 반올림 결과가 같은 수는?' 어떤 수일 때 결과가 같아지는지 알아야 풀립니다.",
+  topic: "어림하기",
   supports: [2, 3],
   family: 'estimate',
   generate(rng, difficulty) {

@@ -140,7 +140,9 @@ const METHOD_CHOICES = ['올림', '버림', '반올림']
 
 export const T6: Template = {
   id: 'T6',
-  name: '방법 선택 + 적용',
+  name: "실생활에서 어림하기",
+  description: "버스 대수, 상자 포장, 물건값처럼 어떤 방법을 쓸지 정하고 값까지 구합니다.",
+  topic: "어림하기",
   supports: [2, 3],
   family: 'estimate',
   generate(rng, difficulty) {

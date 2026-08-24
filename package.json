@@ -13,7 +13,8 @@
     "snapshot:save": "tsx scripts/snapshot.ts save",
     "snapshot:check": "tsx scripts/snapshot.ts check",
     "check:game": "tsx scripts/game-check.ts",
-    "deploy": "npm run build && gh-pages -d dist --dotfiles"
+    "deploy": "npm run build && gh-pages -d dist --dotfiles",
+    "check:scope": "tsx scripts/scope-check.ts"
   },
   "dependencies": {
     "firebase": "^12.18.0",

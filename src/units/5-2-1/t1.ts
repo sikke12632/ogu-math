@@ -155,7 +155,9 @@ function mid(vs: number[]): number {
 
 export const T1: Template = {
   id: 'T1',
-  name: '범위 판별',
+  name: "이상·이하·초과·미만",
+  description: "'25 이상인 수를 모두 고르세요' 처럼 용어를 알고 판정하는 문제. 표를 보고 찾는 것도 나옵니다.",
+  topic: "수의 범위",
   supports: [1, 2],
   family: 'range',
   generate(rng, difficulty) {
