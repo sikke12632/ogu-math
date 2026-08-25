@@ -141,15 +141,39 @@ button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
 
 /* ── 이동 ───────────────────────────────── */
 
-.pager { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 8px; }
-.pager > button { padding: 10px 14px; }
-.dots { list-style: none; display: flex; gap: 5px; margin: 0; padding: 0; flex-wrap: wrap; justify-content: center; }
+/* 문제 이동판. 원래 있던 기능인데 너무 작아 아이들이 못 알아봤다.
+   손가락으로 누를 만한 크기로 키우고, 안 푼 문제를 한눈에 보이게 한다 */
+.pager { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin: 14px 0 10px; flex-wrap: wrap; }
+.pagearrow { padding: 14px 18px; font-size: 16px; font-weight: 700; }
+.dots { list-style: none; display: flex; gap: 8px; margin: 0; padding: 0; flex-wrap: wrap; justify-content: center; }
 .dots button {
-  width: 32px; height: 32px; padding: 0; border-radius: 999px;
-  background: var(--card); border: 1px solid var(--rule); color: var(--ink-soft); font-size: 13px;
+  width: 46px; height: 46px; padding: 0; border-radius: 12px; font-weight: 800;
+  background: var(--card); border: 1px solid var(--rule); color: var(--ink-soft); font-size: 17px;
 }
-.dots button.done { background: #eff4ff; color: var(--mark); border-color: var(--band); }
-.dots button.here { background: var(--ink); color: #fff; border-color: var(--ink); }
+/* 아직 안 푼 문제 — 점선으로 "비었다" 는 느낌을 준다 */
+.dots button.blank { border-style: dashed; border-color: var(--warn); color: var(--warn); background: #fffbeb; }
+.dots button.done { background: #eff4ff; color: var(--mark); border-color: var(--band); border-width: 2px; }
+.dots button.here { background: var(--ink); color: #fff; border-color: var(--ink); border-style: solid; }
+
+/* 빈 문제 알림 줄 — 누르면 첫 빈 문제로 간다 */
+.blankbar {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 16px; margin-bottom: 10px; border-radius: 12px; font-size: 16px; text-align: left;
+  background: #fffbeb; border: 1px solid var(--warn); color: #7a5b06;
+}
+.blankbar b { font-weight: 900; }
+.blankbar-go { font-size: 14px; font-weight: 800; white-space: nowrap; text-decoration: underline; }
+
+/* 마지막 문제 전에는 제출 버튼 대신 이 안내가 있다 */
+.submithint { text-align: center; font-size: 14px; color: var(--ink-soft); margin: 4px 0 0; }
+
+/* 방 코드 — 튕겼을 때 스스로 돌아오는 유일한 실마리 */
+.roomcode { font-size: 13px; color: var(--ink-soft); }
+.roomcode b { color: var(--ink); font-family: ui-monospace, monospace; letter-spacing: .08em; margin-left: 3px; }
+
+/* 빈 문제를 두고 낼 때만 뜨는 확인 */
+.confirm { margin-top: 12px; padding: 16px; border-radius: 12px; background: #fffbeb; border: 1px solid var(--warn); }
+.confirm p { margin: 0 0 12px; font-size: 16px; line-height: 1.6; }
 
 /* ── 결과 ───────────────────────────────── */
 
