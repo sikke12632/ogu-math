@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>세로 분수 표기 견본</title>
+<!--
+  2단원 분수의 곱셈을 만들기 전에, 분수가 어떻게 보일지 먼저 보는 견본이다.
+  실제 앱과 같은 글자 크기·색·간격을 그대로 옮겼다.
+  마음에 안 드는 게 있으면 이 화면을 보고 말해 주면 된다.
+-->
+<style>
+  :root {
+    --ink: #16202b; --ink-soft: #5b6472; --card: #fff; --rule: #e2e6ec;
+    --mark: #2563eb; --band: #93b4fd;
+  }
+  body {
+    margin: 0; padding: 24px; background: #f7f8fa; color: var(--ink);
+    font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--ink-soft); margin: 0 0 20px; font-size: 15px; }
+  h2 { font-size: 15px; color: var(--ink-soft); margin: 26px 0 8px; font-weight: 700; }
+  .card {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  .prompt { font-size: 17px; line-height: 1.7; margin: 0 0 10px; }
+  .prompt:last-child { margin-bottom: 0; }
+
+  /* ── 앱에 들어간 것과 같은 규칙 ── */
+  .frac { display: inline-flex; align-items: center; gap: 3px; vertical-align: -0.42em; margin: 0 2px; }
+  .frac-whole { font-size: 1.1em; font-weight: 600; }
+  .frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.08; font-size: .86em; }
+  .frac-num { padding: 0 .25em; }
+  .frac-den { padding: 0 .25em; border-top: 1.5px solid currentColor; }
+
+  .choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .choice {
+    width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 13px 14px; font: inherit; font-size: 17px; color: var(--ink);
+  }
+  .choice .mark {
+    width: 26px; height: 26px; border-radius: 50%; background: #eef2f7; color: var(--ink-soft);
+    display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none;
+  }
+  .compare { font-size: 22px; line-height: 2.1; }
+  .note { font-size: 14px; color: var(--ink-soft); line-height: 1.7; }
+  .note b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>세로 분수 표기 견본</h1>
+  <p class="sub">2단원 문제를 만들기 전에 분수가 어떻게 보일지 먼저 봅니다. 실제 앱과 같은 크기·색입니다.</p>
+
+  <h2>1. 발문 안에 섞여 나올 때</h2>
+  <div class="card">
+    <p class="prompt">전체의 <span class="frac"><span class="frac-stack"><span class="frac-num">3</span><span class="frac-den">4</span></span></span>의 <span class="frac"><span class="frac-stack"><span class="frac-num">2</span><span class="frac-den">5</span></span></span>는 얼마인가요?</p>
+    <p class="prompt">지원이네 학교는 여학생이 전체의 <span class="frac"><span class="frac-stack"><span class="frac-num">2</span><span class="frac-den">5</span></span></span>이고, 여학생 중에서 <span class="frac"><span class="frac-stack"><span class="frac-num">4</span><span class="frac-den">7</span></span></span>은 야구를 좋아합니다.</p>
+    <p class="prompt">지은이는 고기를 2 kg의 <span class="frac"><span class="frac-whole">1</span><span class="frac-stack"><span class="frac-num">5</span><span class="frac-den">6</span></span></span>만큼 사려고 합니다.</p>
+  </div>
+
+  <h2>2. 계산식으로 나올 때</h2>
+  <div class="card">
+    <p class="prompt"><span class="frac"><span class="frac-stack"><span class="frac-num">5</span><span class="frac-den">7</span></span></span> × 6 을 계산해 보세요.</p>
+    <p class="prompt"><span class="frac"><span class="frac-whole">1</span><span class="frac-stack"><span class="frac-num">2</span><span class="frac-den">3</span></span></span> × <span class="frac"><span class="frac-whole">2</span><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">4</span></span></span> 를 계산해 보세요.</p>
+    <p class="prompt">12 × <span class="frac"><span class="frac-stack"><span class="frac-num">7</span><span class="frac-den">8</span></span></span> 은 얼마인가요?</p>
+  </div>
+
+  <h2>3. 보기로 나올 때</h2>
+  <div class="card">
+    <ul class="choices">
+      <li><button class="choice"><span class="mark">1</span><span class="frac"><span class="frac-stack"><span class="frac-num">3</span><span class="frac-den">10</span></span></span></button></li>
+      <li><button class="choice"><span class="mark">2</span><span class="frac"><span class="frac-whole">3</span><span class="frac-stack"><span class="frac-num">2</span><span class="frac-den">3</span></span></span></button></li>
+      <li><button class="choice"><span class="mark">3</span><span class="frac"><span class="frac-stack"><span class="frac-num">30</span><span class="frac-den">42</span></span></span></button></li>
+      <li><button class="choice"><span class="mark">4</span><span class="frac"><span class="frac-whole">4</span><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">3</span></span></span></button></li>
+    </ul>
+  </div>
+
+  <h2>4. 크게 늘어놓았을 때 (비교 문항)</h2>
+  <div class="card">
+    <p class="compare">
+      <span class="frac"><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">2</span></span></span> ×
+      <span class="frac"><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">9</span></span></span>
+      &nbsp;□&nbsp;
+      <span class="frac"><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">4</span></span></span> ×
+      <span class="frac"><span class="frac-stack"><span class="frac-num">1</span><span class="frac-den">8</span></span></span>
+    </p>
+  </div>
+
+  <h2>봐 주실 것</h2>
+  <div class="card">
+    <p class="note">
+      <b>1.</b> 교실 뒤에서도 읽힐 만한 크기인가요? 지금 분자·분모는 발문 글자의 86% 입니다.<br>
+      <b>2.</b> 가로줄이 너무 얇거나 두껍지 않나요?<br>
+      <b>3.</b> 대분수(1과 <span class="frac"><span class="frac-stack"><span class="frac-num">5</span><span class="frac-den">6</span></span></span>)에서 자연수와 분수 사이 간격이 적당한가요?<br>
+      <b>4.</b> 분수가 낀 줄이 위아래로 너무 벌어지지 않나요?
+    </p>
+  </div>
+</div>
+</body>
+</html>

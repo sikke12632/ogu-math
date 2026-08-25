@@ -76,8 +76,13 @@ export type Problem = {
   answer: string | string[]
   /** 필수. 게임 후 오답 해설에 쓴다 */
   explanation: string
-  /** 성취기준 */
-  standard: '6수01-02' | '6수01-03' | '6수01-02·03'
+  /**
+   * 성취기준. 검수용 덤프(#dump)에만 찍힌다. 학생·교사 화면에는 안 나온다.
+   *
+   * 단원마다 번호가 다르므로 여기서 타입으로 묶지 않는다.
+   * 처음에는 1단원 것만 나열했는데, 2단원(6수01-09)을 넣으려니 코어를 고쳐야 했다.
+   */
+  standard: string
 }
 
 export type SetConfig = {
@@ -126,8 +131,15 @@ export type UnitModule = {
 /** id 와 points 는 세트 조립 단계에서 붙인다 */
 export type Draft = Omit<Problem, 'id' | 'points'>
 
-/** 교사 화면에서 출제 범위를 고를 때 묶는 갈래 */
-export type Topic = '수의 범위' | '어림하기' | '범위 + 어림'
+/**
+ * 교사 화면에서 출제 범위를 고를 때 묶는 갈래.
+ *
+ * **단원마다 다르므로 여기서 값을 못박지 않는다.**
+ * 처음에는 1단원 갈래만 나열했는데, 2단원(분수 × 자연수 …)을 넣으려니
+ * 코어를 고쳐야 했다. 갈래 이름은 교사에게 보여 줄 글자일 뿐이고,
+ * 타입으로 묶어서 얻는 게 없다.
+ */
+export type Topic = string
 
 export type Template = {
   id: string
@@ -141,8 +153,12 @@ export type Template = {
   topic: Topic
   /** 이 템플릿이 만들 수 있는 난이도 */
   supports: Difficulty[]
-  /** 범위 계열인지 어림 계열인지. 세트의 성취기준 균형을 맞추는 데 쓴다 */
-  family: 'range' | 'estimate' | 'both'
+  /**
+   * 세트 안에서 계열 균형을 맞추는 데 쓰는 꼬리표. **단원이 알아서 정한다.**
+   * 1단원은 'range' / 'estimate' 로 나누고, 2단원은 '계산' / '활용' 으로 나눈다.
+   * 이름은 자유지만 값은 반드시 넣는다 — 빈 채로 두면 균형 계산이 조용히 어긋난다.
+   */
+  family: string
   /** 가드를 못 맞추면 null 을 돌려준다. 호출한 쪽이 재시도한다 */
   generate(rng: import('../lib/rng').Rng, difficulty: Difficulty): Draft | null
 }

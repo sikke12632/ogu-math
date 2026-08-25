@@ -1,5 +1,6 @@
 /** 문항 카드. 선택형(하나 고르기 / 모두 고르기), 단답형, 그림 보기를 모두 여기서 그린다 */
 
+import { MathText } from '../../components/MathText'
 import { VisualView } from '../../components/visuals/VisualView'
 import type { Answer } from '../../session/grade'
 import type { Problem } from '../../units/_types'
@@ -37,7 +38,7 @@ export function QuestionCard({ problem, index, total, given, onChange, readOnly 
         <span className="badge">{problem.points}점</span>
       </header>
 
-      <p className="prompt">{problem.prompt}</p>
+      <p className="prompt"><MathText text={problem.prompt} /></p>
       {multi && !readOnly && <p className="hint">답이 여러 개입니다. 모두 고르세요.</p>}
 
       {problem.visual && (
@@ -61,7 +62,7 @@ export function QuestionCard({ problem, index, total, given, onChange, readOnly 
               <li key={c}>
                 <button type="button" className={cls} onClick={() => toggle(c)} disabled={readOnly}>
                   <span className="mark">{multi ? (on ? '☑' : '☐') : String(i + 1)}</span>
-                  <span className="label">{c}</span>
+                  <span className="label"><MathText text={c} /></span>
                   {problem.choiceVisuals?.[i] && (
                     <span className="choice-visual">
                       <VisualView visual={problem.choiceVisuals[i]!} />

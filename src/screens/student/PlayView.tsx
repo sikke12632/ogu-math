@@ -19,6 +19,7 @@ import {
   fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
   roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
+import { MathText } from '../../components/MathText'
 import { BlankBar } from './BlankBar'
 import { Scratchpad } from './Scratchpad'
 import { NicknamePicker } from './NicknamePicker'
@@ -411,9 +412,15 @@ export function PlayView() {
                 readOnly
               />
               <div className="explain">
-                <p className="mine">내가 쓴 답: {item.given === null ? '(안 씀)' : Array.isArray(item.given) ? item.given.join(', ') : item.given}</p>
-                <p className="right">정답: {Array.isArray(item.problem.answer) ? item.problem.answer.join(', ') : item.problem.answer}</p>
-                {item.problem.explanation.split('\n').map((line, i) => <p key={i}>{line}</p>)}
+                <p className="mine">
+                  내가 쓴 답: <MathText text={item.given === null ? '(안 씀)' : Array.isArray(item.given) ? item.given.join(', ') : item.given} />
+                </p>
+                <p className="right">
+                  정답: <MathText text={Array.isArray(item.problem.answer) ? item.problem.answer.join(', ') : item.problem.answer} />
+                </p>
+                {item.problem.explanation.split('\n').map((line, i) => (
+                  <p key={i}><MathText text={line} /></p>
+                ))}
               </div>
             </section>
           ))}

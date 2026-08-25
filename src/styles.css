@@ -233,3 +233,13 @@ button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
   border: 1px dashed var(--rule);
 }
 .pad-full { margin: 8px 0 0; font-size: 13px; color: var(--warn); }
+
+/* ── 세로 분수 ───────────────────────────────────────
+   5학년에게 3/4 는 나눗셈으로 읽힌다. 교과서는 예외 없이 세로 분수다.
+   글 한가운데에 끼어 들어가므로 글줄 높이를 흔들지 않는 게 중요하다. */
+.frac { display: inline-flex; align-items: center; gap: 3px; vertical-align: -0.42em; margin: 0 2px; }
+.frac-whole { font-size: 1.1em; font-weight: 600; }
+.frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.08; font-size: .86em; }
+.frac-num { padding: 0 .25em; }
+/* 가로줄. border 로 그어야 글씨 크기를 따라간다 */
+.frac-den { padding: 0 .25em; border-top: 1.5px solid currentColor; }

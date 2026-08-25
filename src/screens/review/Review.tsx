@@ -7,6 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MathText } from '../../components/MathText'
 import { VisualView } from '../../components/visuals/VisualView'
 import { clearArchive, loadArchive } from '../../session/api'
 import { rememberedName } from '../../session/api'
@@ -136,9 +137,11 @@ export function Review() {
                 </ul>
               )}
               <div className="explain">
-                <p className="mine">내가 쓴 답: {it.given || '(안 씀)'}</p>
-                <p className="right">정답: {it.answer}</p>
-                {it.explanation.split('\n').map((line, j) => <p key={j}>{line}</p>)}
+                <p className="mine">내가 쓴 답: <MathText text={it.given || '(안 씀)'} /></p>
+                <p className="right">정답: <MathText text={it.answer} /></p>
+                {it.explanation.split('\n').map((line, j) => (
+                  <p key={j}><MathText text={line} /></p>
+                ))}
               </div>
             </section>
           ))

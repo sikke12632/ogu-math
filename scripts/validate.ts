@@ -258,7 +258,7 @@ for (let i = 0; i < 200; i++) {
     if (new Set(shapes).size !== shapes.length) dupShape++
     for (const p of set) {
       const f = TEMPLATES.find((t) => t.id === p.templateId)!.family
-      familyCount[f]++
+      if (f === 'range' || f === 'estimate' || f === 'both') familyCount[f]++
     }
   } catch (e) {
     console.log(`  ✗ set${i}: ${e instanceof Error ? e.message : String(e)}`)

@@ -11,6 +11,7 @@ import { levelsOf, planCounts, scoreOf, totalOf } from '../../units/_plan'
 import type { Problem } from '../../units/_types'
 import { TopicPicker } from '../teacher/TopicPicker'
 import { BlankBar } from './BlankBar'
+import { MathText } from '../../components/MathText'
 import { QuestionCard } from './QuestionCard'
 import { Scratchpad } from './Scratchpad'
 
@@ -358,13 +359,14 @@ export function Practice() {
             />
             <div className="explain">
               <p className="mine">
-                내가 쓴 답: {item.given === null ? '(안 씀)' : Array.isArray(item.given) ? item.given.join(', ') : item.given}
+                내가 쓴 답: <MathText text={item.given === null ? '(안 씀)' : Array.isArray(item.given) ? item.given.join(', ') : item.given} />
               </p>
               <p className="right">
-                정답: {Array.isArray(item.problem.answer) ? item.problem.answer.join(', ') : item.problem.answer}
+                정답: <MathText text={Array.isArray(item.problem.answer) ? item.problem.answer.join(', ') : item.problem.answer} />
               </p>
+              {/* 해설에도 분수가 섞여 나온다 */}
               {item.problem.explanation.split('\n').map((line, i) => (
-                <p key={i}>{line}</p>
+                <p key={i}><MathText text={line} /></p>
               ))}
             </div>
           </section>

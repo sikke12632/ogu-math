@@ -165,10 +165,11 @@ export function generateSet(seed: string, config: SetConfig): Problem[] {
       used[tpl.id] = (used[tpl.id] ?? 0) + 1
       usedShapes.add(shapeOf(d))
       usedPrompts.add(d.prompt)
+      // family 는 이제 자유 글자다(단원마다 다르므로). 이 단원이 쓰는 값만 센다
       if (tpl.family === 'both') {
         if (needRange >= needEstimate) family.range++
         else family.estimate++
-      } else {
+      } else if (tpl.family === 'range' || tpl.family === 'estimate') {
         family[tpl.family]++
       }
       out.push({ ...d, id: `q${out.length + 1}`, points: POINTS[d.difficulty] })
