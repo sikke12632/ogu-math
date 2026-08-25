@@ -23,6 +23,67 @@ export function isFirebaseConfigured(): boolean {
   return Object.values(cfg).every((v) => typeof v === 'string' && v.length > 0)
 }
 
+/**
+ * 이 앱이 실제로 접속하는 주소들.
+ * 학교 필터(웹키퍼 등)에 허용 요청을 넣으려면 이 목록이 정확해야 한다.
+ * 진단 화면(#/check)이 하나씩 따로 두드려 본다.
+ */
+export type FirebaseHost = {
+  key: string
+  /** 사람이 읽는 이름 */
+  label: string
+  host: string
+  /** 두드려 볼 주소 */
+  probe: string
+  /** 막히면 무슨 일이 벌어지나 */
+  effect: string
+}
+
+export function firebaseHosts(): FirebaseHost[] {
+  let dbHost = ''
+  try {
+    dbHost = new URL(cfg.databaseURL).host
+  } catch {
+    dbHost = ''
+  }
+  return [
+    {
+      key: 'idtoolkit',
+      label: '로그인 서버',
+      host: 'identitytoolkit.googleapis.com',
+      probe: 'https://identitytoolkit.googleapis.com/v1/projects',
+      effect: '학생이 접속 자체를 못 합니다. 이름 고르는 화면에서 멈춥니다.',
+    },
+    {
+      key: 'securetoken',
+      label: '로그인 유지 서버',
+      host: 'securetoken.googleapis.com',
+      // 실제 토큰 주소(/v1/token)는 POST 전용이라 그냥 두드리면 막히지 않았는데도 실패로 보인다.
+      // 가짜 경보를 내면 정보부에 엉뚱한 주소를 보내게 되므로, 응답이 제대로 오는 주소를 쓴다
+      probe: 'https://securetoken.googleapis.com/$discovery/rest?version=v1',
+      effect: '처음엔 되다가 한 시간쯤 뒤에 갑자기 끊깁니다.',
+    },
+    {
+      key: 'db',
+      label: '데이터 서버',
+      host: dbHost,
+      probe: `https://${dbHost}/.json?shallow=true`,
+      effect: '접속은 되는데 문제가 안 뜨고 답도 저장되지 않습니다.',
+    },
+  ]
+}
+
+/** 실시간 연결(WebSocket)용 주소. HTTPS 는 되는데 이것만 막히는 학교가 있다 */
+export function firebaseSocketUrl(): string {
+  try {
+    const host = new URL(cfg.databaseURL).host
+    const ns = host.split('.')[0] ?? ''
+    return `wss://${host}/.ws?v=5&ns=${ns}`
+  } catch {
+    return ''
+  }
+}
+
 let app: FirebaseApp | null = null
 let db: Database | null = null
 let auth: Auth | null = null

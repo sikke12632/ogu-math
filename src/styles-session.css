@@ -425,3 +425,12 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 .checkinfo { background: #f4f6f8; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
 .checkinfo p { margin: 0 0 3px; font-size: 12.5px; color: var(--ink-soft); word-break: break-all; }
 .checkinfo b { color: var(--ink); }
+
+/* 연결 진단 — 막힌 주소를 정보부에 그대로 넘길 수 있어야 한다 */
+.check-host { display: block; font-size: 12px; color: var(--ink-soft); font-family: ui-monospace, monospace; word-break: break-all; }
+.checkreport {
+  width: 100%; margin-top: 8px; padding: 10px 12px; box-sizing: border-box;
+  font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.6;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 10px; color: var(--ink);
+  resize: vertical;
+}
