@@ -12,6 +12,7 @@ import type { Problem } from '../../units/_types'
 import { TopicPicker } from '../teacher/TopicPicker'
 import { BlankBar } from './BlankBar'
 import { QuestionCard } from './QuestionCard'
+import { Scratchpad } from './Scratchpad'
 
 type Phase = 'intro' | 'quiz' | 'result' | 'review'
 
@@ -253,7 +254,8 @@ export function Practice() {
       if (blanks.length > 0) setCursor(blanks[0]!)
     }
     return (
-      <div className="wrap">
+      // 낙서장을 옆에 두므로 넓게 쓴다. 세션 화면과 같은 모양이어야 한다
+      <div className="wrap solvewrap">
         <div className="topbar">
           <span className={warn ? 'timer warn' : 'timer'}>{fmtTime(left)}</span>
           <span className="progresstext">{answered} / {problems.length} 답함</span>
@@ -263,13 +265,17 @@ export function Practice() {
         </div>
         {warn && <p className="notice">마감까지 30초 남았습니다. 지금까지 쓴 답으로 채점됩니다.</p>}
 
-        <QuestionCard
-          problem={p}
-          index={cursor}
-          total={problems.length}
-          given={answers[p.id] ?? null}
-          onChange={(a) => setAnswers((prev) => ({ ...prev, [p.id]: a }))}
-        />
+        {/* 문제와 낙서장을 나란히. 세션 화면과 같은 모양이어야 아이들이 헷갈리지 않는다 */}
+        <div className="solve">
+          <QuestionCard
+            problem={p}
+            index={cursor}
+            total={problems.length}
+            given={answers[p.id] ?? null}
+            onChange={(a) => setAnswers((prev) => ({ ...prev, [p.id]: a }))}
+          />
+          <Scratchpad id={`${seed}:${p.id}`} />
+        </div>
 
         <nav className="pager">
           <button className="ghost pagearrow" onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor === 0}>

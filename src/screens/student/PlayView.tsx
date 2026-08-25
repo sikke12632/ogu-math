@@ -20,6 +20,7 @@ import {
   roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
 import { BlankBar } from './BlankBar'
+import { Scratchpad } from './Scratchpad'
 import { NicknamePicker } from './NicknamePicker'
 import { QuestionCard } from './QuestionCard'
 
@@ -262,7 +263,8 @@ export function PlayView() {
       if (blanks.length > 0) setCursor(blanks[0]!)
     }
     return (
-      <div className="wrap">
+      // 낙서장을 옆에 두므로 넓게 쓴다. 크롬북은 가로가 넓다
+      <div className="wrap solvewrap">
         <div className="topbar">
           <span className={warn ? 'timer warn' : 'timer'}>{fmtClock(left)}</span>
           {/*
@@ -281,13 +283,17 @@ export function PlayView() {
         {warn && <p className="notice">마감까지 30초. 지금까지 쓴 답으로 채점됩니다.</p>}
         {session.meta.paused && <p className="notice">잠시 멈췄어요. 선생님을 봐 주세요.</p>}
 
-        <QuestionCard
-          problem={p}
-          index={cursor}
-          total={problems.length}
-          given={answers[p.id] ?? null}
-          onChange={(a) => setAnswer(p.id, a)}
-        />
+        {/* 문제와 낙서장을 나란히 둔다. 종이를 꺼내지 않고 바로 계산하도록 */}
+        <div className="solve">
+          <QuestionCard
+            problem={p}
+            index={cursor}
+            total={problems.length}
+            given={answers[p.id] ?? null}
+            onChange={(a) => setAnswer(p.id, a)}
+          />
+          <Scratchpad id={`${session.meta.code}:${me}:${p.id}`} />
+        </div>
 
         {/* 번호를 눌러 원하는 문제로 간다. 빈 문제는 한눈에 보이게 색을 달리한다 */}
         <nav className="pager">
