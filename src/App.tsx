@@ -4,16 +4,37 @@
  * 해시(#/play/ABC123)면 리포 이름이 무엇이든 그대로 돈다.
  */
 
+import { lazy, Suspense } from 'react'
 import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
-import { BoardView } from './screens/board/BoardView'
-import { CheckView } from './screens/CheckView'
-import { StageLab } from './screens/dev/StageLab'
-import { Review } from './screens/review/Review'
-import { JoinView } from './screens/student/JoinView'
-import { PlayView } from './screens/student/PlayView'
 import { Practice } from './screens/student/Practice'
-import { TeacherConsole } from './screens/teacher/TeacherConsole'
-import { TeacherHome } from './screens/teacher/TeacherHome'
+
+/*
+ * **Firebase 를 쓰는 화면은 따로 떼어 나중에 받는다.**
+ *
+ * Firebase 묶음은 압축해도 200KB 가 넘는다. 처음 화면과 혼자 풀기는
+ * Firebase 가 전혀 필요 없는데, 한 덩어리로 묶으면 그것까지 다 받고서야 화면이 뜬다.
+ *
+ * 학교 와이파이가 느릴 때 이 차이가 크다. 그리고 학교 필터에 막혀
+ * 세션 기능을 못 쓰는 날에도 **혼자 풀기는 가볍게 열려야 한다.**
+ */
+const BoardView = lazy(() => import('./screens/board/BoardView').then((m) => ({ default: m.BoardView })))
+const CheckView = lazy(() => import('./screens/CheckView').then((m) => ({ default: m.CheckView })))
+const Review = lazy(() => import('./screens/review/Review').then((m) => ({ default: m.Review })))
+const JoinView = lazy(() => import('./screens/student/JoinView').then((m) => ({ default: m.JoinView })))
+const PlayView = lazy(() => import('./screens/student/PlayView').then((m) => ({ default: m.PlayView })))
+const TeacherHome = lazy(() => import('./screens/teacher/TeacherHome').then((m) => ({ default: m.TeacherHome })))
+const TeacherConsole = lazy(() =>
+  import('./screens/teacher/TeacherConsole').then((m) => ({ default: m.TeacherConsole })),
+)
+const StageLab = lazy(() => import('./screens/dev/StageLab').then((m) => ({ default: m.StageLab })))
+
+function Loading() {
+  return (
+    <div className="wrap play-center">
+      <p>불러오는 중…</p>
+    </div>
+  )
+}
 
 /**
  * QR 로 들어온 학생 받기.
@@ -64,6 +85,7 @@ function Landing() {
 export default function App() {
   return (
     <HashRouter>
+      <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/join" element={<JoinView />} />
@@ -79,6 +101,7 @@ export default function App() {
         <Route path="/stage" element={<StageLab />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </HashRouter>
   )
 }

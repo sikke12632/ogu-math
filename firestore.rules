@@ -1,0 +1,40 @@
+// Firestore 보안 규칙.
+//
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 이 내용을 통째로 붙여넣고
+// [게시] 를 누르세요. (이 주석 줄도 같이 붙여넣어도 됩니다. Firestore 규칙은 주석을 지원합니다.)
+//
+// 원칙: 익명 로그인한 사람만 읽고 쓸 수 있다.
+// 학번·생년월일 같은 개인정보는 저장하지 않으므로 학급 단위로는 이 정도가 적절하다.
+// 세션 코드를 모르면 어차피 찾을 수 없다.
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 세션과 그 아래 모든 묶음
+    // (parts / roster / quiz / rounds / matches / bets / mvp)
+    match /sessions/{sessionId} {
+      allow read, write: if request.auth != null;
+
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // 코드 → 세션 연결.
+    // **한 번 잡힌 코드를 남이 다른 세션으로 바꿔치기하지 못하게 막는다.**
+    // 지우는 것은 허용한다 (학년말 일괄 삭제에 필요).
+    match /codes/{code} {
+      allow read: if request.auth != null;
+      allow create, delete: if request.auth != null;
+      allow update: if request.auth != null
+                    && request.resource.data.sessionId == resource.data.sessionId;
+    }
+
+    // 오답 기록 (/review 에서 읽는다)
+    match /archive/{entry} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

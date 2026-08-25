@@ -11,10 +11,13 @@ import type { MatchRecord, Session, StudentId, TeamRecord } from './types'
 export function readableError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e)
   if (/permission[_ ]denied/i.test(msg)) {
-    return '서버가 접근을 막았습니다. Firebase 의 Realtime Database 규칙과 Authentication 승인된 도메인을 확인하세요.'
+    return '서버가 접근을 막았습니다. Firebase 의 Firestore 규칙과 Authentication 승인된 도메인을 확인하세요.'
   }
   if (/api-key-not-valid/i.test(msg)) {
     return 'Firebase 설정값(API 키)이 올바르지 않습니다.'
+  }
+  if (/not[- ]found|does not exist|NOT_FOUND/i.test(msg)) {
+    return 'Firestore 데이터베이스가 아직 만들어지지 않았습니다. docs/Firestore_설정.md 를 따라 만들어 주세요.'
   }
   if (/network|offline|unavailable/i.test(msg)) {
     return '인터넷 연결이 끊겼습니다. 와이파이를 확인해 주세요.'
