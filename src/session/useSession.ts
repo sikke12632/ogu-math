@@ -16,6 +16,11 @@ export function readableError(e: unknown): string {
   if (/api-key-not-valid/i.test(msg)) {
     return 'Firebase 설정값(API 키)이 올바르지 않습니다.'
   }
+  // 2026-08-25 에 수업 도중 이걸로 멈췄다. 화면이 아무 말도 안 해서
+  // 원인을 찾는 데 한참 걸렸다. 사람이 읽고 바로 알 수 있게 적어 둔다
+  if (/resource[- ]exhausted|quota/i.test(msg)) {
+    return '오늘 서버 사용량을 다 썼습니다. 저장이 안 되는 상태예요. 한국시간 오후 5시쯤 풀립니다. 그때까지는 "혼자 풀기" 를 쓰세요.'
+  }
   if (/not[- ]found|does not exist|NOT_FOUND/i.test(msg)) {
     return 'Firestore 데이터베이스가 아직 만들어지지 않았습니다. docs/Firestore_설정.md 를 따라 만들어 주세요.'
   }
@@ -25,7 +30,14 @@ export function readableError(e: unknown): string {
   return msg
 }
 
-export function useSession(sessionId: string | undefined): {
+/**
+ * @param opts.withPresence 접속 신호까지 받을지. **교사 화면과 칠판만 켠다.**
+ *   학생이 다 켜면 신호 한 번이 읽기 스물몇 번이 되어 하루 한도가 터진다.
+ */
+export function useSession(
+  sessionId: string | undefined,
+  opts?: { withPresence?: boolean },
+): {
   session: Session | null
   loading: boolean
   error: string | null
@@ -33,6 +45,8 @@ export function useSession(sessionId: string | undefined): {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const withPresence = Boolean(opts?.withPresence)
 
   useEffect(() => {
     if (!sessionId) return
@@ -51,13 +65,14 @@ export function useSession(sessionId: string | undefined): {
           setError(readableError(e))
           setLoading(false)
         },
+        { withPresence },
       )
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
       setLoading(false)
     }
     return () => stop()
-  }, [sessionId])
+  }, [sessionId, withPresence])
 
   return { session, loading, error }
 }

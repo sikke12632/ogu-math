@@ -7,16 +7,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { load, remove, save } from '../../lib/storage'
 import { grade, shuffleChoices, type Answer, type Result } from '../../session/grade'
 import { getUnit, listUnitsByGrade } from '../../units'
+import { levelsOf, planCounts, scoreOf, totalOf } from '../../units/_plan'
 import type { Problem } from '../../units/_types'
+import { TopicPicker } from '../teacher/TopicPicker'
+import { BlankBar } from './BlankBar'
 import { QuestionCard } from './QuestionCard'
 
 type Phase = 'intro' | 'quiz' | 'result' | 'review'
 
-const DEFAULT_COUNTS = { easy: 3, mid: 4, hard: 2 }
 const DEFAULT_MINUTES = 8
+const DEFAULT_COUNT = 9
 
-/** 새로고침해도 같은 세트가 나오도록 시드를 저장해 둔다 */
-type Saved = { seed: string; name: string; answers: Record<string, Answer>; startedAt: number; minutes: number }
+/**
+ * 새로고침해도 같은 세트가 나오도록 시드를 저장해 둔다.
+ * **고른 범위도 같이 저장해야 한다.** 안 그러면 이어서 하기를 눌렀을 때
+ * 다른 범위로 문제가 다시 만들어져 답이 어긋난다.
+ */
+type Saved = {
+  seed: string
+  name: string
+  answers: Record<string, Answer>
+  startedAt: number
+  minutes: number
+  unitId?: string
+  topicIds?: string[]
+  count?: number
+}
 
 function newSeed(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -32,6 +48,23 @@ export function Practice() {
   const [unitId, setUnitId] = useState('5-2-1')
   const [name, setName] = useState(() => load<string>('name', ''))
   const [minutes, setMinutes] = useState(DEFAULT_MINUTES)
+  const [count, setCount] = useState(DEFAULT_COUNT)
+  /** 오늘 배운 것만 골라 풀 수 있게. 교사 화면과 같은 고르개를 쓴다 */
+  const [topicIds, setTopicIds] = useState<string[]>([])
+
+  const topics = useMemo(() => {
+    try {
+      return getUnit(unitId).topics()
+    } catch {
+      return []
+    }
+  }, [unitId])
+
+  // 단원이 바뀌면 그 단원 전체로 되돌린다
+  useEffect(() => setTopicIds(topics.map((t) => t.id)), [topics])
+
+  const counts = planCounts(levelsOf(topics, topicIds), count)
+  const planned = totalOf(counts)
 
   const [phase, setPhase] = useState<Phase>('intro')
   const [seed, setSeed] = useState('')
@@ -71,16 +104,25 @@ export function Practice() {
   useEffect(() => {
     if (phase !== 'quiz') return
     const id = setTimeout(() => {
-      const snapshot: Saved = { seed, name, answers, startedAt, minutes }
+      const snapshot: Saved = { seed, name, answers, startedAt, minutes, unitId, topicIds, count }
       save('progress', snapshot)
     }, 500)
     return () => clearTimeout(id)
-  }, [answers, phase, seed, name, startedAt, minutes])
+  }, [answers, phase, seed, name, startedAt, minutes, unitId, topicIds, count])
 
   const build = useCallback(
     (s: string, saved?: Saved) => {
       try {
-        const set = getUnit(unitId).generate(s, { unit: unitId, counts: DEFAULT_COUNTS })
+        // 이어서 할 때는 그때 쓰던 범위를 그대로 쓴다
+        const useUnit = saved?.unitId ?? unitId
+        const useTopics = saved?.topicIds ?? topicIds
+        const useCount = saved?.count ?? count
+        const useCounts = planCounts(levelsOf(getUnit(useUnit).topics(), useTopics), useCount)
+        const set = getUnit(useUnit).generate(s, {
+          unit: useUnit,
+          counts: useCounts,
+          templateIds: useTopics,
+        })
         const studentSeed = s + '|' + (name || '학생')
         setProblems(set.map((p) => shuffleChoices(p, studentSeed)))
         setAnswers(saved ? saved.answers : {})
@@ -94,7 +136,7 @@ export function Practice() {
         setError(e instanceof Error ? e.message : String(e))
       }
     },
-    [unitId, name],
+    [unitId, name, topicIds, count],
   )
 
   const resume = useCallback(() => {
@@ -102,6 +144,9 @@ export function Practice() {
     if (!saved) return
     setName(saved.name)
     setMinutes(saved.minutes)
+    if (saved.unitId) setUnitId(saved.unitId)
+    if (saved.topicIds) setTopicIds(saved.topicIds)
+    if (saved.count) setCount(saved.count)
     build(saved.seed, saved)
   }, [build])
 
@@ -154,10 +199,32 @@ export function Practice() {
               ))}
             </select>
           </label>
+
+          <label>
+            <span>문항 수</span>
+            <select value={count} onChange={(e) => setCount(Number(e.target.value))}>
+              {[4, 5, 6, 7, 8, 9, 10, 12].map((n) => (
+                <option key={n} value={n}>{n}문항</option>
+              ))}
+            </select>
+          </label>
         </div>
 
+        {/* 단원 전체가 아니라 오늘 배운 것만 골라 풀 수 있어야 한다.
+            교사 화면에 쓰던 고르개를 그대로 가져다 쓴다 */}
+        <section className="panel">
+          <h2>무엇을 풀까요</h2>
+          <p className="sub">배운 것만 골라도 돼요. 눌러 보면 어떤 문제인지 볼 수 있어요.</p>
+          {/* 전체 선택·해제 버튼은 TopicPicker 안에 이미 있다. 여기서 또 만들지 않는다 */}
+          <TopicPicker unitId={unitId} topics={topics} selected={topicIds} onChange={setTopicIds} />
+        </section>
+
         <div className="row">
-          <button className="primary big" onClick={() => build(newSeed())}>
+          <button
+            className="primary big"
+            onClick={() => build(newSeed())}
+            disabled={planned === 0}
+          >
             시작하기
           </button>
           {savedRun && (
@@ -167,7 +234,11 @@ export function Practice() {
           )}
         </div>
 
-        <p className="foot">9문항 · 17점 만점 (1점 3문항, 2점 4문항, 3점 2문항)</p>
+        <p className="foot">
+          {planned === 0
+            ? '풀고 싶은 것을 하나 이상 골라 주세요'
+            : `${planned}문항 · ${scoreOf(counts)}점 만점 (하 ${counts.easy} · 중 ${counts.mid} · 상 ${counts.hard})`}
+        </p>
       </div>
     )
   }
@@ -175,7 +246,12 @@ export function Practice() {
   if (phase === 'quiz') {
     const p = problems[cursor]!
     const answered = problems.filter((q) => answers[q.id] != null).length
+    const blanks = problems.map((q, i) => (answers[q.id] == null ? i : -1)).filter((i) => i >= 0)
     const warn = left <= 30_000
+    const last = cursor === problems.length - 1
+    const goFirstBlank = (): void => {
+      if (blanks.length > 0) setCursor(blanks[0]!)
+    }
     return (
       <div className="wrap">
         <div className="topbar">
@@ -196,33 +272,33 @@ export function Practice() {
         />
 
         <nav className="pager">
-          <button className="ghost" onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor === 0}>
-            이전
+          <button className="ghost pagearrow" onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor === 0}>
+            ← 이전
           </button>
           <ul className="dots">
             {problems.map((q, i) => (
               <li key={q.id}>
                 <button
-                  className={[i === cursor ? 'here' : '', answers[q.id] != null ? 'done' : ''].filter(Boolean).join(' ')}
+                  className={[i === cursor ? 'here' : '', answers[q.id] != null ? 'done' : 'blank'].filter(Boolean).join(' ')}
                   onClick={() => setCursor(i)}
-                  aria-label={i + 1 + '번으로'}
+                  aria-label={i + 1 + '번으로' + (answers[q.id] == null ? ' (아직 안 풂)' : '')}
                 >
                   {i + 1}
                 </button>
               </li>
             ))}
           </ul>
-          <button
-            className="ghost"
-            onClick={() => setCursor((c) => Math.min(problems.length - 1, c + 1))}
-            disabled={cursor === problems.length - 1}
-          >
-            다음
+          <button className="ghost pagearrow" onClick={() => setCursor((c) => Math.min(problems.length - 1, c + 1))} disabled={last}>
+            다음 →
           </button>
         </nav>
 
-        <button className="primary big" onClick={submit}>
-          다 풀었어요 · 제출하기
+        <BlankBar blanks={blanks} total={problems.length} onGo={goFirstBlank} />
+
+        {!last && <p className="submithint">마지막 문제까지 가면 제출 버튼이 나와요.</p>}
+
+        <button className="primary big" onClick={submit} style={{ display: last ? undefined : 'none' }}>
+          {blanks.length > 0 ? '다 못 풀었지만 제출하기' : '다 풀었어요 · 제출하기'}
         </button>
       </div>
     )

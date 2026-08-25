@@ -20,11 +20,29 @@ import {
 
 const CHEER = ['좋아, 침착하게', '천천히 읽어도 돼', '거의 다 왔어', '끝까지 해 보자']
 
+/**
+ * 칠판 구석에 늘 붙어 있는 방 코드.
+ *
+ * 대기실에는 QR 과 함께 코드가 크게 뜨지만 문제를 풀기 시작하면 사라졌다.
+ * 그런데 **튕기거나 실수로 창을 닫는 일은 풀이 중에 제일 많이 생긴다.**
+ * 그때 학생이 스스로 돌아올 방법이 없어 매번 선생님을 불러야 했다.
+ * 고개만 들면 보이도록 끝까지 띄워 둔다.
+ */
+function CodeCorner({ code }: { code: string }) {
+  return (
+    <p className="board-corner">
+      다시 들어오려면 <b>{code}</b>
+    </p>
+  )
+}
+
 export function BoardView() {
   const { code = '' } = useParams()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const { session, error } = useSession(sessionId ?? undefined)
+  // 칠판은 누가 붙어 있는지 보여 줘야 하므로 신호를 받는다.
+  // 학생 화면은 안 받는다 — 그래야 사용량이 안 터진다
+  const { session, error } = useSession(sessionId ?? undefined, { withPresence: true })
   const [enterError, setEnterError] = useState<string | null>(null)
   const now = useTick(300)
 
@@ -116,6 +134,7 @@ export function BoardView() {
         </div>
         <p className="board-sub">{CHEER[Math.floor(now / 8000) % CHEER.length]}</p>
         {session.meta.paused && <p className="board-paused">잠시 멈춤</p>}
+        <CodeCorner code={session.meta.code} />
       </div>
     )
   }
@@ -128,6 +147,7 @@ export function BoardView() {
           <span /><span /><span />
         </div>
         <p className="board-sub">잠깐만 기다려 주세요</p>
+        <CodeCorner code={session.meta.code} />
       </div>
     )
   }
@@ -150,6 +170,7 @@ export function BoardView() {
             </div>
           ))}
         </div>
+        <CodeCorner code={session.meta.code} />
       </div>
     )
   }
@@ -176,6 +197,7 @@ export function BoardView() {
           {round} / {session.meta.rounds}판
           {cheerleaders.length > 0 && ` · 응원단장 ${cheerleaders.map((c) => nameOf(session, c)).join(', ')}`}
         </p>
+        <CodeCorner code={session.meta.code} />
       </div>
     )
   }
@@ -201,6 +223,7 @@ export function BoardView() {
         })}
       </ol>
       <p className="board-sub board-pad">틀린 문제는 각자 기기에서 확인하세요</p>
+      <CodeCorner code={session.meta.code} />
     </div>
   )
 }

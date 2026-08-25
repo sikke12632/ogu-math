@@ -19,6 +19,7 @@ import {
   fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
   roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
+import { BlankBar } from './BlankBar'
 import { NicknamePicker } from './NicknamePicker'
 import { QuestionCard } from './QuestionCard'
 
@@ -36,6 +37,8 @@ export function PlayView() {
   const [answers, setAnswers] = useState<Record<string, Answer>>({})
   const [cursor, setCursor] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  /** 빈 문제를 두고 내려 할 때 한 번 더 묻는 중 */
+  const [confirming, setConfirming] = useState(false)
   const [showWrong, setShowWrong] = useState(false)
   // 자리를 잡은 뒤 딱 한 번, 그날 쓸 별명을 고르는 화면을 띄운다
   const [nickDone, setNickDone] = useState(false)
@@ -114,6 +117,7 @@ export function PlayView() {
 
   const doSubmit = useCallback(() => {
     if (!sessionId || !me) return
+    setConfirming(false)
     setSubmitted(true)
     void submitQuiz(sessionId, me, answers)
   }, [sessionId, me, answers])
@@ -165,22 +169,29 @@ export function PlayView() {
         {seatError && <p className="notice error">{seatError}</p>}
         <ul className="seatgrid">
           {seats.map(([sid, r]) => {
-            const taken = r.joinedAt > 0 && r.connected
+            // 학생 화면은 접속 신호를 받지 않는다(사용량 때문). 앉았는지만 본다.
+            // 정말 자리를 비워야 하면 교사가 '자리 비우기' 를 누른다
+            const taken = r.joinedAt > 0
             return (
               <li key={sid}>
                 <button
                   className={`seat${r.name === remembered ? ' mine' : ''}`}
                   disabled={taken}
                   onClick={() => {
-                    void claimSeat(sessionId!, sid).then((ok) => {
-                      if (ok) {
-                        setMe(sid)
-                        rememberName(r.name)
-                        setSeatError(null)
-                      } else {
-                        setSeatError('그 이름은 다른 기기가 쓰고 있어요. 선생님께 말해 주세요.')
-                      }
-                    })
+                    // **반드시 catch 를 붙인다.** 이게 없으면 서버가 거절해도
+                    // 화면에 아무 일이 안 일어나서, 학생은 버튼이 고장 난 줄 안다
+                    void claimSeat(sessionId!, sid).then(
+                      (ok) => {
+                        if (ok) {
+                          setMe(sid)
+                          rememberName(r.name)
+                          setSeatError(null)
+                        } else {
+                          setSeatError('그 이름은 다른 기기가 쓰고 있어요. 선생님께 말해 주세요.')
+                        }
+                      },
+                      (e) => setSeatError(readableError(e)),
+                    )
                   }}
                 >
                   {r.name}
@@ -244,11 +255,24 @@ export function PlayView() {
     const p = problems[cursor]
     if (!p) return <div className="wrap"><p>문제를 불러오는 중…</p></div>
     const answered = problems.filter((q) => answers[q.id] != null).length
+    const blanks = problems.map((q, i) => (answers[q.id] == null ? i : -1)).filter((i) => i >= 0)
     const warn = left <= 30_000
+    const last = cursor === problems.length - 1
+    const goFirstBlank = (): void => {
+      if (blanks.length > 0) setCursor(blanks[0]!)
+    }
     return (
       <div className="wrap">
         <div className="topbar">
           <span className={warn ? 'timer warn' : 'timer'}>{fmtClock(left)}</span>
+          {/*
+            방 코드를 풀이 중에도 띄운다.
+            튕기거나 실수로 창을 닫은 학생이 스스로 돌아올 방법이 이것뿐이다.
+            예전에는 이 화면에 코드가 없어서, 선생님을 불러야만 복귀할 수 있었다.
+          */}
+          <span className="roomcode" title="이 코드로 다시 들어올 수 있어요">
+            방 <b>{session.meta.code}</b>
+          </span>
           <span className="progresstext">{answered} / {problems.length} 답함</span>
         </div>
         <div className="progress">
@@ -265,25 +289,63 @@ export function PlayView() {
           onChange={(a) => setAnswer(p.id, a)}
         />
 
+        {/* 번호를 눌러 원하는 문제로 간다. 빈 문제는 한눈에 보이게 색을 달리한다 */}
         <nav className="pager">
-          <button className="ghost" onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor === 0}>이전</button>
+          <button className="ghost pagearrow" onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor === 0}>← 이전</button>
           <ul className="dots">
             {problems.map((q, i) => (
               <li key={q.id}>
                 <button
-                  className={[i === cursor ? 'here' : '', answers[q.id] != null ? 'done' : ''].filter(Boolean).join(' ')}
+                  className={[i === cursor ? 'here' : '', answers[q.id] != null ? 'done' : 'blank'].filter(Boolean).join(' ')}
                   onClick={() => setCursor(i)}
-                  aria-label={`${i + 1}번으로`}
+                  aria-label={`${i + 1}번으로${answers[q.id] == null ? ' (아직 안 풂)' : ''}`}
                 >
                   {i + 1}
                 </button>
               </li>
             ))}
           </ul>
-          <button className="ghost" onClick={() => setCursor((c) => Math.min(problems.length - 1, c + 1))} disabled={cursor === problems.length - 1}>다음</button>
+          <button className="ghost pagearrow" onClick={() => setCursor((c) => Math.min(problems.length - 1, c + 1))} disabled={last}>다음 →</button>
         </nav>
 
-        <button className="primary big" onClick={doSubmit}>다 풀었어요 · 제출하기</button>
+        <BlankBar blanks={blanks} total={problems.length} onGo={goFirstBlank} />
+
+        {/*
+          **제출 버튼은 마지막 문제에서만 나온다.**
+          늘 큰 버튼이 아래에 있으면 다음 문제로 넘기려다 눌러서 그냥 제출돼 버린다.
+        */}
+        {last ? (
+          <button
+            className="primary big"
+            onClick={() => (blanks.length > 0 ? setConfirming(true) : doSubmit())}
+          >
+            {blanks.length > 0 ? '다 못 풀었지만 제출하기' : '다 풀었어요 · 제출하기'}
+          </button>
+        ) : (
+          <p className="submithint">마지막 문제까지 가면 제출 버튼이 나와요.</p>
+        )}
+
+        {/* 빈 문제를 두고 낼 때만 한 번 더 묻는다. 다 푼 학생은 그냥 나간다 */}
+        {confirming && (
+          <div className="confirm">
+            <p>
+              <b>{blanks.length}문제</b>가 아직 비어 있어요.
+              <br />비운 문제는 <b>틀린 것으로 채점</b>돼요.
+            </p>
+            <div className="row">
+              <button
+                className="primary"
+                onClick={() => {
+                  setConfirming(false)
+                  goFirstBlank()
+                }}
+              >
+                가서 마저 풀기
+              </button>
+              <button className="ghost" onClick={doSubmit}>그냥 낼래요</button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -392,7 +454,6 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
     )
   }
 
-  const opp = match.players.find((p) => p !== me)!
   return (
     // 게임 화면은 넓게 쓴다. 통과 점수를 좌우로 놓아야 글씨를 키울 수 있다
     <div className="wrap wide">
@@ -400,7 +461,6 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
         match={match}
         me={me}
         nameOf={(id) => nameOf(session, id)}
-        opponentConnected={session.roster?.[opp]?.connected ?? false}
         roundLabel={`${round} / ${session.meta.rounds}판`}
         betOn={isBetOn(session, round, me)}
         onChoose={(turn, choice) => void writeTurn(sessionId, round, match.id, turn, me, choice)}

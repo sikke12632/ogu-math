@@ -505,3 +505,15 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 .duel-num-plus { font-size: .58em; color: var(--ink-soft); font-weight: 800; letter-spacing: -.02em; }
 /* 한 덩어리로 읽혀야 하는 말은 여기서 안 끊는다 */
 .duel-num-note .nb { white-space: nowrap; }
+
+/* 칠판 구석의 방 코드 — 튕긴 학생이 고개만 들면 보여야 한다.
+   수업 내용을 가리지 않게 작고 흐리게, 코드만 또렷하게 */
+.board-corner {
+  position: fixed; right: 22px; bottom: 18px; margin: 0;
+  font-size: clamp(15px, 1.5vw, 22px); color: rgba(255, 255, 255, .55);
+  letter-spacing: .02em;
+}
+.board-corner b {
+  color: #fff; font-size: 1.5em; font-weight: 900; margin-left: 8px;
+  letter-spacing: .12em; font-family: ui-monospace, 'IBM Plex Mono', monospace;
+}
