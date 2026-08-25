@@ -121,6 +121,23 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+/**
+ * 분수 표시를 세로 분수로 그린다.
+ *
+ * `[3/4]` · `[1_2/3]` 는 **코드 안에서만 쓰는 표시**이고
+ * 학생 화면에서는 세로 분수로 그려진다(components/MathText.tsx).
+ * 검수 파일이 그 표시를 그대로 보여 주면 읽을 수가 없어 검수가 안 된다.
+ * 화면과 같은 모양으로 그려야 "이게 학생이 볼 문제" 가 된다.
+ */
+function withFractions(s: string): string {
+  return esc(s).replace(
+    /\[(?:(\d+)_)?(\d+)\/(\d+)\]/g,
+    (_m, w: string | undefined, n: string, d: string) =>
+      `<span class="frac">${w ? `<span class="fw">${w}</span>` : ''}` +
+      `<span class="fs"><span class="fn">${n}</span><span class="fd">${d}</span></span></span>`,
+  )
+}
+
 /* ── HTML ───────────────────────────────────────────── */
 
 const DIFF_LABEL: Record<number, string> = { 1: '하', 2: '중', 3: '상' }
@@ -134,7 +151,7 @@ const body = rows
           .map((c, i) => {
             const on = (Array.isArray(r.answer) ? r.answer : [r.answer]).includes(c)
             const vis = r.choiceVisuals?.[i] ? `<div class="cv">${visualHtml(r.choiceVisuals[i]!)}</div>` : ''
-            return `<li class="${on ? 'on' : ''}">${esc(c)}${vis}</li>`
+            return `<li class="${on ? 'on' : ''}">${withFractions(c)}${vis}</li>`
           })
           .join('')}</ol>`
       : `<p class="short">단답형</p>`
@@ -144,12 +161,12 @@ const body = rows
     <span class="tag">${r.templateId} · ${DIFF_LABEL[r.difficulty]} · ${esc(r.standard)}</span>
     <span class="params">${esc(params)}</span>
   </div>
-  <p class="prompt">${esc(r.prompt).replace(/\n/g, '<br>')}</p>
+  <p class="prompt">${withFractions(r.prompt).replace(/\n/g, '<br>')}</p>
   ${r.visual ? `<div class="vis">${visualHtml(r.visual)}</div>` : ''}
   ${choices}
   <details><summary>정답 · 해설</summary>
-    <p class="ans">정답: ${esc(answer)}</p>
-    <p class="exp">${esc(r.explanation).replace(/\n/g, '<br>')}</p>
+    <p class="ans">정답: ${withFractions(answer)}</p>
+    <p class="exp">${withFractions(r.explanation).replace(/\n/g, '<br>')}</p>
   </details>
 </article>`
   })
@@ -193,6 +210,13 @@ const html = `<!doctype html>
  table.dt caption{font-size:12px;color:#5b6b7c;text-align:left;padding-bottom:4px}
  table.dt th,table.dt td{border:1px solid #d8dde3;padding:6px 12px;text-align:center}
  table.dt th{background:#f4f6f8}
+ /* 세로 분수 — 앱 화면과 같은 규칙. 검수하는 눈에 보이는 것이 학생이 볼 것과 같아야 한다 */
+ .frac{display:inline-flex;align-items:center;gap:.1em;vertical-align:middle;margin:0 .08em;transform:translateY(-.16em)}
+ .fw{font-size:1em}
+ .fs{display:inline-flex;flex-direction:column;align-items:center;line-height:1;font-size:1.02em}
+ .fn{padding:0 .2em}
+ .fd{padding:0 .2em;border-top:1.5px solid currentColor}
+ .prompt,.exp,.choices li{line-height:2.1}
  .bar{position:sticky;top:0;background:#fbfaf7;padding:10px 0;border-bottom:1px solid #d8dde3;margin-bottom:16px}
  button{font:inherit;font-size:13px;padding:6px 12px;cursor:pointer}
  @media print{.bar{display:none}details{display:none}.q{break-inside:avoid}}
