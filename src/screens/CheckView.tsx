@@ -14,10 +14,10 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { get, ref, remove, set } from 'firebase/database'
 import {
-  ensureSignedIn, firebaseHosts, firebaseSocketUrl, getDb, isFirebaseConfigured,
-} from '../lib/firebase'
+  collection, deleteDoc, doc, getDocsFromServer, limit, query, setDoc,
+} from 'firebase/firestore'
+import { ensureSignedIn, firebaseHosts, getFs, isFirebaseConfigured } from '../lib/firebase'
 
 type Status = 'wait' | 'run' | 'ok' | 'fail'
 
@@ -68,35 +68,17 @@ async function probeHttps(url: string, ms = 8000): Promise<Probe> {
   }
 }
 
-/** 실시간 연결(WebSocket). HTTPS 는 열어 주면서 이것만 막는 필터가 있다 */
-function probeWs(url: string, ms = 8000): Promise<Probe> {
-  return new Promise((resolve) => {
-    if (!url) return resolve({ ok: false, detail: '주소를 만들 수 없음' })
-    let ws: WebSocket
-    try {
-      ws = new WebSocket(url)
-    } catch {
-      return resolve({ ok: false, detail: '연결을 시작조차 못 함' })
-    }
-    let done = false
-    const finish = (p: Probe): void => {
-      if (done) return
-      done = true
-      clearTimeout(timer)
-      try {
-        ws.close()
-      } catch {
-        /* 이미 닫혔으면 그만 */
-      }
-      resolve(p)
-    }
-    const timer = setTimeout(
-      () => finish({ ok: false, detail: `${ms / 1000}초 안에 연결되지 않음` }),
-      ms,
-    )
-    ws.onopen = () => finish({ ok: true, detail: '연결됨' })
-    ws.onerror = () => finish({ ok: false, detail: '연결이 거부됨' })
-  })
+/**
+ * Firestore 는 서버에 못 닿아도 **거부하지 않는다.** 쓰기는 조용히 줄을 서서
+ * 언젠가 올라갈 때를 기다리고, 그 약속은 영원히 끝나지 않는다.
+ * 진단 화면이 "확인 중…" 에서 멈춰 버리면 선생님이 아무것도 알 수 없다.
+ * 그래서 시간을 재서 끊는다.
+ */
+function withLimit<T>(p: Promise<T>, ms: number, msg: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+  ])
 }
 
 const two = (n: number): string => String(n).padStart(2, '0')
@@ -124,10 +106,9 @@ export function CheckView() {
         meaning: h.effect,
         status: 'wait' as Status,
       })),
-      { key: 'ws', name: '실시간 연결 (WebSocket)', meaning: '문제는 뜨는데 다음 화면으로 안 넘어갑니다.', status: 'wait' },
       { key: 'auth', name: '실제로 로그인해 보기', meaning: '로그인 서버가 막혔거나, 이 주소가 Firebase 승인 목록에 없습니다.', status: 'wait' },
-      { key: 'read', name: '실제로 읽어 보기', meaning: '데이터 서버가 막혔거나, 데이터베이스 규칙이 읽기를 막고 있습니다.', status: 'wait' },
-      { key: 'write', name: '실제로 써 보기', meaning: '읽기는 되는데 쓰기가 막혔습니다. 데이터베이스 규칙을 확인하세요.', status: 'wait' },
+      { key: 'read', name: '실제로 읽어 보기', meaning: 'Firestore 데이터베이스가 없거나, 규칙이 읽기를 막고 있습니다. docs/Firestore_설정.md 를 보세요.', status: 'wait' },
+      { key: 'write', name: '실제로 써 보기', meaning: '읽기는 되는데 쓰기가 막혔습니다. Firestore 규칙을 확인하세요.', status: 'wait' },
     ]
     setRows(base)
 
@@ -147,14 +128,8 @@ export function CheckView() {
 
     // 도메인은 하나씩 따로, 동시에. 하나가 막혀도 나머지는 끝까지 본다
     for (const h of hosts) mark(h.key, 'run')
-    mark('ws', 'run')
-    const probes = await Promise.all([
-      ...hosts.map((h) => probeHttps(h.probe)),
-      probeWs(firebaseSocketUrl()),
-    ])
+    const probes = await Promise.all(hosts.map((h) => probeHttps(h.probe)))
     hosts.forEach((h, i) => mark(h.key, probes[i]!.ok ? 'ok' : 'fail', probes[i]!.detail))
-    const wsProbe = probes[hosts.length]!
-    mark('ws', wsProbe.ok ? 'ok' : 'fail', wsProbe.detail)
 
     // 여기부터는 앞이 되어야 뒤가 된다
     mark('auth', 'run')
@@ -169,9 +144,15 @@ export function CheckView() {
       return
     }
 
+    // **반드시 서버에서 읽는다.** 그냥 읽으면 서버에 못 닿았을 때
+    // 텅 빈 기기 안 저장분을 대신 돌려줘서, 막혔는데도 성공한 것처럼 보인다
     mark('read', 'run')
     try {
-      await get(ref(getDb(), 'codes'))
+      await withLimit(
+        getDocsFromServer(query(collection(getFs(), 'codes'), limit(1))),
+        12000,
+        '12초 안에 응답이 없습니다. Firestore 데이터베이스가 아직 안 만들어졌을 수 있습니다.',
+      )
       mark('read', 'ok')
     } catch (e) {
       mark('read', 'fail', e instanceof Error ? e.message : String(e))
@@ -182,10 +163,16 @@ export function CheckView() {
 
     // 흔적을 남기지 않도록 바로 지운다
     mark('write', 'run')
-    const probe = `sessions/_check_${Math.random().toString(36).slice(2, 8)}`
+    const probe = doc(getFs(), 'sessions', `_check_${Math.random().toString(36).slice(2, 8)}`)
     try {
-      await set(ref(getDb(), `${probe}/meta/phase`), 'lobby')
-      await remove(ref(getDb(), probe))
+      await withLimit(
+        setDoc(probe, { check: true, at: Date.now() }),
+        12000,
+        '12초 안에 응답이 없습니다. Firestore 데이터베이스가 아직 안 만들어졌을 수 있습니다.',
+      )
+      await deleteDoc(probe).catch(() => {
+        /* 지우기가 실패해도 쓰기가 됐다는 사실은 변하지 않는다 */
+      })
       mark('write', 'ok')
     } catch (e) {
       mark('write', 'fail', e instanceof Error ? e.message : String(e))
@@ -215,9 +202,6 @@ export function CheckView() {
     blockedHosts.length > 0
       ? `허용이 필요한 주소: ${blockedHosts.map((r) => r.host).join(', ')}`
       : '막힌 주소 없음',
-    ...(rows.find((r) => r.key === 'ws')?.status === 'fail'
-      ? ['', '※ 데이터 서버 주소는 WebSocket(wss://, 443 포트) 연결도 함께 허용되어야 합니다.']
-      : []),
   ].join('\n')
 
   const copy = async (): Promise<void> => {

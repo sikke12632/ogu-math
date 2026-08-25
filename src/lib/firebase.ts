@@ -1,8 +1,13 @@
 /**
- * Firebase 초기화. 설정값은 .env.local 에 있다(.env.example 참고).
+ * Firebase 초기화. 설정값은 .env / .env.local 에 있다(.env.example 참고).
  *
  * 값이 비어 있으면 여기서 바로 에러를 낸다 —
  * 조용히 연결이 안 된 채로 화면이 도는 게 제일 찾기 어렵다.
+ *
+ * **Realtime Database 를 쓰지 않는다.** 학교 필터(웹키퍼)가
+ * `*.firebasedatabase.app` 을 "미분류" 로 잡아 막는 일이 있었다.
+ * Firestore 는 `firestore.googleapis.com` 이라 구글 주소에 들어가고,
+ * 학교가 그걸 막으면 구글 클래스룸도 같이 죽으므로 사실상 막지 못한다.
  */
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app'
@@ -10,12 +15,11 @@ import {
   browserLocalPersistence, browserSessionPersistence, getAuth, inMemoryPersistence,
   indexedDBLocalPersistence, initializeAuth, onAuthStateChanged, signInAnonymously, type Auth,
 } from 'firebase/auth'
-import { getDatabase, type Database } from 'firebase/database'
+import { getFirestore, initializeFirestore, type Firestore } from 'firebase/firestore'
 
 const cfg = {
   apiKey: import.meta.env.VITE_FB_API_KEY as string,
   authDomain: import.meta.env.VITE_FB_AUTH_DOMAIN as string,
-  databaseURL: import.meta.env.VITE_FB_DATABASE_URL as string,
   projectId: import.meta.env.VITE_FB_PROJECT_ID as string,
   storageBucket: import.meta.env.VITE_FB_STORAGE_BUCKET as string,
   messagingSenderId: import.meta.env.VITE_FB_MESSAGING_SENDER_ID as string,
@@ -28,7 +32,7 @@ export function isFirebaseConfigured(): boolean {
 
 /**
  * 이 앱이 실제로 접속하는 주소들.
- * 학교 필터(웹키퍼 등)에 허용 요청을 넣으려면 이 목록이 정확해야 한다.
+ * 학교 필터에 허용 요청을 넣으려면 이 목록이 정확해야 한다.
  * 진단 화면(#/check)이 하나씩 따로 두드려 본다.
  */
 export type FirebaseHost = {
@@ -43,12 +47,6 @@ export type FirebaseHost = {
 }
 
 export function firebaseHosts(): FirebaseHost[] {
-  let dbHost = ''
-  try {
-    dbHost = new URL(cfg.databaseURL).host
-  } catch {
-    dbHost = ''
-  }
   return [
     {
       key: 'idtoolkit',
@@ -67,31 +65,17 @@ export function firebaseHosts(): FirebaseHost[] {
       effect: '처음엔 되다가 한 시간쯤 뒤에 갑자기 끊깁니다.',
     },
     {
-      key: 'db',
+      key: 'firestore',
       label: '데이터 서버',
-      host: dbHost,
-      probe: `https://${dbHost}/.json?shallow=true`,
-      effect:
-        '접속은 되는데 문제가 안 뜨고 답도 저장되지 않습니다. ' +
-        '실시간 연결은 s-gke-... 로 시작하는 다른 이름에 붙으므로, ' +
-        '허용 요청은 *.firebasedatabase.app 으로 해야 합니다.',
+      host: 'firestore.googleapis.com',
+      probe: `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases`,
+      effect: '접속은 되는데 문제가 안 뜨고 답도 저장되지 않습니다.',
     },
   ]
 }
 
-/** 실시간 연결(WebSocket)용 주소. HTTPS 는 되는데 이것만 막히는 학교가 있다 */
-export function firebaseSocketUrl(): string {
-  try {
-    const host = new URL(cfg.databaseURL).host
-    const ns = host.split('.')[0] ?? ''
-    return `wss://${host}/.ws?v=5&ns=${ns}`
-  } catch {
-    return ''
-  }
-}
-
 let app: FirebaseApp | null = null
-let db: Database | null = null
+let fs: Firestore | null = null
 let auth: Auth | null = null
 
 function init(): void {
@@ -100,8 +84,25 @@ function init(): void {
     throw new Error('Firebase 설정값이 없습니다. .env.local 을 확인하세요 (.env.example 참고).')
   }
   app = getApps().length ? getApp() : initializeApp(cfg)
-  db = getDatabase(app)
+  fs = makeFs(app)
   auth = makeAuth(app)
+}
+
+/**
+ * 데이터 준비.
+ *
+ * `experimentalAutoDetectLongPolling` 을 켜 둔다. Firestore 는 기본적으로
+ * 연결을 길게 붙잡는 방식(스트리밍)을 쓰는데, 학교 필터나 프록시가 낀 망에서는
+ * 그게 중간에 끊기는 일이 있다. 이 값을 켜 두면 그런 망을 스스로 알아채고
+ * **평범한 요청을 반복하는 방식으로 바꾼다.** 조금 느려지지만 안 끊긴다.
+ */
+function makeFs(a: FirebaseApp): Firestore {
+  try {
+    return initializeFirestore(a, { experimentalAutoDetectLongPolling: true })
+  } catch {
+    // 이미 준비된 경우(개발 중 새로고침 등)
+    return getFirestore(a)
+  }
 }
 
 /**
@@ -129,14 +130,13 @@ function makeAuth(a: FirebaseApp): Auth {
       ],
     })
   } catch {
-    // 이미 한 번 준비된 경우(개발 중 새로고침 등). 그때는 있는 것을 쓴다
     return getAuth(a)
   }
 }
 
-export function getDb(): Database {
+export function getFs(): Firestore {
   init()
-  return db!
+  return fs!
 }
 
 /** 익명 로그인. 학생 계정·비밀번호는 만들지 않는다 */
