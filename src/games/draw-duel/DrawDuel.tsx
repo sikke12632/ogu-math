@@ -339,14 +339,24 @@ function Score(p: {
         {p.dead && <span className="duel-flag dead">꽝! 졌어</span>}
         {!p.dead && p.stopped && <span className="duel-flag stop">스탑</span>}
       </div>
+      {/*
+        상대 점수는 **`20 + ?` 로 적는다.**
+        내 점수(33)에는 내 숨은 공이 이미 더해져 있는데, 상대 것만 20 으로 적어 두면
+        아이들이 33 대 20 으로 읽고 "내가 13점 이기고 있다" 고 착각한다.
+        아직 안 열린 값이 하나 남아 있다는 것이 숫자에 그대로 보여야 한다.
+      */}
       <div className="duel-num">
-        <b>{p.hidden === null ? p.sum : p.sum + p.hidden}</b>
-        <span className="duel-num-note">
+        <b>
           {p.hidden === null ? (
-            <>보이는 점수 · 숨은 공 <i>?</i></>
+            <>{p.sum} <span className="duel-num-plus">+ ?</span></>
           ) : (
-            <>보이는 점수 {p.sum} · 숨은 공 {p.hidden}</>
+            p.sum + p.hidden
           )}
+        </b>
+        {/* 두 덩어리를 각각 묶어 둔다. 좁은 화면에서 "숨은 공" 과 그 숫자가 갈라지면 읽기 나쁘다 */}
+        <span className="duel-num-note">
+          <span className="nb">보이는 점수 {p.sum}</span>{' · '}
+          <span className="nb">숨은 공 {p.hidden === null ? <i>?</i> : p.hidden}</span>
         </span>
       </div>
       <div className="duel-chips">

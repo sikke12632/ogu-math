@@ -364,7 +364,7 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
   font-family: ui-monospace, monospace; font-size: 52px; font-weight: 700;
   line-height: 1.05; letter-spacing: -.03em;
 }
-.duel-num-note { font-size: 14px; color: var(--ink-soft); }
+.duel-num-note { font-size: 14px; color: var(--ink-soft); word-break: keep-all; }
 .duel-num-note i { font-style: normal; color: #b8860b; font-weight: 700; }
 
 .duel-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
@@ -401,7 +401,7 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 
 /* 점수는 큰 숫자 한 줄, 설명은 그 아래 한 줄 */
 .duel-num { display: grid; gap: 1px; }
-.duel-num-note { font-size: 14px; color: var(--ink-soft); }
+.duel-num-note { font-size: 14px; color: var(--ink-soft); word-break: keep-all; }
 
 /* ── 연결 진단 화면 ─────────────────────────── */
 
@@ -458,7 +458,7 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 /* 교실 뒤에서도 보여야 한다. 진짜 화면의 글씨를 설명용으로만 키운다 */
 .rules-screen .duel-num { font-size: clamp(34px, 3.6vw, 56px); }
 .rules-screen .duel-name { font-size: clamp(16px, 1.6vw, 24px); }
-.rules-screen .duel-num-note { font-size: clamp(12px, 1.1vw, 17px); }
+.rules-screen .duel-num-note { font-size: clamp(12px, 1vw, 15px); }
 .rules-screen .duel-msg { font-size: clamp(15px, 1.5vw, 23px); }
 .rules-screen .duel-ctrl b { font-size: clamp(18px, 1.9vw, 28px); }
 
@@ -499,3 +499,9 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 .rules-dots i { width: 9px; height: 9px; border-radius: 999px; background: var(--rule); }
 .rules-dots i.on { background: var(--ink); }
 .rules-exit { font-size: 14px; color: var(--ink-soft); }
+
+/* 상대 점수의 "+ ?" — 아직 안 열린 값이 있다는 표시.
+   숫자보다 작고 흐리게 해서 점수 자체를 잘못 읽지 않게 한다 */
+.duel-num-plus { font-size: .58em; color: var(--ink-soft); font-weight: 800; letter-spacing: -.02em; }
+/* 한 덩어리로 읽혀야 하는 말은 여기서 안 끊는다 */
+.duel-num-note .nb { white-space: nowrap; }
