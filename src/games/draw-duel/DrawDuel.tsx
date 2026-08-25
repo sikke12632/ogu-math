@@ -33,10 +33,16 @@ type Props = {
    */
   betOn?: boolean
   roundLabel: string
+  /**
+   * 설명용으로 세워 둘 때 켠다 (`#/rules`).
+   * 시간 재기·자동 스탑·결과 보고를 모두 멈춘다.
+   * **규칙은 건드리지 않는다.** 화면을 가만히 세워 두기만 하는 것이다.
+   */
+  frozen?: boolean
 }
 
 const HUE = [0, 6, 28, 44, 58, 96, 148, 172, 194, 214, 244, 276, 320]
-const chipColor = (v: Card): string =>
+export const chipColor = (v: Card): string =>
   v === 'X' ? '#e0503f' : `hsl(${HUE[v as number] ?? 200} 78% 50%)`
 
 export function DrawDuel(props: Props) {
@@ -132,13 +138,15 @@ export function DrawDuel(props: Props) {
 
   const turnKey = `${match.id}:${state.turn}`
 
+  const frozen = props.frozen ?? false
+
   useEffect(() => {
-    if (!myTurn) {
+    if (!myTurn || frozen) {
       setDeadline(null)
       return
     }
     setDeadline({ key: turnKey, at: Date.now() + TURN_LIMIT_SEC * 1000 })
-  }, [myTurn, turnKey])
+  }, [myTurn, turnKey, frozen])
 
   useEffect(() => {
     if (deadline === null) return
@@ -148,11 +156,11 @@ export function DrawDuel(props: Props) {
 
   const choose = useCallback(
     (c: 'draw' | 'stop') => {
-      if (!myTurn || state.over) return
+      if (!myTurn || state.over || frozen) return
       setDeadline(null)
       onChoose(state.turn, c)
     },
-    [myTurn, state.over, onChoose, state.turn],
+    [myTurn, state.over, onChoose, state.turn, frozen],
   )
 
   // 시간이 다 되면 **자동 스탑**이다. 자동 뽑기가 아니다 —
@@ -169,7 +177,7 @@ export function DrawDuel(props: Props) {
 
   const disconnectSince = useRef<number | null>(null)
   useEffect(() => {
-    if (state.over) return
+    if (state.over || frozen) return
     if (opponentConnected) {
       disconnectSince.current = null
       return
@@ -182,17 +190,18 @@ export function DrawDuel(props: Props) {
       }
     }, 1000)
     return () => clearInterval(t)
-  }, [opponentConnected, state.over, opp, me, onForfeit])
+  }, [opponentConnected, state.over, opp, me, onForfeit, frozen])
 
   /* ── 결과 보고 — 두 사람 중 앞선 id 만 쓴다 ───────── */
 
   useEffect(() => {
+    if (frozen) return
     if (!state.over || state.winner === null || reportedRef.current) return
     if (match.winner) return
     if (match.players[0] !== me) return
     reportedRef.current = true
     onResult(state.winner)
-  }, [state.over, state.winner, match.winner, match.players, me, onResult])
+  }, [state.over, state.winner, match.winner, match.players, me, onResult, frozen])
 
   /* ── 배팅 ─────────────────────────────────────── */
 

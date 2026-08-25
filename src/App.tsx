@@ -27,6 +27,8 @@ const TeacherConsole = lazy(() =>
   import('./screens/teacher/TeacherConsole').then((m) => ({ default: m.TeacherConsole })),
 )
 const StageLab = lazy(() => import('./screens/dev/StageLab').then((m) => ({ default: m.StageLab })))
+// 설명 화면은 Firebase 를 쓰지 않는다. 학교에서 뭐가 막혀도 열린다
+const Rules = lazy(() => import('./screens/rules/Rules').then((m) => ({ default: m.Rules })))
 
 function Loading() {
   return (
@@ -73,6 +75,10 @@ function Landing() {
           <b>혼자 연습</b>
           <span>인터넷 없이 풀어보기</span>
         </Link>
+        <Link className="landing-card" to="/rules">
+          <b>게임 설명</b>
+          <span>전자칠판에 띄우기</span>
+        </Link>
         <Link className="landing-card" to="/review">
           <b>기록 보기</b>
           <span>지난 오답 확인</span>
@@ -94,6 +100,8 @@ export default function App() {
         <Route path="/board/:code" element={<BoardView />} />
         <Route path="/play/:code" element={<PlayView />} />
         <Route path="/practice" element={<Practice />} />
+        {/* 전자칠판에 띄우고 교사가 넘기는 게임 설명 */}
+        <Route path="/rules" element={<Rules />} />
         <Route path="/review" element={<Review />} />
         {/* 학교에서 뭐가 막혔는지 확인하는 화면 */}
         <Route path="/check" element={<CheckView />} />
