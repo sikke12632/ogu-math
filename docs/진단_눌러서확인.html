@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>연결 진단 — 눌러서 확인</title>
+<!--
+  웹키퍼는 막힌 주소를 만나면 **탭을 통째로 빈 화면(about:blank)으로 만든다.**
+  그래서 화면 안에서 자동으로 주소를 두드리는 방식은 쓸 수 없다.
+  확인하는 순간 확인 화면 자체가 죽어서 결과를 못 본다.
+
+  이 파일은 **아무것도 자동으로 두드리지 않는다.**
+  주소를 새 탭으로 열어 보게 하고, 사람이 본 것을 눌러서 기록한다.
+  새 탭이 죽어도 이 화면은 살아 있다.
+
+  쓰는 법
+    1. 이 파일을 학생 디벗으로 옮긴다 (구글 드라이브 → 다운로드)
+    2. 파일 앱에서 더블클릭 → 크롬 탭에서 열린다
+    3. 주소를 하나씩 [열어 보기] 로 열고, 본 대로 [글자가 보임] / [빈 화면] 을 누른다
+    4. 다 하면 [복사하기]
+-->
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; padding: 20px; background: #f7f8fa; color: #1a1d23;
+    font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+    font-size: 16px; line-height: 1.6;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 26px 0 8px; }
+  .sub { color: #5b6472; margin: 0 0 16px; font-size: 15px; }
+  .how {
+    background: #fffbeb; border: 1px solid #f2c14e; border-radius: 10px;
+    padding: 14px 16px; margin: 0 0 20px; font-size: 15px;
+  }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  li { background: #fff; border: 1px solid #e2e6ec; border-radius: 10px; padding: 14px; }
+  li.ok { border-color: #0a9d5c; background: #f5fdf9; }
+  li.fail { border-color: #d4392b; background: #fff7f6; }
+  .name { font-weight: 700; display: block; }
+  .host {
+    display: block; font-size: 12.5px; color: #5b6472; margin-bottom: 9px;
+    font-family: ui-monospace, Consolas, monospace; word-break: break-all;
+  }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  a.open, button {
+    font: inherit; font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 9px;
+    border: 1px solid #c9d0da; background: #fff; color: #1a1d23; cursor: pointer;
+    text-decoration: none; display: inline-block;
+  }
+  a.open { background: #1a1d23; color: #fff; border-color: #1a1d23; }
+  button.yes.on { background: #0a9d5c; color: #fff; border-color: #0a9d5c; }
+  button.no.on { background: #d4392b; color: #fff; border-color: #d4392b; }
+  .state { font-size: 14px; font-weight: 700; margin-left: 4px; }
+  li.ok .state { color: #0a7a48; }
+  li.fail .state { color: #b32b1f; }
+  .verdict { padding: 14px 16px; border-radius: 10px; margin: 20px 0 0; font-size: 16px; line-height: 1.7; }
+  .verdict.ok { background: #ecfdf5; border: 1px solid #0a9d5c; color: #0a7a48; }
+  .verdict.bad { background: #fef2f2; border: 1px solid #d4392b; color: #b32b1f; }
+  textarea {
+    width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px;
+    border: 1px solid #e2e6ec; font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px; line-height: 1.6; background: #fff; color: #1a1d23;
+  }
+  .go { background: #1a1d23; color: #fff; border-color: #1a1d23; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>연결 진단 — 눌러서 확인</h1>
+  <p class="sub">이 화면은 아무것도 자동으로 확인하지 않습니다. 눌러 보고 기록만 합니다.</p>
+
+  <div class="how">
+    웹키퍼는 막힌 주소를 만나면 <b>탭을 통째로 빈 화면으로 만들고 주소창이 <code>about:blank</code> 가 됩니다.</b>
+    그래서 자동 확인은 소용이 없습니다 — 확인하다가 확인 화면이 같이 죽습니다.
+    <b>직접 눌러 보는 게 가장 정확합니다.</b>
+    <br><br>
+    <b>글자가 보이면</b>(알아볼 수 없는 영어 덩어리라도) → 그 주소는 열립니다 → <b>[글자가 보임]</b><br>
+    <b>하얀 빈 화면이거나 웹키퍼 경고가 뜨면</b> → 막힌 겁니다 → <b>[빈 화면 · 차단]</b>
+    <br><br>
+    열어 본 탭은 닫고 돌아오세요. <b>이 화면은 안 죽습니다.</b>
+  </div>
+
+  <ul id="list"></ul>
+
+  <p class="verdict" id="verdict" style="display:none"></p>
+
+  <h2>선생님께 보낼 내용</h2>
+  <textarea id="report" rows="16" readonly></textarea>
+  <div><button class="go" id="copy">복사하기</button></div>
+</div>
+
+<script>
+/*
+ * 확인할 주소들.
+ * 눌렀을 때 브라우저에 글자가 보이는 것만 골랐다.
+ * 대개 권한 오류 JSON 이 뜬다 — 그게 정상이고, 보이기만 하면 안 막힌 것이다.
+ */
+var TARGETS = [
+  {
+    name: '① 앱 화면',
+    host: 'sikke12632.github.io',
+    url: 'https://sikke12632.github.io/ogu-math/',
+    note: '이미 열리는 걸로 확인됐습니다. 확인 삼아 한 번만.'
+  },
+  {
+    name: '② 로그인 서버',
+    host: 'identitytoolkit.googleapis.com',
+    url: 'https://identitytoolkit.googleapis.com/v1/projects',
+    note: '막히면 이름 고르는 화면에서 멈춥니다.'
+  },
+  {
+    name: '③ 로그인 유지 서버',
+    host: 'securetoken.googleapis.com',
+    url: 'https://securetoken.googleapis.com/$discovery/rest?version=v1',
+    note: '막히면 한 시간쯤 뒤에 갑자기 끊깁니다.'
+  },
+  {
+    name: '④ 데이터 서버 — 지금 쓰는 것',
+    host: 'math-game-e3402-default-rtdb.asia-southeast1.firebasedatabase.app',
+    url: 'https://math-game-e3402-default-rtdb.asia-southeast1.firebasedatabase.app/.json',
+    note: '★ 제일 유력한 범인. 생소한 주소라 필터가 "미분류"로 잡아 막는 일이 흔합니다.'
+  },
+  {
+    name: '⑤ 데이터 서버 — 옮길 수 있는 곳',
+    host: 'firestore.googleapis.com',
+    url: 'https://firestore.googleapis.com/v1/projects/math-game-e3402/databases',
+    note: '★ 지금은 안 씁니다. ④가 막혔는데 ⑤가 열리면 저장소를 옮겨서 해결됩니다.'
+  }
+];
+
+var answers = {};
+
+function two(n) { return (n < 10 ? '0' : '') + n; }
+function stamp() {
+  var d = new Date();
+  return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate())
+    + ' ' + two(d.getHours()) + ':' + two(d.getMinutes());
+}
+
+function render() {
+  var ul = document.getElementById('list');
+  ul.innerHTML = '';
+
+  TARGETS.forEach(function (t, i) {
+    var a = answers[i];
+    var li = document.createElement('li');
+    li.className = a === true ? 'ok' : a === false ? 'fail' : '';
+
+    var name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = t.name;
+
+    var host = document.createElement('span');
+    host.className = 'host';
+    host.textContent = t.host + ' · ' + t.note;
+
+    var btns = document.createElement('div');
+    btns.className = 'btns';
+
+    var open = document.createElement('a');
+    open.className = 'open';
+    open.href = t.url;
+    open.target = '_blank';
+    open.rel = 'noreferrer';
+    open.textContent = '열어 보기';
+
+    var yes = document.createElement('button');
+    yes.className = 'yes' + (a === true ? ' on' : '');
+    yes.textContent = '글자가 보임';
+    yes.onclick = function () { answers[i] = true; render(); };
+
+    var no = document.createElement('button');
+    no.className = 'no' + (a === false ? ' on' : '');
+    no.textContent = '빈 화면 · 차단';
+    no.onclick = function () { answers[i] = false; render(); };
+
+    btns.appendChild(open);
+    btns.appendChild(yes);
+    btns.appendChild(no);
+
+    if (a !== undefined) {
+      var st = document.createElement('span');
+      st.className = 'state';
+      st.textContent = a ? '열림' : '막힘';
+      btns.appendChild(st);
+    }
+
+    li.appendChild(name);
+    li.appendChild(host);
+    li.appendChild(btns);
+    ul.appendChild(li);
+  });
+
+  updateVerdict();
+  updateReport();
+}
+
+function updateVerdict() {
+  var v = document.getElementById('verdict');
+  var answered = 0;
+  TARGETS.forEach(function (t, i) { if (answers[i] !== undefined) answered++; });
+  if (answered < TARGETS.length) { v.style.display = 'none'; return; }
+
+  var allOpen = true;
+  TARGETS.forEach(function (t, i) { if (answers[i] !== true) allOpen = false; });
+  v.style.display = '';
+
+  if (answers[3] === false && answers[4] === true) {
+    v.className = 'verdict ok';
+    v.innerHTML = '<b>좋은 결과입니다.</b><br>'
+      + '지금 쓰는 데이터 서버(④)만 막혔고, 옮길 수 있는 곳(⑤)은 열려 있습니다.<br>'
+      + '<b>저장소를 옮기면 허용 요청 없이 해결됩니다.</b> 아래 내용을 그대로 보내 주세요.';
+  } else if (allOpen) {
+    v.className = 'verdict ok';
+    v.innerHTML = '<b>지금은 막힌 주소가 없습니다.</b><br>'
+      + '웹키퍼 정책이 아직 안 내려왔거나 시간에 따라 걸리는 것일 수 있습니다.<br>'
+      + '실제로 막혔을 때 다시 해 주세요.';
+  } else {
+    v.className = 'verdict bad';
+    v.innerHTML = '<b>막힌 주소가 있습니다.</b><br>아래 내용을 복사해서 보내 주세요.';
+  }
+}
+
+function updateReport() {
+  var lines = ['[연결 진단 — 눌러서 확인한 결과]', '확인 시각: ' + stamp(), ''];
+  TARGETS.forEach(function (t, i) {
+    var a = answers[i];
+    var m = a === true ? 'O 열림    ' : a === false ? 'X 막힘    ' : '- 확인 안 함 ';
+    lines.push(m + t.name + ' (' + t.host + ')');
+  });
+
+  var blocked = [];
+  TARGETS.forEach(function (t, i) { if (answers[i] === false) blocked.push(t.host); });
+  lines.push('');
+  lines.push(blocked.length ? '막힌 주소: ' + blocked.join(', ') : '막힌 주소 없음');
+
+  if (answers[3] === false && answers[4] === true) {
+    lines.push('');
+    lines.push('※ 지금 쓰는 데이터 서버만 막히고 firestore.googleapis.com 은 열려 있음');
+    lines.push('  → 저장소를 옮기면 허용 요청 없이 해결 가능');
+  }
+
+  document.getElementById('report').value = lines.join('\n');
+}
+
+document.getElementById('copy').onclick = function () {
+  var ta = document.getElementById('report');
+  ta.focus();
+  ta.select();
+  var okCopy = false;
+  try { okCopy = document.execCommand('copy'); } catch (e) {}
+  var btn = document.getElementById('copy');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(ta.value).then(
+      function () { btn.textContent = '복사했습니다'; },
+      function () { btn.textContent = okCopy ? '복사했습니다' : '위 글상자를 직접 선택해 복사하세요'; }
+    );
+  } else {
+    btn.textContent = okCopy ? '복사했습니다' : '위 글상자를 직접 선택해 복사하세요';
+  }
+};
+
+render();
+</script>
+</body>
+</html>
