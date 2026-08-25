@@ -96,7 +96,7 @@ button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
   font-size: 11px; font-weight: 700; color: var(--mark);
   background: #eff4ff; padding: 3px 9px; border-radius: 999px;
 }
-.prompt { font-size: 17px; line-height: 1.6; margin: 0 0 8px; white-space: pre-line; }
+.prompt { font-size: 17px; line-height: 2.2; margin: 0 0 8px; white-space: pre-line; }
 .hint { font-size: 13px; color: var(--mark); margin: 0 0 8px; }
 
 .visual { margin: 12px 0 16px; }
@@ -189,7 +189,7 @@ button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
   background: #f4f6f8; border-left: 3px solid var(--ok);
   padding: 14px 16px; font-size: 14.5px; line-height: 1.65; border-radius: 0 8px 8px 0;
 }
-.explain p { margin: 0 0 6px; }
+.explain p { margin: 0 0 6px; line-height: 2; }
 .explain p:last-child { margin-bottom: 0; }
 .explain .mine { color: var(--bad); font-weight: 600; }
 .explain .right { color: var(--ok); font-weight: 600; margin-bottom: 10px; }
@@ -237,9 +237,12 @@ button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
 /* ── 세로 분수 ───────────────────────────────────────
    5학년에게 3/4 는 나눗셈으로 읽힌다. 교과서는 예외 없이 세로 분수다.
    글 한가운데에 끼어 들어가므로 글줄 높이를 흔들지 않는 게 중요하다. */
-.frac { display: inline-flex; align-items: center; gap: 3px; vertical-align: -0.42em; margin: 0 2px; }
-.frac-whole { font-size: 1.1em; font-weight: 600; }
-.frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.08; font-size: .86em; }
-.frac-num { padding: 0 .25em; }
-/* 가로줄. border 로 그어야 글씨 크기를 따라간다 */
-.frac-den { padding: 0 .25em; border-top: 1.5px solid currentColor; }
+/* 분수는 **글자 한가운데 줄**에 맞춘다.
+   baseline 에 맞추면 분모가 줄 아래로 처져서, 옆에 있는 한글이나 자연수보다
+   분수만 아래로 내려간 것처럼 보인다. middle 이 수학책의 가로줄 위치와 맞다. */
+.frac { display: inline-flex; align-items: center; gap: .1em; vertical-align: middle; margin: 0 .08em; transform: translateY(-.16em); }
+/* 대분수의 자연수. **굵게 하지 않는다** — 교과서는 본문과 같은 굵기로 쓴다 */
+.frac-whole { font-size: 1em; font-weight: inherit; }
+.frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-size: 1.02em; }
+.frac-num { padding: 0 .2em; }
+.frac-den { padding: 0 .2em; border-top: 1.5px solid currentColor; }

@@ -26,15 +26,15 @@
     background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
     padding: 16px; margin-bottom: 16px;
   }
-  .prompt { font-size: 17px; line-height: 1.7; margin: 0 0 10px; }
+  .prompt { font-size: 17px; line-height: 2.2; margin: 0 0 10px; }
   .prompt:last-child { margin-bottom: 0; }
 
   /* ── 앱에 들어간 것과 같은 규칙 ── */
-  .frac { display: inline-flex; align-items: center; gap: 3px; vertical-align: -0.42em; margin: 0 2px; }
-  .frac-whole { font-size: 1.1em; font-weight: 600; }
-  .frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.08; font-size: .86em; }
-  .frac-num { padding: 0 .25em; }
-  .frac-den { padding: 0 .25em; border-top: 1.5px solid currentColor; }
+  .frac { display: inline-flex; align-items: center; gap: .1em; vertical-align: middle; margin: 0 .08em; transform: translateY(-.16em); }
+  .frac-whole { font-size: 1em; font-weight: inherit; }
+  .frac-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-size: 1.02em; }
+  .frac-num { padding: 0 .2em; }
+  .frac-den { padding: 0 .2em; border-top: 1.5px solid currentColor; }
 
   .choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .choice {
