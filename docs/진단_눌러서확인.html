@@ -84,6 +84,19 @@
 
   <ul id="list"></ul>
 
+  <h2>⑥ 마지막 확인 — 실시간 연결을 붙잡고 있어 보기</h2>
+  <div class="how">
+    주소를 하나씩 여는 것은 <b>잠깐 들렀다 나오는 것</b>이라 통과할 수 있습니다.<br>
+    실제 수업에서는 앱이 <b>연결을 계속 붙잡고 있습니다.</b> 웹키퍼가 그걸 뒤늦게 끊는 것으로 보입니다.
+    <br><br>
+    아래 버튼을 누르면 <b>새 창</b>이 뜨고 30초를 셉니다.
+    <b>이 진단 화면은 안 죽습니다.</b> 새 창만 보세요.
+    <br><br>
+    <b>30초를 다 세면</b> → 실시간 연결은 문제없음 → <b>[30초 버텼음]</b><br>
+    <b>중간에 새 창이 하얗게 되거나 웹키퍼가 뜨면</b> → <b>범인을 찾은 겁니다</b> → <b>[중간에 죽었음]</b>
+  </div>
+  <ul id="holdbox"></ul>
+
   <p class="verdict" id="verdict" style="display:none"></p>
 
   <h2>선생님께 보낼 내용</h2>
@@ -131,6 +144,48 @@ var TARGETS = [
 ];
 
 var answers = {};
+/** ⑥ 실시간 연결 붙잡기 결과. true = 30초 버팀, false = 중간에 죽음 */
+var holdAnswer;
+
+var WS_URL = 'wss://math-game-e3402-default-rtdb.asia-southeast1.firebasedatabase.app/.ws?v=5&ns=math-game-e3402-default-rtdb';
+
+/**
+ * 새 창에서 WebSocket 을 열고 30초 붙잡는다.
+ *
+ * **새 창으로 여는 게 핵심이다.** 이 진단 화면에서 직접 열면,
+ * 웹키퍼가 끊을 때 진단 화면이 같이 죽어서 결과를 못 본다.
+ */
+function holdWs() {
+  var w = window.open('', '_blank', 'width=540,height=460');
+  if (!w) {
+    alert('팝업이 막혔습니다. 주소창 오른쪽의 팝업 허용을 눌러 주세요.');
+    return;
+  }
+  var s = 'scr' + 'ipt';
+  var html =
+    '<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>실시간 연결 확인</title>' +
+    '<style>body{font-family:"Malgun Gothic",system-ui,sans-serif;padding:24px;text-align:center;background:#f7f8fa}' +
+    '#n{font-size:64px;font-weight:900;margin:16px 0}#m{font-size:17px;line-height:1.6}' +
+    '.ok{color:#0a9d5c}.bad{color:#d4392b}</style></head><body>' +
+    '<h1 style="font-size:20px;margin:0">실시간 연결 붙잡는 중</h1>' +
+    '<div id="n">30</div><p id="m">연결하는 중…</p>' +
+    '<p style="font-size:14px;color:#5b6472">이 창이 하얗게 되면 웹키퍼가 끊은 것입니다.<br>끝나면 이 창을 닫고 돌아가세요.</p>' +
+    '<' + s + '>' +
+    'var left=30,ws;' +
+    'try{ws=new WebSocket("' + WS_URL + '");}catch(e){document.getElementById("m").textContent="연결을 시작조차 못 했습니다";}' +
+    'if(ws){' +
+    'ws.onopen=function(){document.getElementById("m").innerHTML="<b class=ok>연결됨</b> — 이제 붙잡고 버팁니다";};' +
+    'ws.onerror=function(){document.getElementById("m").innerHTML="<b class=bad>연결이 끊겼습니다</b>";};' +
+    'ws.onclose=function(){if(left>0)document.getElementById("m").innerHTML="<b class=bad>중간에 끊겼습니다 ("+(30-left)+"초 만에)</b>";};' +
+    '}' +
+    'var t=setInterval(function(){left--;document.getElementById("n").textContent=left;' +
+    'if(left<=0){clearInterval(t);try{ws&&ws.close();}catch(e){}' +
+    'document.getElementById("n").textContent="OK";' +
+    'document.getElementById("m").innerHTML="<b class=ok>30초 버텼습니다</b> — 창을 닫고 돌아가세요";}},1000);' +
+    '</' + s + '></body></html>';
+  w.document.write(html);
+  w.document.close();
+}
 
 function two(n) { return (n < 10 ? '0' : '') + n; }
 function stamp() {
@@ -193,28 +248,88 @@ function render() {
     ul.appendChild(li);
   });
 
+  renderHold();
   updateVerdict();
   updateReport();
+}
+
+function renderHold() {
+  var ul = document.getElementById('holdbox');
+  ul.innerHTML = '';
+  var li = document.createElement('li');
+  li.className = holdAnswer === true ? 'ok' : holdAnswer === false ? 'fail' : '';
+
+  var name = document.createElement('span');
+  name.className = 'name';
+  name.textContent = '⑥ 실시간 연결 30초 붙잡기';
+
+  var host = document.createElement('span');
+  host.className = 'host';
+  host.textContent = 'wss:// math-game-e3402-default-rtdb.asia-southeast1.firebasedatabase.app · ★ 여기서 죽으면 범인을 찾은 것입니다';
+
+  var btns = document.createElement('div');
+  btns.className = 'btns';
+
+  var go = document.createElement('button');
+  go.className = 'open';
+  go.style.cssText = 'background:#1a1d23;color:#fff;border-color:#1a1d23';
+  go.textContent = '새 창에서 해 보기';
+  go.onclick = holdWs;
+
+  var yes = document.createElement('button');
+  yes.className = 'yes' + (holdAnswer === true ? ' on' : '');
+  yes.textContent = '30초 버텼음';
+  yes.onclick = function () { holdAnswer = true; render(); };
+
+  var no = document.createElement('button');
+  no.className = 'no' + (holdAnswer === false ? ' on' : '');
+  no.textContent = '중간에 죽었음';
+  no.onclick = function () { holdAnswer = false; render(); };
+
+  btns.appendChild(go);
+  btns.appendChild(yes);
+  btns.appendChild(no);
+
+  if (holdAnswer !== undefined) {
+    var st = document.createElement('span');
+    st.className = 'state';
+    st.textContent = holdAnswer ? '버팀' : '끊김';
+    btns.appendChild(st);
+  }
+
+  li.appendChild(name);
+  li.appendChild(host);
+  li.appendChild(btns);
+  ul.appendChild(li);
 }
 
 function updateVerdict() {
   var v = document.getElementById('verdict');
   var answered = 0;
   TARGETS.forEach(function (t, i) { if (answers[i] !== undefined) answered++; });
-  if (answered < TARGETS.length) { v.style.display = 'none'; return; }
+  if (answered < TARGETS.length || holdAnswer === undefined) { v.style.display = 'none'; return; }
 
   var allOpen = true;
   TARGETS.forEach(function (t, i) { if (answers[i] !== true) allOpen = false; });
   v.style.display = '';
 
-  if (answers[3] === false && answers[4] === true) {
+  var noneBlocked = true;
+  TARGETS.forEach(function (t, i) { if (answers[i] === false) noneBlocked = false; });
+
+  if (noneBlocked && holdAnswer === false) {
+    v.className = 'verdict bad';
+    v.innerHTML = '<b>범인을 찾았습니다.</b><br>'
+      + '주소는 하나하나 다 열리는데, <b>연결을 붙잡고 있으면 끊깁니다.</b><br>'
+      + '개별 주소를 막는 게 아니라 <b>실시간 연결 자체</b>를 끊는 겁니다.<br>'
+      + '아래 내용을 그대로 보내 주세요.';
+  } else if (answers[3] === false && answers[4] === true) {
     v.className = 'verdict ok';
     v.innerHTML = '<b>좋은 결과입니다.</b><br>'
       + '지금 쓰는 데이터 서버(④)만 막혔고, 옮길 수 있는 곳(⑤)은 열려 있습니다.<br>'
       + '<b>저장소를 옮기면 허용 요청 없이 해결됩니다.</b> 아래 내용을 그대로 보내 주세요.';
-  } else if (allOpen) {
+  } else if (allOpen && holdAnswer === true) {
     v.className = 'verdict ok';
-    v.innerHTML = '<b>지금은 막힌 주소가 없습니다.</b><br>'
+    v.innerHTML = '<b>지금은 아무것도 안 막힙니다.</b><br>'
       + '웹키퍼 정책이 아직 안 내려왔거나 시간에 따라 걸리는 것일 수 있습니다.<br>'
       + '실제로 막혔을 때 다시 해 주세요.';
   } else {
@@ -231,6 +346,11 @@ function updateReport() {
     lines.push(m + t.name + ' (' + t.host + ')');
   });
 
+  lines.push(
+    (holdAnswer === true ? 'O 버팀   ' : holdAnswer === false ? 'X 끊김   ' : '- 확인 안 함 ')
+    + '⑥ 실시간 연결 30초 붙잡기 (wss)'
+  );
+
   var blocked = [];
   TARGETS.forEach(function (t, i) { if (answers[i] === false) blocked.push(t.host); });
   lines.push('');
@@ -240,6 +360,11 @@ function updateReport() {
     lines.push('');
     lines.push('※ 지금 쓰는 데이터 서버만 막히고 firestore.googleapis.com 은 열려 있음');
     lines.push('  → 저장소를 옮기면 허용 요청 없이 해결 가능');
+  }
+  if (blocked.length === 0 && holdAnswer === false) {
+    lines.push('');
+    lines.push('※ 주소는 하나하나 다 열리는데, 연결을 붙잡고 있으면 끊긴다');
+    lines.push('  → 개별 주소 차단이 아니라 실시간 연결(WebSocket) 자체가 끊기는 것');
   }
 
   document.getElementById('report').value = lines.join('\n');
