@@ -136,10 +136,28 @@ var TARGETS = [
     note: '★ 제일 유력한 범인. 생소한 주소라 필터가 "미분류"로 잡아 막는 일이 흔합니다.'
   },
   {
-    name: '⑤ 데이터 서버 — 옮길 수 있는 곳',
+    name: '⑤ 데이터 서버 — 실제로 연결되는 곳',
+    host: 's-gke-apse1-nssi4-0.asia-southeast1.firebasedatabase.app',
+    url: 'https://s-gke-apse1-nssi4-0.asia-southeast1.firebasedatabase.app/.json',
+    note: '★ ④와 이름이 다릅니다. 실시간 연결은 이쪽에 붙습니다. 여기만 막혀도 앱이 죽습니다.'
+  },
+  {
+    name: '⑥ 로그인 보조 스크립트',
+    host: 'apis.google.com',
+    url: 'https://apis.google.com/js/api.js',
+    note: '★ 로그인 직후 뒤늦게 불러오던 것. 2026-08-25 에 안 쓰도록 고쳤습니다. 확인용.'
+  },
+  {
+    name: '⑦ 로그인 보조 프레임',
+    host: 'math-game-e3402.firebaseapp.com',
+    url: 'https://math-game-e3402.firebaseapp.com/__/auth/iframe',
+    note: '★ 위와 같습니다. 이것도 안 쓰도록 고쳤습니다. 확인용.'
+  },
+  {
+    name: '⑧ 데이터 서버 — 옮길 수 있는 곳',
     host: 'firestore.googleapis.com',
     url: 'https://firestore.googleapis.com/v1/projects/math-game-e3402/databases',
-    note: '★ 지금은 안 씁니다. ④가 막혔는데 ⑤가 열리면 저장소를 옮겨서 해결됩니다.'
+    note: '지금은 안 씁니다. 위가 다 막혔는데 여기가 열리면 저장소를 옮겨 해결할 수 있습니다.'
   }
 ];
 
@@ -322,10 +340,10 @@ function updateVerdict() {
       + '주소는 하나하나 다 열리는데, <b>연결을 붙잡고 있으면 끊깁니다.</b><br>'
       + '개별 주소를 막는 게 아니라 <b>실시간 연결 자체</b>를 끊는 겁니다.<br>'
       + '아래 내용을 그대로 보내 주세요.';
-  } else if (answers[3] === false && answers[4] === true) {
+  } else if ((answers[3] === false || answers[4] === false) && answers[7] === true) {
     v.className = 'verdict ok';
     v.innerHTML = '<b>좋은 결과입니다.</b><br>'
-      + '지금 쓰는 데이터 서버(④)만 막혔고, 옮길 수 있는 곳(⑤)은 열려 있습니다.<br>'
+      + '지금 쓰는 데이터 서버는 막혔는데, 옮길 수 있는 곳(⑧)은 열려 있습니다.<br>'
       + '<b>저장소를 옮기면 허용 요청 없이 해결됩니다.</b> 아래 내용을 그대로 보내 주세요.';
   } else if (allOpen && holdAnswer === true) {
     v.className = 'verdict ok';
@@ -356,9 +374,9 @@ function updateReport() {
   lines.push('');
   lines.push(blocked.length ? '막힌 주소: ' + blocked.join(', ') : '막힌 주소 없음');
 
-  if (answers[3] === false && answers[4] === true) {
+  if ((answers[3] === false || answers[4] === false) && answers[7] === true) {
     lines.push('');
-    lines.push('※ 지금 쓰는 데이터 서버만 막히고 firestore.googleapis.com 은 열려 있음');
+    lines.push('※ 지금 쓰는 데이터 서버는 막히고 firestore.googleapis.com 은 열려 있음');
     lines.push('  → 저장소를 옮기면 허용 요청 없이 해결 가능');
   }
   if (blocked.length === 0 && holdAnswer === false) {
