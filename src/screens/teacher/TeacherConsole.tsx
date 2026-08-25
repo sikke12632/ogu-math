@@ -25,7 +25,7 @@ const ROUND_GAP_MS = 2500
 
 export function TeacherConsole() {
   const { id = '' } = useParams()
-  const { session, loading, error } = useSession(id)
+  const { session, loading, error } = useSession(id, { withPresence: true })
   const now = useTick(400)
   const [busy, setBusy] = useState(false)
   // 서버 쓰기가 실패하면 조용히 넘어가면 안 된다. 수업 중에 원인을 못 찾는다

@@ -62,7 +62,6 @@ function Screen({ m }: { m: MatchRecord }) {
         match={m}
         me={ME}
         nameOf={(id) => NAMES[id] ?? '친구'}
-        opponentConnected
         roundLabel="1 / 3판"
         onChoose={() => {}}
         onResult={() => {}}

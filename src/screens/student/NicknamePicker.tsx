@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { setNickname } from '../../session/api'
 import type { StudentId } from '../../session/types'
+import { readableError } from '../../session/useSession'
 
 /** 교실에서 부담 없는 것들로만. 매 수업 바꿔 쓰라고 넉넉히 둔다 */
 const EMOJIS = [
@@ -40,10 +41,17 @@ export function NicknamePicker({ sessionId, me, realName, current, onDone }: Pro
   const save = async (value: string): Promise<void> => {
     setBusy(true)
     setError(null)
-    const res = await setNickname(sessionId, me, value)
-    setBusy(false)
-    if (res.ok) onDone()
-    else setError(res.reason)
+    try {
+      const res = await setNickname(sessionId, me, value)
+      if (res.ok) onDone()
+      else setError(res.reason)
+    } catch (e) {
+      // try 가 없으면 여기서 터질 때 setBusy(false) 에 못 가서
+      // **버튼이 영원히 잠긴다.** 학생은 눌러도 아무 반응이 없다고 느낀다
+      setError(readableError(e))
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (

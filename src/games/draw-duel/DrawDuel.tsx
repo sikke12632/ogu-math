@@ -22,8 +22,6 @@ type Props = {
   match: MatchRecord
   me: StudentId
   nameOf: (id: StudentId) => string
-  /** 상대가 접속해 있는지 */
-  opponentConnected: boolean
   onChoose: (turn: number, choice: 'draw' | 'stop') => void
   onResult: (winner: StudentId | 'draw') => void
   onForfeit: (loser: StudentId, winner: StudentId) => void
@@ -46,7 +44,7 @@ export const chipColor = (v: Card): string =>
   v === 'X' ? '#e0503f' : `hsl(${HUE[v as number] ?? 200} 78% 50%)`
 
 export function DrawDuel(props: Props) {
-  const { match, me, nameOf, opponentConnected, onChoose, onResult, onForfeit } = props
+  const { match, me, nameOf, onChoose, onResult, onForfeit } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<DuelStage | null>(null)
   const playedRef = useRef(0)
@@ -148,11 +146,13 @@ export function DrawDuel(props: Props) {
     setDeadline({ key: turnKey, at: Date.now() + TURN_LIMIT_SEC * 1000 })
   }, [myTurn, turnKey, frozen])
 
+  // 내 차례가 아니어도 시계는 돌아야 한다 — 상대를 기다리는 표시가 그것으로 뜬다.
+  // 이건 화면 안에서만 도는 것이라 서버를 읽거나 쓰지 않는다
   useEffect(() => {
-    if (deadline === null) return
-    const t = setInterval(() => setNow(Date.now()), 100)
+    if (props.frozen || state.over) return
+    const t = setInterval(() => setNow(Date.now()), 200)
     return () => clearInterval(t)
-  }, [deadline])
+  }, [props.frozen, state.over])
 
   const choose = useCallback(
     (c: 'draw' | 'stop') => {
@@ -173,24 +173,43 @@ export function DrawDuel(props: Props) {
     choose('stop')
   }, [now, deadline, turnKey, myTurn, choose])
 
-  /* ── 상대 연결 끊김 — 10초 뒤 그 판 패배 ──────────── */
+  /* ── 상대가 사라졌을 때 — 그 판 패배 ────────────────
+     **접속 신호를 쓰지 않는다.** 예전에는 학생마다 4초에 한 번씩
+     서버에 "나 있어요" 를 썼는데, 25명이면 한 시간에 2만 번이 넘어
+     Firestore 하루 한도를 혼자 다 썼다 (2026-08-25 에 수업 중 터졌다).
 
-  const disconnectSince = useRef<number | null>(null)
+     신호가 없어도 알 수 있다. **이 판에 아무것도 안 고르는 것**이 곧 없다는 뜻이다.
+     자리에 있는 학생은 10초가 지나면 자기 기기가 저절로 스탑을 써 준다.
+     그러니 제한시간이 지나고도 한참 조용하면 그 사람은 없는 것이다. */
+
+  /** 제한시간이 지난 뒤 이만큼 더 기다려 본다. 느린 와이파이에서 억울하게 지지 않도록 */
+  const GONE_GRACE_SEC = 12
+
+  const oppWaiting = state.waitingFor.includes(opp)
+  const waitSince = useRef<{ key: string; at: number } | null>(null)
+
   useEffect(() => {
-    if (state.over || frozen) return
-    if (opponentConnected) {
-      disconnectSince.current = null
+    if (frozen || state.over || !oppWaiting) {
+      waitSince.current = null
       return
     }
-    if (disconnectSince.current === null) disconnectSince.current = Date.now()
+    if (!waitSince.current || waitSince.current.key !== turnKey) {
+      waitSince.current = { key: turnKey, at: Date.now() }
+    }
     const t = setInterval(() => {
-      if (disconnectSince.current && Date.now() - disconnectSince.current > 10_000) {
+      const w = waitSince.current
+      if (!w || w.key !== turnKey) return
+      if (Date.now() - w.at > (TURN_LIMIT_SEC + GONE_GRACE_SEC) * 1000) {
         clearInterval(t)
         onForfeit(opp, me)
       }
     }, 1000)
     return () => clearInterval(t)
-  }, [opponentConnected, state.over, opp, me, onForfeit, frozen])
+  }, [oppWaiting, turnKey, state.over, frozen, opp, me, onForfeit])
+
+  /** 상대가 제한시간을 넘겼나. 화면에 "기다리는 중" 을 띄우는 데만 쓴다 */
+  const oppLate =
+    oppWaiting && waitSince.current !== null && now - waitSince.current.at > TURN_LIMIT_SEC * 1000
 
   /* ── 결과 보고 — 두 사람 중 앞선 id 만 쓴다 ───────── */
 
@@ -251,7 +270,7 @@ export function DrawDuel(props: Props) {
         <div className="duel-side">
           <p className="duel-round">
             {props.roundLabel}
-            {!opponentConnected && !state.over && <span className="duel-warn">상대 연결 확인 중</span>}
+            {oppLate && !state.over && <span className="duel-warn">상대를 기다리는 중</span>}
           </p>
 
           {props.betOn && (

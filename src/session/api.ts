@@ -11,7 +11,8 @@
  *
  *   sessions/{sid}                   교사만 씀 (meta, teams, game.round)
  *   sessions/{sid}/parts/problems    만들 때 한 번 (문항은 크고 안 바뀐다)
- *   sessions/{sid}/roster/{학생}      그 학생만 씀
+ *   sessions/{sid}/roster/{학생}      그 학생만 씀 (이름·별명·앉은 시각)
+ *   sessions/{sid}/presence/{학생}    접속 신호. **교사·칠판만 듣는다**
  *   sessions/{sid}/quiz/{학생}        그 학생만 씀
  *   sessions/{sid}/rounds/{판}        교사만 씀 (응원단장 명단)
  *   sessions/{sid}/matches/{매치}     그 두 명만 씀
@@ -26,7 +27,7 @@
  * Firestore 에는 없다. 그래서 **마지막 신호 시각(lastSeen)이 오래됐으면 끊긴 것으로 본다.**
  *
  * 답안 유실 방지 (설계보고서 2.4):
- *   - 답 선택 즉시 화면 반영 → 500ms 디바운스 후 서버 write
+ *   - 답 선택 즉시 화면 반영 → 잠깐 기다렸다 서버 write
  *   - 동시에 localStorage 미러링, 재접속 시 최신 것 채택
  */
 
@@ -39,30 +40,28 @@ import { load, save } from '../lib/storage'
 import type { Problem } from '../units/_types'
 import type { Answer } from './grade'
 import type {
-  ArchiveEntry, MatchRecord, Phase, QuizEntry, RosterEntry, RoundRecord, Session, SessionMeta,
-  StudentId, TeamRecord,
+  ArchiveEntry, MatchRecord, Phase, PresenceEntry, QuizEntry, RosterEntry, RoundRecord, Session,
+  SessionMeta, StudentId, TeamRecord,
 } from './types'
 
 const SESSIONS = 'sessions'
 const CODES = 'codes'
 const ARCHIVE = 'archive'
 
-/* ── 접속 여부 판정 ─────────────────────────────────── */
+/* ── 접속 신호 ──────────────────────────────────────── */
 
 /**
- * 마지막 신호가 이보다 오래됐으면 끊긴 것으로 본다.
+ * 신호를 보내는 간격, 그리고 얼마나 지나면 끊긴 것으로 볼지.
  *
- * 대전 중에는 짧아야 한다 — 상대가 튕겼는데 한참 기다리면 판이 멈춘다.
- * 그 밖에는 길어도 된다. 신호를 자주 보낼수록 Firestore 사용량이 늘기 때문이다.
+ * **이 두 값이 Firestore 사용량을 거의 결정한다.**
+ * 25명이 4초마다 보내면 한 시간에 2만 번을 쓴다 — 하루 한도가 그것이다.
+ * 45초로 두면 같은 한 시간에 2천 번이다.
+ *
+ * 대전 중에 촘촘히 보낼 필요는 없다. 상대가 튕겼는지는
+ * **그 판에 아무것도 안 고르는 것으로** 알 수 있기 때문이다 (DrawDuel 참고).
  */
-const STALE_MS_GAME = 9_000
-const STALE_MS_IDLE = 60_000
-
-/** 지금 이 세션이 어느 단계인지. heartbeat 가 얼마나 자주 쓸지 정하는 데 쓴다 */
-const phaseOf = new Map<string, Phase>()
-
-const staleLimit = (sessionId: string): number =>
-  phaseOf.get(sessionId) === 'game' ? STALE_MS_GAME : STALE_MS_IDLE
+export const HEARTBEAT_MS = 45_000
+const STALE_MS = HEARTBEAT_MS * 2.5
 
 /* ── 코드 ──────────────────────────────────────────── */
 
@@ -136,7 +135,7 @@ export async function createSession(o: CreateOptions): Promise<{ sessionId: stri
   // 명단은 이름을 그대로 키로 쓰지 않는다. 동명이인과 특수문자 때문에 번호를 붙인다
   o.names.forEach((name, i) => {
     const sid = `p${String(i + 1).padStart(3, '0')}`
-    const entry: RosterEntry = { name, joinedAt: 0, connected: false, lastSeen: 0 }
+    const entry: RosterEntry = { name, joinedAt: 0 }
     batch.set(doc(db, SESSIONS, sessionId, 'roster', sid), entry)
   })
 
@@ -151,6 +150,8 @@ type Parts = {
   main: { meta: SessionMeta; teams: Record<string, TeamRecord>; game: { round: number } | null } | null
   problems: Problem[]
   roster: Record<StudentId, RosterEntry>
+  /** 교사·칠판만 받는다. 학생 화면에서는 늘 비어 있다 */
+  presence: Record<StudentId, PresenceEntry>
   quiz: Record<StudentId, QuizEntry>
   rounds: Record<string, { round: number; cheerleaders: StudentId[] }>
   matches: Record<string, MatchRecord>
@@ -159,7 +160,7 @@ type Parts = {
 }
 
 /** 흩어진 문서들을 화면이 아는 모양 하나로 합친다 */
-function assemble(sessionId: string, p: Parts): Session | null {
+function assemble(p: Parts): Session | null {
   if (!p.main) return null
 
   // 판별로 매치를 모아 준다. 예전 Realtime Database 모양과 똑같이 맞춘다
@@ -173,12 +174,15 @@ function assemble(sessionId: string, p: Parts): Session | null {
     rounds[key]!.matches[m.id] = m
   }
 
-  // 접속 여부는 저장된 값만 믿지 않는다. 마지막 신호가 오래됐으면 끊긴 것으로 본다
-  const limit = staleLimit(sessionId)
+  // 접속 여부는 저장된 값만 믿지 않는다. 마지막 신호가 오래됐으면 끊긴 것으로 본다.
+  // 신호를 안 받는 화면(학생)에서는 connected 를 아예 넣지 않는다 — 모르는 것은 모른다고 둔다
   const now = Date.now()
   const roster: Record<StudentId, RosterEntry> = {}
   for (const [id, r] of Object.entries(p.roster)) {
-    roster[id] = { ...r, connected: Boolean(r.connected) && now - (r.lastSeen ?? 0) < limit }
+    const pr = p.presence[id]
+    roster[id] = pr
+      ? { ...r, connected: pr.connected && now - (pr.lastSeen ?? 0) < STALE_MS, lastSeen: pr.lastSeen }
+      : { ...r }
   }
 
   return {
@@ -211,9 +215,14 @@ export function watchSession(
   sessionId: string,
   cb: (s: Session | null) => void,
   onError?: (e: Error) => void,
+  /**
+   * 접속 신호까지 받을지. **교사 화면과 칠판만 켠다.**
+   * 학생 25명이 다 켜면 신호 한 번이 읽기 27번이 되어 한도가 터진다.
+   */
+  opts?: { withPresence?: boolean },
 ): () => void {
   const parts: Parts = {
-    main: null, problems: [], roster: {}, quiz: {}, rounds: {}, matches: {}, bets: {}, mvp: {},
+    main: null, problems: [], roster: {}, presence: {}, quiz: {}, rounds: {}, matches: {}, bets: {}, mvp: {},
   }
   const stops: (() => void)[] = []
   let cancelled = false
@@ -221,7 +230,7 @@ export function watchSession(
 
   const emit = (): void => {
     if (cancelled) return
-    cb(assemble(sessionId, parts))
+    cb(assemble(parts))
   }
   const fail = (e: unknown): void =>
     onError?.(e instanceof Error ? e : new Error(String(e)))
@@ -235,9 +244,6 @@ export function watchSession(
       stops.push(
         onSnapshot(s, (d) => {
           parts.main = d.exists() ? (d.data() as Parts['main']) : null
-          // heartbeat 가 이 값을 본다. **키는 반드시 sessionId 로 맞춘다** —
-          // 코드로 넣으면 heartbeat 가 못 찾아서 대전 중에도 신호를 느리게 보낸다
-          if (parts.main) phaseOf.set(sessionId, parts.main.meta.phase)
           emit()
         }, fail),
       )
@@ -257,6 +263,9 @@ export function watchSession(
         )
       }
       sub('roster', (v) => { parts.roster = v as Record<StudentId, RosterEntry> })
+      if (opts?.withPresence) {
+        sub('presence', (v) => { parts.presence = v as Record<StudentId, PresenceEntry> })
+      }
       sub('quiz', (v) => { parts.quiz = v as Record<StudentId, QuizEntry> })
       sub('rounds', (v) => { parts.rounds = v as Parts['rounds'] })
       sub('matches', (v) => { parts.matches = v as Record<string, MatchRecord> })
@@ -369,7 +378,7 @@ async function deleteSub(db: Firestore, sessionId: string, name: string): Promis
 /** 학년말 일괄 삭제 — 세션과 코드, 기록을 지운다 */
 export async function deleteSession(sessionId: string, code: string): Promise<void> {
   const db = getFs()
-  for (const name of ['roster', 'quiz', 'rounds', 'matches', 'bets', 'mvp', 'parts']) {
+  for (const name of ['roster', 'presence', 'quiz', 'rounds', 'matches', 'bets', 'mvp', 'parts']) {
     await deleteSub(db, sessionId, name)
   }
   await deleteDoc(doc(db, SESSIONS, sessionId))
@@ -394,24 +403,27 @@ export async function claimSeat(
   await ensureSignedIn()
   const db = getFs()
   const seat = doc(db, SESSIONS, sessionId, 'roster', studentId)
+  const pres = doc(db, SESSIONS, sessionId, 'presence', studentId)
 
   const ok = await runTransaction(db, async (tx) => {
     const snap = await tx.get(seat)
     if (!snap.exists()) return false
     const cur = snap.data() as RosterEntry
     // 아직 살아 있는 다른 기기가 쓰는 중이면 비켜 준다
-    const alive = cur.connected && Date.now() - (cur.lastSeen ?? 0) < STALE_MS_IDLE
+    const pSnap = await tx.get(pres)
+    const p = pSnap.exists() ? (pSnap.data() as PresenceEntry) : null
+    const alive = Boolean(p?.connected) && Date.now() - (p?.lastSeen ?? 0) < STALE_MS
     if (!force && cur.joinedAt > 0 && alive) return false
     const now = Date.now()
-    tx.update(seat, {
-      joinedAt: cur.joinedAt > 0 ? cur.joinedAt : now,
-      connected: true,
-      lastSeen: now,
-    })
+    if (!cur.joinedAt) tx.update(seat, { joinedAt: now })
+    tx.set(pres, { connected: true, lastSeen: now })
     return true
   })
 
-  if (ok) save(`seat:${sessionId}`, studentId)
+  if (ok) {
+    save(`seat:${sessionId}`, studentId)
+    lastBeat.set(`${sessionId}/${studentId}`, Date.now())
+  }
   return ok
 }
 
@@ -466,20 +478,20 @@ export function rememberedName(): string {
 /**
  * "나 아직 있어요" 신호.
  *
- * 화면은 4초마다 부르지만 **여기서 걸러 낸다.** Firestore 는 쓴 횟수만큼
- * 값을 매기므로, 대전 중이 아닐 때까지 4초마다 쓰면 한 시간 수업 한 번에
- * 하루치 무료 한도를 다 쓴다. 대전 중에만 촘촘히 보낸다.
+ * 화면이 자주 불러도 **여기서 걸러 낸다.** 실제로 쓰는 것은 45초에 한 번뿐이다.
+ * 화면을 안 보고 있으면(다른 탭·덮개 닫음) 아예 안 쓴다 —
+ * 그때는 정말로 없는 것이므로 끊긴 것으로 보여도 맞다.
  */
 const lastBeat = new Map<string, number>()
 
 export async function heartbeat(sessionId: string, studentId: StudentId): Promise<void> {
+  if (typeof document !== 'undefined' && document.hidden) return
   const key = `${sessionId}/${studentId}`
-  const gap = phaseOf.get(sessionId) === 'game' ? 4_000 : 20_000
   const prev = lastBeat.get(key) ?? 0
   const now = Date.now()
-  if (now - prev < gap) return
+  if (now - prev < HEARTBEAT_MS) return
   lastBeat.set(key, now)
-  await updateDoc(doc(getFs(), SESSIONS, sessionId, 'roster', studentId), {
+  await setDoc(doc(getFs(), SESSIONS, sessionId, 'presence', studentId), {
     connected: true,
     lastSeen: now,
   }).catch(() => {
@@ -490,17 +502,25 @@ export async function heartbeat(sessionId: string, studentId: StudentId): Promis
 
 /** 교사가 "이 학생 재접속 처리" 를 눌렀을 때 자리를 비워 준다 */
 export async function releaseSeat(sessionId: string, studentId: StudentId): Promise<void> {
-  await updateDoc(doc(getFs(), SESSIONS, sessionId, 'roster', studentId), {
-    connected: false,
-    joinedAt: 0,
-  })
+  const db = getFs()
+  const batch = writeBatch(db)
+  batch.update(doc(db, SESSIONS, sessionId, 'roster', studentId), { joinedAt: 0 })
+  batch.set(doc(db, SESSIONS, sessionId, 'presence', studentId), { connected: false, lastSeen: 0 })
+  await batch.commit()
 }
 
 /* ── 답안 ───────────────────────────────────────────── */
 
 const pending = new Map<string, ReturnType<typeof setTimeout>>()
 
-/** 500ms 디바운스 후 서버에 쓴다. localStorage 미러는 즉시 */
+/**
+ * 서버에 쓰기 전에 잠깐 기다린다. 보기를 이리저리 눌러 보는 동안
+ * 누른 횟수만큼 쓰기가 나가면 사용량이 크게 는다.
+ * **localStorage 에는 즉시 남으므로** 기다리는 사이에 답이 사라질 일은 없다.
+ */
+const SAVE_DELAY_MS = 1_500
+
+/** 답을 서버에 저장한다. 화면 반영은 즉시, 서버 쓰기는 잠깐 뒤 */
 export function saveAnswers(
   sessionId: string,
   studentId: StudentId,
@@ -521,7 +541,7 @@ export function saveAnswers(
       ).catch(() => {
         // 네트워크가 죽어도 풀이는 계속되어야 한다. 다음 저장 때 다시 올라간다
       })
-    }, 500),
+    }, SAVE_DELAY_MS),
   )
 }
 

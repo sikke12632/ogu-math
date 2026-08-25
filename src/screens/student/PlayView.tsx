@@ -169,22 +169,29 @@ export function PlayView() {
         {seatError && <p className="notice error">{seatError}</p>}
         <ul className="seatgrid">
           {seats.map(([sid, r]) => {
-            const taken = r.joinedAt > 0 && r.connected
+            // 학생 화면은 접속 신호를 받지 않는다(사용량 때문). 앉았는지만 본다.
+            // 정말 자리를 비워야 하면 교사가 '자리 비우기' 를 누른다
+            const taken = r.joinedAt > 0
             return (
               <li key={sid}>
                 <button
                   className={`seat${r.name === remembered ? ' mine' : ''}`}
                   disabled={taken}
                   onClick={() => {
-                    void claimSeat(sessionId!, sid).then((ok) => {
-                      if (ok) {
-                        setMe(sid)
-                        rememberName(r.name)
-                        setSeatError(null)
-                      } else {
-                        setSeatError('그 이름은 다른 기기가 쓰고 있어요. 선생님께 말해 주세요.')
-                      }
-                    })
+                    // **반드시 catch 를 붙인다.** 이게 없으면 서버가 거절해도
+                    // 화면에 아무 일이 안 일어나서, 학생은 버튼이 고장 난 줄 안다
+                    void claimSeat(sessionId!, sid).then(
+                      (ok) => {
+                        if (ok) {
+                          setMe(sid)
+                          rememberName(r.name)
+                          setSeatError(null)
+                        } else {
+                          setSeatError('그 이름은 다른 기기가 쓰고 있어요. 선생님께 말해 주세요.')
+                        }
+                      },
+                      (e) => setSeatError(readableError(e)),
+                    )
                   }}
                 >
                   {r.name}
@@ -447,7 +454,6 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
     )
   }
 
-  const opp = match.players.find((p) => p !== me)!
   return (
     // 게임 화면은 넓게 쓴다. 통과 점수를 좌우로 놓아야 글씨를 키울 수 있다
     <div className="wrap wide">
@@ -455,7 +461,6 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
         match={match}
         me={me}
         nameOf={(id) => nameOf(session, id)}
-        opponentConnected={session.roster?.[opp]?.connected ?? false}
         roundLabel={`${round} / ${session.meta.rounds}판`}
         betOn={isBetOn(session, round, me)}
         onChoose={(turn, choice) => void writeTurn(sessionId, round, match.id, turn, me, choice)}

@@ -40,7 +40,9 @@ export function BoardView() {
   const { code = '' } = useParams()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
-  const { session, error } = useSession(sessionId ?? undefined)
+  // 칠판은 누가 붙어 있는지 보여 줘야 하므로 신호를 받는다.
+  // 학생 화면은 안 받는다 — 그래야 사용량이 안 터진다
+  const { session, error } = useSession(sessionId ?? undefined, { withPresence: true })
   const [enterError, setEnterError] = useState<string | null>(null)
   const now = useTick(300)
 
