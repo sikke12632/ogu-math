@@ -40,14 +40,25 @@ const HUE = [0, 6, 28, 44, 58, 96, 148, 172, 194, 214, 244, 276, 320]
 
 type Palette = { light: string; base: string; mid: string; dark: string; bounce: string }
 
-function paletteOf(v: Card | '?'): Palette {
+/**
+ * 통 안 공에 입히는 **변장색**. 값과 아무 상관이 없다.
+ *
+ * 빨강 계열(0·6)은 뺐다. 꽝은 통 안에서도 빨갛게 두기 때문에,
+ * 숫자 공이 빨가면 헷갈린다.
+ */
+const DISGUISE = HUE.slice(2)
+
+export const disguiseHue = (): number =>
+  DISGUISE[Math.floor(Math.random() * DISGUISE.length)] ?? 200
+
+function paletteOf(v: Card | '?', hue?: number): Palette {
   if (v === '?') {
     return { light: '#9db0c6', base: '#65788f', mid: '#3c4a5c', dark: '#1a2230', bounce: 'rgba(150,180,215,.40)' }
   }
   if (v === 'X') {
     return { light: '#ffa693', base: '#e0503f', mid: '#a02a1c', dark: '#4c0f07', bounce: 'rgba(255,150,120,.42)' }
   }
-  const h = HUE[v as number] ?? 200
+  const h = hue ?? HUE[v as number] ?? 200
   return {
     light: `hsl(${h} 95% 82%)`,
     base: `hsl(${h} 80% 58%)`,
@@ -64,6 +75,8 @@ type Ball = {
   vx: number
   vy: number
   r: number
+  /** 통 안에서만 쓰는 변장색. 값과 무관하다 */
+  hue: number
   rot: number
   /** 착지 후 눌리는 정도 — 0이면 완전한 구 */
   squash: number
@@ -154,7 +167,7 @@ export class DuelStage {
     const side = t.x < MOUTH.x ? -1 : 1
     const x0 = MOUTH.x + side * 30
     this.flying.push({
-      v, x: x0, y: MOUTH.y, vx: 0, vy: 0, r: BALL_R, rot: 0, squash: 0,
+      v, x: x0, y: MOUTH.y, vx: 0, vy: 0, r: BALL_R, hue: disguiseHue(), rot: 0, squash: 0,
       spin: Math.PI * 1.4 * side,
       x0, y0: MOUTH.y, x1: t.x, y1: t.y,
       cx: (x0 + t.x) / 2, cy: MOUTH.y - 92,
@@ -184,6 +197,7 @@ export class DuelStage {
   private spawn(v: Card): Ball {
     return {
       v,
+      hue: disguiseHue(),
       x: JAR_X + (Math.random() - 0.5) * (JAR_HW - BALL_R) * 1.8,
       y: JAR_TOP + 30 + Math.random() * 90,
       vx: (Math.random() - 0.5) * 3,
@@ -327,9 +341,22 @@ export class DuelStage {
     ctx.lineTo(R, JAR_TOP)
   }
 
-  private drawBall(b: Ball): void {
+  /**
+   * @param masked 통 안에 있는 공인가.
+   *
+   * **통 안 공은 숫자도 색도 감춰야 한다.** 안 그러면 통에 없는 숫자를 골라내서
+   * 상대의 숨은 공을 정확히 맞힐 수 있다. 1~12 중 내 숨은 공·내가 뽑은 공·
+   * 상대가 뽑은 공을 빼고 남는 것이 통에 있어야 하는데, 하나가 비기 때문이다.
+   *
+   * 색도 같이 감춰야 한다. 색이 값에서 나오므로 숫자만 지우면 색으로 읽힌다.
+   *
+   * 꽝은 통 안에서도 빨갛게 둔다. 몇 개 남았는지는 어차피 화면에 적혀 있고,
+   * 꽝이 통에 들어가는 순간이 눈에 보여야 규칙이 와닿는다.
+   */
+  private drawBall(b: Ball, masked = false): void {
     const ctx = this.ctx
-    const c = paletteOf(b.v)
+    const hide = masked && b.v !== 'X' && b.v !== '?'
+    const c = paletteOf(b.v, hide ? b.hue : undefined)
     const r = b.r
     const sq = b.squash
     ctx.save()
@@ -374,25 +401,28 @@ export class DuelStage {
     ctx.fill()
     ctx.restore()
 
-    // 숫자 — 구 표면에 얹힌 느낌으로 살짝 눕히고 회전시킨다
-    ctx.save()
-    // 숫자는 거의 세워 둔다. 통 안에서 굴러도 몇 번인지 읽혀야 한다
-    ctx.rotate((b.rot || 0) * 0.10)
-    const t = b.v === 'X' ? '꽝' : b.v === '?' ? '?' : String(b.v)
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.font =
-      b.v === 'X' || b.v === '?'
-        ? `900 ${r * 0.76}px 'Gothic A1', system-ui, sans-serif`
-        : `700 ${r * 0.95}px 'IBM Plex Mono', ui-monospace, monospace`
-    ctx.scale(1, 0.92)
-    ctx.lineWidth = r * 0.17
-    ctx.lineJoin = 'round'
-    ctx.strokeStyle = 'rgba(0,0,0,.32)'
-    ctx.strokeText(t, 0, r * 0.02)
-    ctx.fillStyle = '#fff'
-    ctx.fillText(t, 0, r * 0.02)
-    ctx.restore()
+    // 숫자 — 구 표면에 얹힌 느낌으로 살짝 눕히고 회전시킨다.
+    // 통 안 공에는 아무것도 쓰지 않는다 (위 설명 참고)
+    if (!hide) {
+      ctx.save()
+      // 꺼낸 공은 거의 세워 둔다. 몇 번인지 바로 읽혀야 한다
+      ctx.rotate((b.rot || 0) * 0.10)
+      const t = b.v === 'X' ? '꽝' : b.v === '?' ? '?' : String(b.v)
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.font =
+        b.v === 'X' || b.v === '?'
+          ? `900 ${r * 0.76}px 'Gothic A1', system-ui, sans-serif`
+          : `700 ${r * 0.95}px 'IBM Plex Mono', ui-monospace, monospace`
+      ctx.scale(1, 0.92)
+      ctx.lineWidth = r * 0.17
+      ctx.lineJoin = 'round'
+      ctx.strokeStyle = 'rgba(0,0,0,.32)'
+      ctx.strokeText(t, 0, r * 0.02)
+      ctx.fillStyle = '#fff'
+      ctx.fillText(t, 0, r * 0.02)
+      ctx.restore()
+    }
 
     // 스펙큘러 — 작고 밝게. 크면 플라스틱이 아니라 젤리로 보인다
     ctx.save()
@@ -541,7 +571,7 @@ export class DuelStage {
     ctx.save()
     this.jarPath()
     ctx.clip()
-    for (const b of this.balls) this.drawBall(b)
+    for (const b of this.balls) this.drawBall(b, true)
     ctx.restore()
     this.drawJarFront()
 
