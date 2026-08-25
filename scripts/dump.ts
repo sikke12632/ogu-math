@@ -12,7 +12,20 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { makeRng } from '../src/lib/rng'
-import { TEMPLATES } from '../src/units/5-2-1'
+import { TEMPLATES as T521 } from '../src/units/5-2-1'
+import { TEMPLATES as T522 } from '../src/units/5-2-2'
+
+/**
+ * 어느 단원을 뽑을지. `npm run dump -- 5-2-2` 처럼 뒤에 붙인다.
+ * 안 붙이면 1단원. 단원이 늘면 여기 한 줄씩 추가한다.
+ */
+const UNITS: Record<string, { name: string; templates: typeof T521 }> = {
+  '5-2-1': { name: '수의 범위와 올림, 버림, 반올림', templates: T521 },
+  '5-2-2': { name: '분수의 곱셈', templates: T522 },
+}
+const UNIT_ID = process.argv[2] && UNITS[process.argv[2]] ? process.argv[2] : '5-2-1'
+const UNIT = UNITS[UNIT_ID]!
+const TEMPLATES = UNIT.templates
 import type { Difficulty, Draft, NumberLineSpec, TableSpec, Visual } from '../src/units/_types'
 
 const TARGET = 100
@@ -152,7 +165,7 @@ for (const r of rows) {
 const html = `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>문항 검수 덤프 · 5-2-1</title>
+<title>문항 검수 덤프 · ${UNIT_ID}</title>
 <style>
  body{font-family:'Pretendard','IBM Plex Sans KR',system-ui,sans-serif;background:#fbfaf7;color:#16202b;margin:0;line-height:1.55}
  .wrap{max-width:860px;margin:0 auto;padding:40px 20px 80px}
@@ -184,7 +197,7 @@ const html = `<!doctype html>
  button{font:inherit;font-size:13px;padding:6px 12px;cursor:pointer}
  @media print{.bar{display:none}details{display:none}.q{break-inside:avoid}}
 </style></head><body><div class="wrap">
-<h1>문항 검수 덤프 · 5-2-1 수의 범위와 올림, 버림, 반올림</h1>
+<h1>문항 검수 덤프 · ${UNIT_ID} ${UNIT.name}</h1>
 <p class="sub">${rows.length}문항. 파라미터 조합을 고루 덮게 뽑았습니다. 고정 시드라 다시 돌려도 같은 결과가 나옵니다.</p>
 <p class="sub">문장이 어색한 것 · 5학년에 안 맞는 수치 · 정답이 애매한 것에 표시하세요.</p>
 <div class="stat">
@@ -196,11 +209,11 @@ ${body}
 </div></body></html>`
 
 mkdirSync('out', { recursive: true })
-writeFileSync('out/dump.html', html, 'utf8')
-writeFileSync('out/dump.json', JSON.stringify(rows, null, 2), 'utf8')
+writeFileSync(`out/dump-${UNIT_ID}.html`, html, 'utf8')
+writeFileSync(`out/dump-${UNIT_ID}.json`, JSON.stringify(rows, null, 2), 'utf8')
 
-console.log(`out/dump.html 에 ${rows.length}문항을 저장했습니다.`)
+console.log(`out/dump-${UNIT_ID}.html 에 ${rows.length}문항을 저장했습니다.`)
 console.log(`  난이도  ${Object.entries(byDiff).map(([d, c]) => `${DIFF_LABEL[Number(d)]} ${c}`).join(' · ')}`)
 console.log(`  템플릿  ${Object.entries(byTemplate).sort().map(([t, c]) => `${t} ${c}`).join(' · ')}`)
 console.log(`  파라미터 조합 ${seen.size}가지`)
-console.log('\n브라우저로 out/dump.html 을 열어 훑어보세요.')
+console.log('\n브라우저로 위 파일을 열어 훑어보세요.')

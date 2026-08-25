@@ -6,6 +6,7 @@
 
 import type { UnitModule } from './_types'
 import unit521 from './5-2-1'
+import unit522 from './5-2-2'
 
 const registry = new Map<string, UnitModule>()
 
@@ -15,6 +16,7 @@ export function registerUnit(u: UnitModule): void {
 }
 
 registerUnit(unit521)
+registerUnit(unit522)
 
 export function getUnit(id: string): UnitModule {
   const u = registry.get(id)

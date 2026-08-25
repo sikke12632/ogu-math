@@ -123,8 +123,17 @@ export function slipFlip(a: Frac, b: Frac): Slip | null {
  *
  * - 정답과 같은 값, 서로 같은 값은 버린다 (보기 중복 금지)
  * - 0 이하이거나 터무니없이 큰 값도 버린다
+ * - **분모가 큰 것도 버린다.** 정답은 분모 24 이하로 막아 두었는데 보기를 안 막으면
+ *   84분의 79 같은 게 섞인다. 5학년에게 말이 안 될뿐더러 **티가 나서 소거법으로 풀린다**
  * - 모자라면 정답을 조금 흔들어 채운다. **그래도 흔한 오류를 먼저 쓴다**
  */
+/**
+ * 보기의 분모 한도. 정답 가드와 같은 값이어야 한다.
+ * 48 인 이유 — 익힘책에 [3/28] 과 [1/42] 가 실제로 나온다(문항 3·4).
+ * 24 로 막았더니 교과서 수준 문제까지 버려졌다.
+ */
+const MAX_DEN = 48
+
 export function distractors(answer: Frac, slips: (Slip | null)[], rnd: () => number): Frac[] {
   const out: Frac[] = []
   const seen = new Set<string>([`${answer.n}/${answer.d}`])
@@ -133,6 +142,7 @@ export function distractors(answer: Frac, slips: (Slip | null)[], rnd: () => num
     const key = `${r.n}/${r.d}`
     if (seen.has(key)) return
     if (r.n <= 0 || value(r) > value(answer) * 12 + 20) return
+    if (r.d > MAX_DEN) return
     seen.add(key)
     out.push(r)
   }
