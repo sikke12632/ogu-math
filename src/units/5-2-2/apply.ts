@@ -9,18 +9,23 @@
 
 import type { Rng } from '../../lib/rng'
 import type { Difficulty, Draft, Template } from '../_types'
-import { distractors, improper, mul, reduce, show, showMixed, value, type Frac } from './frac'
+import { distractors, improper, josa, josaAfter, mul, reduce, show, showMixed, value, type Frac } from './frac'
 import { STANDARD } from './calc'
 
 /* ── T7 중첩 비율 ───────────────────────────────────── */
 
 /** 기준이 두 번 바뀌는 상황들. 익힘책에 실제로 나온 얼개만 쓴다 */
+/**
+ * 기준이 바뀌는 상황들. **b 에 "그중" 을 넣지 않는다** —
+ * 문장 틀에 이미 들어 있어서 "그중 … 그중" 이 되어 뜻이 꼬인다.
+ *   whole 전체 → a 그 일부 → b 그 안의 일부 → (삼중이면) ask 그 안의 일부
+ */
 const NESTED = [
-  { whole: '전교생', a: '여학생', b: '야구를 좋아하는 학생', unitA: '이고', ask: '야구를 좋아하는 여학생' },
-  { whole: '전체 헝겊', a: '바느질에 쓴 헝겊', b: '그중 실제로 꿰맨 부분', unitA: '이고', ask: '꿰맨 부분' },
-  { whole: '학교 텃밭', a: '5학년 텃밭', b: '채소를 심은 곳', unitA: '이고', ask: '채소를 심은 곳' },
-  { whole: '색종이 묶음', a: '오늘 쓴 색종이', b: '그중 노란색', unitA: '이고', ask: '오늘 쓴 노란색 색종이' },
-  { whole: '도서관 책', a: '동화책', b: '그중 그림이 있는 책', unitA: '이고', ask: '그림이 있는 동화책' },
+  { whole: '전교생', a: '여학생', b: '야구를 좋아하는 학생', ask: '야구를 좋아하는 여학생' },
+  { whole: '전체 헝겊', a: '바느질에 쓴 헝겊', b: '실제로 꿰맨 부분', ask: '무늬를 넣은 부분' },
+  { whole: '학교 텃밭', a: '5학년 텃밭', b: '채소를 심은 곳', ask: '토마토를 심은 곳' },
+  { whole: '색종이 묶음', a: '오늘 쓴 색종이', b: '노란색 색종이', ask: '접기에 쓴 노란색 색종이' },
+  { whole: '도서관 책', a: '동화책', b: '그림이 있는 책', ask: '그림이 있는 동화책 중 새 책' },
 ] as const
 
 /** 분모가 작은 진분수. 중첩하면 분모가 금세 커진다 (G7) */
@@ -47,12 +52,12 @@ function nested(rng: Rng, difficulty: Difficulty): Draft | null {
     : `${show(a)} × ${show(b)}`
 
   const prompt = c
-    ? `${s.whole}의 ${show(a)}이 ${s.a}입니다.\n` +
-      `${s.a}의 ${show(b)}이 ${s.b}이고, 그중 ${show(c)}이 ${s.ask}입니다.\n` +
-      `${s.ask}은 ${s.whole} 전체의 얼마인가요?`
+    ? `${s.whole}의 ${josaAfter(show(a), '이가')} ${s.a}입니다.\n` +
+      `${s.a}의 ${josaAfter(show(b), '이가')} ${s.b}이고, 그중 ${josaAfter(show(c), '이가')} ${s.ask}입니다.\n` +
+      `${josa(s.ask, '은는')} ${s.whole} 전체의 얼마인가요?`
     : `${s.whole}의 ${show(a)}이 ${s.a}입니다.\n` +
-      `${s.a} 중에서 ${show(b)}이 ${s.b}입니다.\n` +
-      `${s.b}은 ${s.whole} 전체의 얼마인가요?`
+      `${s.a} 중에서 ${josaAfter(show(b), '이가')} ${s.b}입니다.\n` +
+      `${josa(s.b, '은는')} ${s.whole} 전체의 얼마인가요?`
 
   // 오답은 "기준을 놓친" 실수에서 뽑는다. 이게 이 유형의 핵심 오개념이다
   const slips = [
@@ -73,7 +78,7 @@ function nested(rng: Rng, difficulty: Difficulty): Draft | null {
     explanation:
       `"전체의 얼마"를 묻고 있으므로 비율을 이어서 곱합니다.\n` +
       `${step} = ${show(ans)}\n` +
-      `${show(b)}은 ${s.whole} 전체가 아니라 ${s.a}의 ${show(b)}이라는 점이 중요합니다.`,
+      `${josaAfter(show(b), '은는')} ${s.whole} 전체가 아니라 ${s.a}의 ${show(b)}이라는 점이 중요합니다.`,
     standard: STANDARD,
   }
 }
@@ -92,14 +97,15 @@ export const T7: Template = {
 /* ── T8 단위 환산 결합 ──────────────────────────────── */
 
 /** G8 — 아이가 이미 아는 단위만. 새 지식을 요구하면 분수 문제가 아니게 된다 */
+/** batchim — 단위를 소리 내어 읽었을 때 받침이 있나. "15초야" vs "20분이야" */
 const UNITS = [
-  { one: '1시간', total: 60, unit: '분' },
-  { one: '하루', total: 24, unit: '시간' },
-  { one: '1 m', total: 100, unit: 'cm' },
-  { one: '1 kg', total: 1000, unit: 'g' },
-  { one: '1 L', total: 1000, unit: 'mL' },
-  { one: '1 km', total: 1000, unit: 'm' },
-  { one: '1분', total: 60, unit: '초' },
+  { one: '1시간', total: 60, unit: '분', batchim: true },
+  { one: '하루', total: 24, unit: '시간', batchim: true },
+  { one: '1 m', total: 100, unit: 'cm', batchim: false },   // 센티미터
+  { one: '1 kg', total: 1000, unit: 'g', batchim: false },  // 그램
+  { one: '1 L', total: 1000, unit: 'mL', batchim: false },  // 밀리리터
+  { one: '1 km', total: 1000, unit: 'm', batchim: false },  // 미터
+  { one: '1분', total: 60, unit: '초', batchim: false },
 ] as const
 
 function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
@@ -110,7 +116,10 @@ function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
   // 딱 떨어지지 않으면 5학년 문제가 아니다
   if (!Number.isInteger(exact) || exact <= 0) return null
 
-  if (difficulty === 3 && rng.bool(0.5)) {
+  // **상에서는 반드시 판별형으로 낸다.**
+  // 값만 구하는 변주는 하 난이도와 다를 게 없는데 난이도 표만 상으로 붙어 나갔다.
+  // (검수에서 "1 m의 1/2은 몇 cm" 가 상으로 나왔다)
+  if (difficulty === 3) {
     // 상 — 셋 중 잘못 말한 친구 찾기. 익힘책의 그 문항 얼개다
     const others: { text: string; ok: boolean }[] = []
     const seen = new Set<string>()
@@ -123,14 +132,14 @@ function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
       const key = `${v.one}|${nn}/${dd}`
       if (seen.has(key)) continue
       seen.add(key)
-      others.push({ text: `${v.one}의 [${nn}/${dd}]은 ${e}${v.unit}이야.`, ok: true })
+      others.push({ text: `${v.one}의 ${josaAfter(`[${nn}/${dd}]`, '은는')} ${e}${v.unit}${v.batchim ? '이야' : '야'}.`, ok: true })
     }
-    if (others.length < 2) return null
+    if (others.length < 2) return null // 상인데 판별형을 못 만들면 아예 안 낸다
 
     // 틀린 사람 하나 — 값을 어긋나게 만든다
     const off = exact + rng.pick([-1, 1] as const) * Math.max(1, Math.round(exact * rng.pick([0.2, 0.5] as const)))
     if (off === exact || off <= 0) return null
-    const wrongLine = `${u.one}의 [${n}/${d}]은 ${off}${u.unit}이야.`
+    const wrongLine = `${u.one}의 ${josaAfter(`[${n}/${d}]`, '은는')} ${off}${u.unit}${u.batchim ? '이야' : '야'}.`
 
     const names = rng.shuffle(['소민', '성진', '은별', '재희', '다정'] as const).slice(0, 3)
     const lines = rng.shuffle([wrongLine, others[0]!.text, others[1]!.text])
@@ -157,7 +166,7 @@ function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
     templateId: 'T8',
     params: { kind: 'unit-value', unit: u.unit },
     difficulty,
-    prompt: `${u.one}의 [${n}/${d}]은 몇 ${u.unit}인가요?`,
+    prompt: `${u.one}의 ${josaAfter(`[${n}/${d}]`, '은는')} 몇 ${u.unit}인가요?`,
     answer: String(exact),
     explanation:
       `${u.one}은 ${u.total}${u.unit}입니다.\n` +

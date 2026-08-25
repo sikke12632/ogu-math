@@ -22,7 +22,10 @@ const FRACTION = /\[(?:(\d+)_)?(\d+)\/(\d+)\]/g
 
 function Fraction({ whole, num, den }: { whole?: string; num: string; den: string }) {
   // 소리로 읽을 때도 뜻이 통해야 한다 (화면 낭독기)
-  const label = whole ? `${whole}과 ${den}분의 ${num}` : `${den}분의 ${num}`
+  // 자연수를 소리 내어 읽었을 때 받침이 있으면 '과', 없으면 '와'
+  //   2 이·4 사·5 오·9 구 → 와,  나머지 → 과
+  const wa = whole && [true, true, false, true, false, false, true, true, true, false][Number(whole) % 10]
+  const label = whole ? `${whole}${wa ? '과' : '와'} ${den}분의 ${num}` : `${den}분의 ${num}`
   return (
     <span className="frac" role="math" aria-label={label}>
       {whole && <span className="frac-whole">{whole}</span>}

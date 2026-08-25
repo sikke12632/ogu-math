@@ -36,8 +36,24 @@ type Row = Draft & { seq: number }
 
 const seen = new Set<string>()
 const picked: Draft[] = []
+/**
+ * 난이도를 지정해 뽑을 수 있다 — `npm run dump -- 5-2-2 3`
+ * 상 난이도만 몰아 보고 싶을 때가 있다. 심화 유형은 상만 지원하므로
+ * 섞어 뽑으면 100문항에 한두 개밖에 안 들어간다.
+ */
+const ONLY: Difficulty | null =
+  process.argv[3] === '1' || process.argv[3] === '2' || process.argv[3] === '3'
+    ? (Number(process.argv[3]) as Difficulty)
+    : null
+
 const slots: { t: (typeof TEMPLATES)[number]; d: Difficulty }[] = []
-for (const t of TEMPLATES) for (const d of t.supports) slots.push({ t, d })
+for (const t of TEMPLATES) {
+  for (const d of t.supports) {
+    if (ONLY !== null && d !== ONLY) continue
+    slots.push({ t, d })
+  }
+}
+if (slots.length === 0) throw new Error('그 난이도를 내는 유형이 없습니다.')
 
 // 1차: 파라미터 조합이 새로운 것만 담는다
 for (let i = 0; i < 6000 && picked.length < TARGET; i++) {
@@ -233,10 +249,10 @@ ${body}
 </div></body></html>`
 
 mkdirSync('out', { recursive: true })
-writeFileSync(`out/dump-${UNIT_ID}.html`, html, 'utf8')
-writeFileSync(`out/dump-${UNIT_ID}.json`, JSON.stringify(rows, null, 2), 'utf8')
+writeFileSync(`out/dump-${UNIT_ID}${ONLY ? `-난이도${ONLY}` : ''}.html`, html, 'utf8')
+writeFileSync(`out/dump-${UNIT_ID}${ONLY ? `-난이도${ONLY}` : ''}.json`, JSON.stringify(rows, null, 2), 'utf8')
 
-console.log(`out/dump-${UNIT_ID}.html 에 ${rows.length}문항을 저장했습니다.`)
+console.log(`out/dump-${UNIT_ID}${ONLY ? `-난이도${ONLY}` : ''}.html 에 ${rows.length}문항을 저장했습니다.`)
 console.log(`  난이도  ${Object.entries(byDiff).map(([d, c]) => `${DIFF_LABEL[Number(d)]} ${c}`).join(' · ')}`)
 console.log(`  템플릿  ${Object.entries(byTemplate).sort().map(([t, c]) => `${t} ${c}`).join(' · ')}`)
 console.log(`  파라미터 조합 ${seen.size}가지`)

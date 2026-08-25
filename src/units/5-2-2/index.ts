@@ -15,8 +15,9 @@ import type { Difficulty, Draft, Problem, SetConfig, Template, TopicInfo, UnitMo
 import { CALC_TEMPLATES } from './calc'
 import { T7, T8, T11 } from './apply'
 import { T9, T10 } from './judge'
+import { HARD_TEMPLATES } from './hard'
 
-export const TEMPLATES: Template[] = [...CALC_TEMPLATES, T7, T8, T9, T10, T11]
+export const TEMPLATES: Template[] = [...CALC_TEMPLATES, T7, T8, T9, T10, T11, ...HARD_TEMPLATES]
 
 /** 계산 6 : 활용 3 — 9문항 기준. 계산만 잔뜩 나오면 지겹다 */
 const TARGET = { 계산: 6, 활용: 3 }

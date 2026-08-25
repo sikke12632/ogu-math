@@ -18,7 +18,7 @@
 import type { Rng } from '../../lib/rng'
 import type { Difficulty, Draft, Template } from '../_types'
 import {
-  distractors, improper, mul, show, showMixed, slipAdd, slipAddDen, slipFlip,
+  distractors, improper, josaAfter, mul, show, showMixed, slipAdd, slipAddDen, slipFlip,
   slipMulDen, slipNumOnly, slipWholeOnly, value, type Frac, type Slip,
 } from './frac'
 
@@ -208,7 +208,7 @@ function plain(rng: Rng, k: Kind, m: Made, difficulty: Difficulty): Draft {
     templateId: k.id,
     params: { ...m.params, form: 'choice' },
     difficulty,
-    prompt: `${m.expr} 을 계산해 보세요.`,
+    prompt: `${josaAfter(m.expr, '을를')} 계산해 보세요.`,
     choices,
     answer: show(m.answer),
     explanation: `${m.how}\n${m.expr} = ${show(m.answer)}`,

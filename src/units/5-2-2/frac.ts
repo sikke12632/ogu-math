@@ -67,9 +67,67 @@ export function show(f0: Frac): string {
 /** 곱셈식을 글자로. `[3/4] × 6` 처럼 */
 export const showMul = (a: string, b: string): string => `${a} × ${b}`
 
-/** 대분수를 표시로 (계산 안 하고 그대로 보여 줄 때) */
-export const showMixed = (w: number, n: number, d: number): string =>
-  w === 0 ? `[${n}/${d}]` : `[${w}_${n}/${d}]`
+/**
+ * 대분수를 표시로 (계산 안 하고 그대로 보여 줄 때).
+ * **분수 부분을 약분한다** — 안 하면 "2와 6분의 2" 같은 게 화면에 나간다.
+ */
+export function showMixed(w: number, n: number, d: number): string {
+  const f = reduce({ n, d })
+  if (f.n === 0) return String(w)
+  if (f.d === 1) return String(w + f.n)
+  return w === 0 ? `[${f.n}/${f.d}]` : `[${w}_${f.n}/${f.d}]`
+}
+
+/* ── 한국어 조사 ────────────────────────────────────── */
+
+/** 받침이 있나. 한글 음절만 본다 */
+function hasBatchim(word: string): boolean {
+  const ch = word.trim().slice(-1)
+  const code = ch.charCodeAt(0)
+  if (code < 0xac00 || code > 0xd7a3) return false
+  return (code - 0xac00) % 28 !== 0
+}
+
+/**
+ * 낱말 뒤에 붙는 조사를 골라 준다.
+ * "주스이", "남은 주스은" 같은 게 나가면 아이들이 먼저 알아본다.
+ */
+export function josa(word: string, kind: '은는' | '이가' | '을를'): string {
+  const b = hasBatchim(word)
+  if (kind === '은는') return word + (b ? '은' : '는')
+  if (kind === '이가') return word + (b ? '이' : '가')
+  return word + (b ? '을' : '를')
+}
+
+/**
+ * 숫자를 소리 내어 읽었을 때 받침이 있나.
+ *   0 영·1 일·3 삼·6 육·7 칠·8 팔 → 있음
+ *   2 이·4 사·5 오·9 구           → 없음
+ * "2를", "3을" 처럼 갈린다.
+ */
+function numHasBatchim(n: number): boolean {
+  return [true, true, false, true, false, false, true, true, true, false][Math.abs(n) % 10]!
+}
+
+/**
+ * 분수 표시나 숫자로 끝나는 말 뒤에 조사를 붙인다.
+ *
+ * 분수는 "d분의 n" 으로 읽으므로 **분자(n)** 로 판정한다.
+ * "[3/4]을" 이 아니라 "[3/4]를" 이다 — 4분의 3, 즉 "삼" 으로 끝나니 사실은 "을" 이고,
+ * "[2/5]" 는 "5분의 2", "이" 로 끝나니 "를" 이다. 손으로 정하면 반드시 틀린다.
+ */
+export function josaAfter(text: string, kind: '은는' | '이가' | '을를'): string {
+  const t = text.trim()
+  let b: boolean
+  const frac = /\[(?:\d+_)?(\d+)\/\d+\]$/.exec(t)
+  const digit = /(\d+)$/.exec(t)
+  if (frac) b = numHasBatchim(Number(frac[1]))
+  else if (digit) b = numHasBatchim(Number(digit[1]))
+  else b = hasBatchim(t)
+  if (kind === '은는') return t + (b ? '은' : '는')
+  if (kind === '이가') return t + (b ? '이' : '가')
+  return t + (b ? '을' : '를')
+}
 
 /* ── 흔한 오류 (오답 보기의 재료) ────────────────────── */
 
@@ -134,7 +192,10 @@ export function slipFlip(a: Frac, b: Frac): Slip | null {
  */
 const MAX_DEN = 48
 
-export function distractors(answer: Frac, slips: (Slip | null)[], rnd: () => number): Frac[] {
+export function distractors(answer0: Frac, slips: (Slip | null)[], rnd: () => number): Frac[] {
+  // **정답을 반드시 약분해서 담는다.** 안 그러면 2/4 로 들어온 정답과
+  // 1/2 인 오답이 서로 다른 것으로 보여, 화면에는 같은 보기가 두 번 나온다.
+  const answer = reduce(answer0)
   const out: Frac[] = []
   const seen = new Set<string>([`${answer.n}/${answer.d}`])
   const add = (f: Frac): void => {
