@@ -97,8 +97,12 @@ export type Session = {
   game: {
     round: number
     rounds: Record<string, RoundRecord>
-    /** 응원 보내기 — 받는 사람 id → 마지막 응원 시각 */
-    cheers?: Record<StudentId, number>
+    /**
+     * 배팅 — 판 번호 → 응원단장 id → 그가 건 팀원 id.
+     * 판으로 나눠 두는 게 중요하다. 한 통에 모으면 지난 판 배팅이
+     * 다음 판 화면에 유령처럼 다시 뜬다.
+     */
+    bets?: Record<string, Record<StudentId, StudentId>>
     /** MVP 지목 — 지목한 사람 → 지목당한 사람 */
     mvp?: Record<StudentId, StudentId>
   } | null

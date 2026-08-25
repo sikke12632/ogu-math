@@ -407,8 +407,20 @@ export async function writeForfeit(
   })
 }
 
-export async function sendCheer(sessionId: string, targetId: StudentId): Promise<void> {
-  await set(ref(getDb(), sessionPath(sessionId, `game/cheers/${targetId}`)), Date.now())
+/**
+ * 배팅 — 응원단장이 이번 판에 팀원 한 명을 고른다.
+ * 그 친구가 이기면 그 승리가 팀 점수 2점이 된다.
+ *
+ * 판마다 따로 저장한다. 한 번 고르면 못 바꾸는 규칙은 화면에서 막는다
+ * (Firebase 규칙은 이미 굳어 있어 건드리지 않았다).
+ */
+export async function placeBet(
+  sessionId: string,
+  round: number,
+  cheerleader: StudentId,
+  target: StudentId,
+): Promise<void> {
+  await set(ref(getDb(), sessionPath(sessionId, `game/bets/${round}/${cheerleader}`)), target)
 }
 
 export async function voteMvp(sessionId: string, voter: StudentId, target: StudentId): Promise<void> {

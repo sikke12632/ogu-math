@@ -9,15 +9,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DrawDuel } from '../../games/draw-duel/DrawDuel'
 import {
-  claimSeat, codeToSessionId, heartbeat, mirroredAnswers, rememberedName, rememberedSeat,
-  rememberName, saveAnswers, sendCheer, submitQuiz, voteMvp, writeForfeit, writeMatchResult, writeTurn,
+  claimSeat, codeToSessionId, heartbeat, mirroredAnswers, placeBet, rememberedName, rememberedSeat,
+  rememberName, saveAnswers, submitQuiz, voteMvp, writeForfeit, writeMatchResult, writeTurn,
 } from '../../session/api'
 import { grade, shuffleChoices, type Answer } from '../../session/grade'
 import { mvpOf } from '../../session/teams'
 import type { StudentId } from '../../session/types'
 import {
-  fmtClock, isCheerleader, myMatch, nameOf, quizTimeLeft, readableError, realNameOf, roundMatches,
-  teamList, useSession, useTeamScores, useTick,
+  fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
+  roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
 import { NicknamePicker } from './NicknamePicker'
 import { QuestionCard } from './QuestionCard'
@@ -402,7 +402,7 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
         nameOf={(id) => nameOf(session, id)}
         opponentConnected={session.roster?.[opp]?.connected ?? false}
         roundLabel={`${round} / ${session.meta.rounds}판`}
-        cheerAt={session.game?.cheers?.[me]}
+        betOn={isBetOn(session, round, me)}
         onChoose={(turn, choice) => void writeTurn(sessionId, round, match.id, turn, me, choice)}
         onResult={(winner) => void writeMatchResult(sessionId, round, match.id, winner)}
         onForfeit={(loser, winner) => void writeForfeit(sessionId, round, match.id, loser, winner)}
@@ -416,27 +416,76 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
  * 부전승 처리보다 낫다. 쉬는 게 아니라 역할이 생기기 때문이다.
  *
  * **카드는 보이지 않는다. 점수만 본다** — 훈수를 막기 위해서다.
+ *
+ * 하는 일은 배팅이다. 팀원 한 명을 골라 걸고, 그 친구가 이기면 그 판이 2점이 된다.
+ * 규칙이 성립하려면 두 가지가 반드시 지켜져야 한다.
+ *   1. **아직 승부가 안 난 친구만** 고를 수 있다.
+ *      이 화면에는 대결 현황이 실시간으로 뜬다. 안 막으면 이긴 걸 보고 나서 건다.
+ *   2. **한 번 고르면 못 바꾼다.**
  */
 function Cheerleader({ sessionId, me, round }: { sessionId: string; me: StudentId; round: number }) {
   const { session } = useSession(sessionId)
   const teams = teamList(session)
   const myTeam = teams.find((t) => t.members.includes(me))
   const matches = roundMatches(session, round)
-  const [sent, setSent] = useState<StudentId | null>(null)
-  const [voted, setVoted] = useState<StudentId | null>(null)
 
   if (!session || !myTeam) return <div className="wrap play-center"><p>불러오는 중…</p></div>
 
   const teammates = myTeam.members.filter((m) => m !== me)
   const mine = matches.filter((m) => m.players.some((p) => myTeam.members.includes(p)))
+  const matchOf = (id: StudentId) => mine.find((m) => m.players.includes(id)) ?? null
+
+  // 이번 판에 실제로 대결하는 팀원만. 같은 팀의 다른 응원단장은 걸 대상이 아니다
+  const bettable = teammates.filter((t) => matchOf(t) !== null)
+  const bet = myBet(session, round, me)
+  const betMatch = bet ? matchOf(bet) : null
+  const stillOpen = bettable.some((t) => !matchOf(t)!.winner)
 
   return (
     <div className="wrap">
       <header className="site-head">
         <p className="eyebrow">{round}판 · {myTeam.name}팀 응원단장</p>
-        <h1>우리 팀을 응원해 주세요</h1>
+        <h1>누구한테 걸까?</h1>
         <p className="sub">이번 판은 쉬는 대신 응원단장이에요. 다음 판에는 다시 대결합니다.</p>
       </header>
+
+      <section className="panel">
+        <h2>배팅</h2>
+        {bet ? (
+          <p className="betstate">
+            <b>{nameOf(session, bet)}</b> 한테 걸었다.{' '}
+            {betMatch?.winner === bet
+              ? '이겼다! 이 판은 2점.'
+              : betMatch?.winner
+                ? '아쉽다. 점수는 그대로.'
+                : '이기면 이 판이 2점이 된다.'}
+          </p>
+        ) : (
+          <>
+            <p className="sub">
+              고른 친구가 이기면 그 판이 <b>2점</b>. 져도 잃는 건 없어요.
+              <br />한 번 고르면 못 바꾸고, 승부가 끝난 친구한테는 걸 수 없어요.
+            </p>
+            {!stillOpen && <p className="betstate">이번 판은 배팅할 수 있는 대결이 남지 않았어요.</p>}
+            <div className="cheergrid">
+              {bettable.map((t) => {
+                const done = Boolean(matchOf(t)!.winner)
+                return (
+                  <button
+                    key={t}
+                    className="cheerbtn"
+                    disabled={done}
+                    onClick={() => void placeBet(sessionId, round, me, t)}
+                  >
+                    {nameOf(session, t)}
+                    <span>{done ? '끝남' : '걸기'}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </section>
 
       <section className="panel">
         <h2>우리 팀 대결 현황</h2>
@@ -446,7 +495,10 @@ function Cheerleader({ sessionId, me, round }: { sessionId: string; me: StudentI
             const theirs = m.players.find((p) => p !== ours)!
             return (
               <li key={m.id}>
-                <span>{nameOf(session, ours)} vs {nameOf(session, theirs)}</span>
+                <span>
+                  {nameOf(session, ours)} vs {nameOf(session, theirs)}
+                  {ours === bet && <b className="betmark"> 걸었음</b>}
+                </span>
                 <span className={m.winner ? 'done' : 'playing'}>
                   {m.winner === 'draw' ? '무승부' : m.winner ? (myTeam.members.includes(m.winner) ? '이김' : '짐') : '진행 중'}
                 </span>
@@ -456,45 +508,42 @@ function Cheerleader({ sessionId, me, round }: { sessionId: string; me: StudentI
         </ul>
       </section>
 
-      <section className="panel">
-        <h2>응원 보내기</h2>
-        <div className="cheergrid">
-          {teammates.map((t) => (
-            <button
-              key={t}
-              className={`cheerbtn${sent === t ? ' sent' : ''}`}
-              onClick={() => {
-                void sendCheer(sessionId, t)
-                setSent(t)
-                setTimeout(() => setSent(null), 1200)
-              }}
-            >
-              {nameOf(session, t)}
-              <span>응원!</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel">
-        <h2>이번 판 우리 팀 MVP</h2>
-        <div className="cheergrid">
-          {teammates.map((t) => (
-            <button
-              key={t}
-              className={`cheerbtn${voted === t ? ' sent' : ''}`}
-              onClick={() => {
-                void voteMvp(sessionId, me, t)
-                setVoted(t)
-              }}
-            >
-              {nameOf(session, t)}
-              <span>MVP</span>
-            </button>
-          ))}
-        </div>
-      </section>
+      <MvpPicker sessionId={sessionId} me={me} teammates={teammates} session={session} />
     </div>
+  )
+}
+
+/**
+ * 오늘 우리 팀 MVP.
+ * 표는 판별로 쌓이지 않고 한 사람당 한 표다. 나중에 누르면 앞의 것을 덮어쓴다.
+ * 그래서 "이번 판" 이 아니라 "오늘" 이라고 쓴다.
+ */
+function MvpPicker(p: {
+  sessionId: string
+  me: StudentId
+  teammates: StudentId[]
+  session: Parameters<typeof nameOf>[0]
+}) {
+  const [voted, setVoted] = useState<StudentId | null>(null)
+  return (
+    <section className="panel">
+      <h2>오늘 우리 팀 MVP</h2>
+      <div className="cheergrid">
+        {p.teammates.map((t) => (
+          <button
+            key={t}
+            className={`cheerbtn${voted === t ? ' sent' : ''}`}
+            onClick={() => {
+              void voteMvp(p.sessionId, p.me, t)
+              setVoted(t)
+            }}
+          >
+            {nameOf(p.session, t)}
+            <span>MVP</span>
+          </button>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -513,7 +562,7 @@ function ResultPhase(p: {
   const teams = teamList(session)
   const scores = useTeamScores(session)
   const myTeam = teams.find((t) => t.members.includes(p.me)) ?? null
-  const myWins = myTeam ? scores.find((s) => s.teamId === myTeam.id)?.wins ?? 0 : 0
+  const myPoints = myTeam ? scores.find((s) => s.teamId === myTeam.id)?.points ?? 0 : 0
   const mvp = myTeam ? mvpOf(myTeam, session?.game?.mvp ?? {}) : null
 
   // 내 전적은 작게. 팀 결과가 크게 (설계보고서 3.7)
@@ -529,7 +578,7 @@ function ResultPhase(p: {
   return (
     <div className="play-center">
       <p className="eyebrow">오늘 결과</p>
-      <h1 className="teamname">{p.myTeamName ?? '우리'}팀 {myWins}승</h1>
+      <h1 className="teamname">{p.myTeamName ?? '우리'}팀 {myPoints}점</h1>
       {mvp && <p className="sub">우리 팀 MVP · {nameOf(session, mvp)}</p>}
       <p className="myrecord">내 전적 {w}승 {l}패 {d}무 · 문제 {p.score} / {p.total}점</p>
       {p.wrongCount > 0 && (

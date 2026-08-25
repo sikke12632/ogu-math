@@ -1,0 +1,2584 @@
+{
+  "golden-0": [
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이하",
+        "context": "키",
+        "format": "OX"
+      },
+      "difficulty": 1,
+      "prompt": "키가 123cm 이하인 사람만 탈 수 있는 놀이기구가 있습니다.\n키가 124cm인 하준은 이 놀이기구를 탈 수 있을까요?",
+      "choices": [
+        "탈 수 있다",
+        "탈 수 없다"
+      ],
+      "answer": "탈 수 없다",
+      "explanation": "123 이하인 수는 123과 같거나 123보다 작은 수입니다. 123도 포함합니다.\n124는 여기에 속하지 않으므로 탈 수 없습니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·미만",
+        "extra": "없음"
+      },
+      "difficulty": 1,
+      "prompt": "53 이상 57 미만인 자연수는 모두 몇 개인가요?",
+      "answer": "4",
+      "explanation": "53 이상이므로 53부터, 57 미만이므로 56까지입니다.\n53부터 56까지는 4개입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "선택형"
+      },
+      "difficulty": 1,
+      "prompt": "836을 반올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "840",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 6이므로 올려서 840입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "850",
+        "840",
+        "830",
+        "800"
+      ],
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "홀짝",
+        "parity": "홀수"
+      },
+      "difficulty": 2,
+      "prompt": "56 이상 60 이하인 자연수 중 홀수는 모두 몇 개인가요?",
+      "answer": "2",
+      "explanation": "56 이상이므로 56부터, 60 이하이므로 60까지입니다.\n56부터 60까지 중 그중 홀수만 세면 2개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 버림하여 백의 자리까지 나타냈더니 3800이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "3800",
+      "explanation": "3800이 되려면 3800부터 3899까지여야 합니다. 3900부터는 버림해도 3900이 됩니다.\n따라서 가장 작은 수는 3800입니다.",
+      "standard": "6수01-02·03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 8,
+          "max": 14,
+          "step": 1,
+          "marks": [
+            {
+              "at": 10,
+              "type": "filled"
+            },
+            {
+              "at": 12,
+              "type": "filled"
+            }
+          ]
+        }
+      },
+      "choices": [
+        "10 이상 12 미만인 수",
+        "10 초과 12 미만인 수",
+        "10 이상 12 이하인 수",
+        "10 초과 12 이하인 수"
+      ],
+      "answer": "10 이상 12 이하인 수",
+      "explanation": "10 쪽 점은 ●라서 포함합니다(이상). 12 쪽 점은 ●라서 포함합니다(이하).\n따라서 10 이상 12 이하인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "십",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 십의 자리까지 나타냈더니 760이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "751",
+      "explanation": "760이 되려면 751부터 760까지여야 합니다. 750은 올림하면 750이 되어 버립니다.\n따라서 가장 작은 수는 751입니다.",
+      "standard": "6수01-02·03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "버스 대수",
+        "ask": "값까지",
+        "post": "합산후어림",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "남학생 90명과 여학생 81명이 함께 버스를 타고 갑니다.\n버스 한 대에 40명씩 탈 때, 버스는 최소 몇 대 필요한가요?",
+      "answer": "5",
+      "explanation": "남는 학생도 버스를 타야 하므로 남는 사람이 생기면 한 대를 더 준비해야 합니다. 그래서 올림입니다.\n90 + 81 = 171(명), 171 ÷ 40 = 4대 하고 11명이 남습니다. 남는 11명도 타야 하므로 5대가 필요합니다.",
+      "standard": "6수01-03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "묶음 구매",
+        "ask": "값까지",
+        "post": "묶음수×단가",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "색종이 179장이 필요합니다. 색종이는 20장씩 한 묶음에 1200원입니다.\n색종이를 사려면 최소 얼마가 필요한가요?",
+      "answer": "10800",
+      "explanation": "20장이 안 되는 만큼도 사려면 한 묶음을 더 사야 합니다. 그래서 올림입니다.\n179 ÷ 20 = 8묶음 하고 19장이 남으므로 9묶음이 필요합니다.\n9 × 1200 = 10800(원)입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-1": [
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "초과",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 21 초과인 수를 모두 고르세요.",
+      "choices": [
+        "10",
+        "32",
+        "24",
+        "21",
+        "18",
+        "16"
+      ],
+      "answer": [
+        "32",
+        "24"
+      ],
+      "explanation": "21 초과인 수는 21보다 큰 수입니다. 21은 포함하지 않습니다.\n그래서 32, 24 입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이하",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 290 이하인 수를 모두 고르세요.",
+      "choices": [
+        "290",
+        "370",
+        "330",
+        "310",
+        "390",
+        "210"
+      ],
+      "answer": [
+        "290",
+        "210"
+      ],
+      "explanation": "290 이하인 수는 290과 같거나 290보다 작은 수입니다. 290도 포함합니다.\n그래서 290, 210 입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "백",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "2649를 반올림하여 백의 자리까지 나타내면 얼마인가요?",
+      "answer": "2600",
+      "explanation": "백의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 4이므로 버려서 2600입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "십",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 버림하여 십의 자리까지 나타냈더니 200이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "209",
+      "explanation": "200이 되려면 200부터 209까지여야 합니다. 210부터는 버림해도 210이 됩니다.\n따라서 가장 큰 수는 209입니다.",
+      "standard": "6수01-02·03",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "물건값 지불",
+        "ask": "방법만",
+        "post": "없음",
+        "method": "올림"
+      },
+      "difficulty": 2,
+      "prompt": "공책 한 권이 600원입니다. 6권을 사려고 합니다.\n10000원짜리 지폐로만 낼 때 어떤 방법으로 어림해야 할까요?",
+      "choices": [
+        "올림",
+        "버림",
+        "반올림"
+      ],
+      "answer": "올림",
+      "explanation": "돈이 모자라면 물건을 살 수 없으므로 부족하지 않게 올려야 합니다. 그래서 올림입니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·미만",
+        "extra": "홀짝",
+        "parity": "홀수"
+      },
+      "difficulty": 2,
+      "prompt": "14 이상 23 미만인 자연수 중 홀수는 모두 몇 개인가요?",
+      "answer": "4",
+      "explanation": "14 이상이므로 14부터, 23 미만이므로 22까지입니다.\n14부터 22까지 중 그중 홀수만 세면 4개입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "버스 대수",
+        "ask": "방법만",
+        "post": "없음",
+        "method": "올림"
+      },
+      "difficulty": 2,
+      "prompt": "학생 158명이 버스를 타고 갑니다.\n버스 한 대에 35명씩 탈 때, 어떤 방법으로 어림해야 할까요?",
+      "choices": [
+        "올림",
+        "버림",
+        "반올림"
+      ],
+      "answer": "올림",
+      "explanation": "남는 학생도 버스를 타야 하므로 남는 사람이 생기면 한 대를 더 준비해야 합니다. 그래서 올림입니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "두 범위",
+        "extra": "교집합"
+      },
+      "difficulty": 3,
+      "prompt": "가 상자에는 17 초과 30 미만인 수, 나 상자에는 20 이상 30 이하인 수를 넣습니다.\n두 상자에 모두 넣을 수 있는 자연수는 몇 개인가요?",
+      "answer": "10",
+      "explanation": "가 상자에 들어가는 자연수는 18부터 29까지,\n나 상자는 20부터 30까지입니다. 겹치는 수는 20부터 29까지 10개입니다.",
+      "standard": "6수01-02",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "같은 것",
+        "place": "천"
+      },
+      "difficulty": 3,
+      "prompt": "다음 수를 천의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 같은 수는 어느 것인가요?",
+      "choices": [
+        "26941",
+        "26254",
+        "30227",
+        "28196"
+      ],
+      "answer": "26941",
+      "explanation": "26941은 올림 27000, 반올림 27000입니다.\n천의 자리 바로 아래 자리 숫자가 9이라서 반올림하면 올라갑니다. 올림도 올라가므로 결과가 같습니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-2": [
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·미만",
+        "extra": "없음"
+      },
+      "difficulty": 1,
+      "prompt": "25 이상 29 미만인 자연수는 모두 몇 개인가요?",
+      "answer": "4",
+      "explanation": "25 이상이므로 25부터, 29 미만이므로 28까지입니다.\n25부터 28까지는 4개입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이상",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 26 이상인 수를 모두 고르세요.",
+      "choices": [
+        "15",
+        "23",
+        "13",
+        "34",
+        "26",
+        "39"
+      ],
+      "answer": [
+        "34",
+        "26",
+        "39"
+      ],
+      "explanation": "26 이상인 수는 26과 같거나 26보다 큰 수입니다. 26도 포함합니다.\n그래서 34, 26, 39 입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "선택형"
+      },
+      "difficulty": 1,
+      "prompt": "789를 버림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "780",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 780입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "770",
+        "790",
+        "780",
+        "700"
+      ],
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "초과·미만",
+        "extra": "배수",
+        "multiple": "3"
+      },
+      "difficulty": 2,
+      "prompt": "24 초과 33 미만인 자연수 중 3의 배수는 모두 몇 개인가요?",
+      "answer": "2",
+      "explanation": "24 초과이므로 25부터, 33 미만이므로 32까지입니다.\n25부터 32까지 중 그중 3의 배수만 세면 2개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "같은 것",
+        "place": "십"
+      },
+      "difficulty": 2,
+      "prompt": "다음 수를 십의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 같은 수는 어느 것인가요?",
+      "choices": [
+        "171",
+        "164",
+        "137",
+        "163"
+      ],
+      "answer": "137",
+      "explanation": "137은 올림 140, 반올림 140입니다.\n십의 자리 바로 아래 자리 숫자가 7이라서 반올림하면 올라갑니다. 올림도 올라가므로 결과가 같습니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "백",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 백의 자리까지 나타냈더니 7000이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "7000",
+      "explanation": "7000이 되려면 6901부터 7000까지여야 합니다. 6900은 올림하면 6900이 되어 버립니다.\n따라서 가장 큰 수는 7000입니다.",
+      "standard": "6수01-02·03",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 버림하여 백의 자리까지 나타냈더니 7200이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "7200",
+      "explanation": "7200이 되려면 7200부터 7299까지여야 합니다. 7300부터는 버림해도 7300이 됩니다.\n따라서 가장 작은 수는 7200입니다.",
+      "standard": "6수01-02·03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "버스 대수",
+        "ask": "값까지",
+        "post": "합산후어림",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "남학생 93명과 여학생 66명이 함께 버스를 타고 갑니다.\n버스 한 대에 35명씩 탈 때, 버스는 최소 몇 대 필요한가요?",
+      "answer": "5",
+      "explanation": "남는 학생도 버스를 타야 하므로 남는 사람이 생기면 한 대를 더 준비해야 합니다. 그래서 올림입니다.\n93 + 66 = 159(명), 159 ÷ 35 = 4대 하고 19명이 남습니다. 남는 19명도 타야 하므로 5대가 필요합니다.",
+      "standard": "6수01-03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "묶음 구매",
+        "ask": "값까지",
+        "post": "묶음수×단가",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "색종이 191장이 필요합니다. 색종이는 25장씩 한 묶음에 600원입니다.\n색종이를 사려면 최소 얼마가 필요한가요?",
+      "answer": "4800",
+      "explanation": "25장이 안 되는 만큼도 사려면 한 묶음을 더 사야 합니다. 그래서 올림입니다.\n191 ÷ 25 = 7묶음 하고 16장이 남으므로 8묶음이 필요합니다.\n8 × 600 = 4800(원)입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-3": [
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 45,
+          "max": 65,
+          "step": 5,
+          "marks": [
+            {
+              "at": 55,
+              "type": "hollow"
+            }
+          ],
+          "ray": "left"
+        }
+      },
+      "choices": [
+        "55 이상인 수",
+        "55 이하인 수",
+        "55 미만인 수",
+        "55 초과인 수"
+      ],
+      "answer": "55 미만인 수",
+      "explanation": "점이 55에 색칠되지 않아(○) 있으므로 55를 포함하지 않고, 선이 왼쪽으로 뻗어 있습니다.\n따라서 55 미만인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "초과",
+        "context": "키",
+        "format": "OX"
+      },
+      "difficulty": 1,
+      "prompt": "키가 125cm 초과인 사람만 탈 수 있는 놀이기구가 있습니다.\n키가 125cm인 예은은 이 놀이기구를 탈 수 있을까요?",
+      "choices": [
+        "탈 수 없다",
+        "탈 수 있다"
+      ],
+      "answer": "탈 수 없다",
+      "explanation": "125 초과인 수는 125보다 큰 수입니다. 125는 포함하지 않습니다.\n125는 여기에 속하지 않으므로 탈 수 없습니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "233을 반올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "230",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 3이므로 버려서 230입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "반올림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 반올림하여 백의 자리까지 나타냈더니 2500이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "2450",
+      "explanation": "2500이 되려면 2450부터 2549까지여야 합니다. 2449는 내려가고, 2550은 올라갑니다.\n따라서 가장 작은 수는 2450입니다.",
+      "standard": "6수01-02·03",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "다른 것",
+        "place": "십"
+      },
+      "difficulty": 2,
+      "prompt": "다음 수를 십의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 다른 수는 어느 것인가요?",
+      "choices": [
+        "176",
+        "165",
+        "170",
+        "151"
+      ],
+      "answer": "151",
+      "explanation": "151은 올림 160, 반올림 150입니다.\n십의 자리 바로 아래 자리 숫자가 1이라서 반올림하면 내려가지만, 올림은 무조건 올라가므로 결과가 달라집니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "십",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 십의 자리까지 나타냈더니 440이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "440",
+      "explanation": "440이 되려면 431부터 440까지여야 합니다. 430은 올림하면 430이 되어 버립니다.\n따라서 가장 큰 수는 440입니다.",
+      "standard": "6수01-02·03",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "자연수",
+        "place": "백",
+        "format": "선택형"
+      },
+      "difficulty": 2,
+      "prompt": "5533을 버림하여 백의 자리까지 나타내면 얼마인가요?",
+      "answer": "5500",
+      "explanation": "백의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 5500입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "5600",
+        "5000",
+        "5500",
+        "5400"
+      ],
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·미만",
+        "extra": "역산"
+      },
+      "difficulty": 3,
+      "prompt": "19 이상 ☐ 미만인 자연수가 4개입니다.\n☐에 알맞은 자연수를 구하세요.",
+      "answer": "23",
+      "explanation": "19 이상이므로 19부터 시작합니다. 4개이면 19부터 22까지입니다.\n22가 마지막이 되려면 ☐는 23여야 합니다(23 미만).",
+      "standard": "6수01-02",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "상자 포장",
+        "ask": "값까지",
+        "post": "나머지",
+        "method": "버림"
+      },
+      "difficulty": 3,
+      "prompt": "초콜릿 94개를 한 상자에 10개씩 담아 팔려고 합니다.\n상자에 담고 남는 초콜릿은 몇 개인가요?",
+      "answer": "4",
+      "explanation": "10개가 안 되면 한 상자로 팔 수 없으므로 남는 것은 버립니다. 그래서 버림입니다.\n94 ÷ 10 = 9상자 하고 4개가 남습니다. 남는 초콜릿은 4개입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-4": [
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이하",
+        "context": "요금",
+        "format": "OX"
+      },
+      "difficulty": 1,
+      "prompt": "3300원 이하인 물건은 할인을 받을 수 있습니다.\n3300원짜리 물건은 할인을 받을 수 있을까요?",
+      "choices": [
+        "받을 수 없다",
+        "받을 수 있다"
+      ],
+      "answer": "받을 수 있다",
+      "explanation": "3300 이하인 수는 3300과 같거나 3300보다 작은 수입니다. 3300도 포함합니다.\n3300은 여기에 속하므로 할인을 받을 수 있습니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "초과",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 600 초과인 수를 모두 고르세요.",
+      "choices": [
+        "700",
+        "620",
+        "600",
+        "480",
+        "660",
+        "580"
+      ],
+      "answer": [
+        "700",
+        "620",
+        "660"
+      ],
+      "explanation": "600 초과인 수는 600보다 큰 수입니다. 600은 포함하지 않습니다.\n그래서 700, 620, 660 입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "자연수",
+        "place": "백",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "2491을 버림하여 백의 자리까지 나타내면 얼마인가요?",
+      "answer": "2400",
+      "explanation": "백의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 2400입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "70 초과 110 미만인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 50,
+            "max": 130,
+            "step": 10,
+            "marks": [
+              {
+                "at": 70,
+                "type": "filled"
+              },
+              {
+                "at": 110,
+                "type": "hollow"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 50,
+            "max": 130,
+            "step": 10,
+            "marks": [
+              {
+                "at": 70,
+                "type": "filled"
+              },
+              {
+                "at": 110,
+                "type": "filled"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 50,
+            "max": 130,
+            "step": 10,
+            "marks": [
+              {
+                "at": 70,
+                "type": "hollow"
+              },
+              {
+                "at": 110,
+                "type": "filled"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 50,
+            "max": 130,
+            "step": 10,
+            "marks": [
+              {
+                "at": 70,
+                "type": "hollow"
+              },
+              {
+                "at": 110,
+                "type": "hollow"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": "라",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n70 초과 110 미만인 수를 바르게 나타낸 것은 라입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "버스 대수",
+        "ask": "값까지",
+        "post": "없음",
+        "method": "올림"
+      },
+      "difficulty": 2,
+      "prompt": "학생 243명이 버스를 타고 갑니다.\n버스 한 대에 40명씩 탈 때, 버스는 최소 몇 대 필요한가요?",
+      "answer": "7",
+      "explanation": "남는 학생도 버스를 타야 하므로 남는 사람이 생기면 한 대를 더 준비해야 합니다. 그래서 올림입니다.\n243 ÷ 40 = 6대 하고 3명이 남습니다. 남는 3명도 타야 하므로 7대가 필요합니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 2,
+          "max": 10,
+          "step": 1,
+          "marks": [
+            {
+              "at": 4,
+              "type": "filled"
+            },
+            {
+              "at": 8,
+              "type": "hollow"
+            }
+          ]
+        }
+      },
+      "choices": [
+        "4 이상 8 이하인 수",
+        "4 이상 8 미만인 수",
+        "4 초과 8 이하인 수",
+        "4 초과 8 미만인 수"
+      ],
+      "answer": "4 이상 8 미만인 수",
+      "explanation": "4 쪽 점은 ●라서 포함합니다(이상). 8 쪽 점은 ○라서 포함하지 않습니다(미만).\n따라서 4 이상 8 미만인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "물건값 지불",
+        "ask": "값까지",
+        "post": "없음",
+        "method": "올림"
+      },
+      "difficulty": 2,
+      "prompt": "공책 한 권이 1900원입니다. 9권을 사려고 합니다.\n10000원짜리 지폐로만 낸다면 최소 몇 장을 내야 하나요?",
+      "answer": "2",
+      "explanation": "돈이 모자라면 물건을 살 수 없으므로 부족하지 않게 올려야 합니다. 그래서 올림입니다.\n1900 × 9 = 17100(원)입니다. 10000원짜리 1장이면 10000원으로 모자라므로 2장을 내야 합니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "반올림",
+        "place": "천",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 반올림하여 천의 자리까지 나타냈더니 59000이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "58500",
+      "explanation": "59000이 되려면 58500부터 59499까지여야 합니다. 58499는 내려가고, 59500은 올라갑니다.\n따라서 가장 작은 수는 58500입니다.",
+      "standard": "6수01-02·03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "천",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 버림하여 천의 자리까지 나타냈더니 84000이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "84000",
+      "explanation": "84000이 되려면 84000부터 84999까지여야 합니다. 85000부터는 버림해도 85000이 됩니다.\n따라서 가장 작은 수는 84000입니다.",
+      "standard": "6수01-02·03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-5": [
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이하",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 200 이하인 수를 모두 고르세요.",
+      "choices": [
+        "80",
+        "180",
+        "100",
+        "200",
+        "240",
+        "300"
+      ],
+      "answer": [
+        "80",
+        "180",
+        "100",
+        "200"
+      ],
+      "explanation": "200 이하인 수는 200과 같거나 200보다 작은 수입니다. 200도 포함합니다.\n그래서 80, 180, 100, 200 입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "50 이상인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 30,
+            "max": 70,
+            "step": 10,
+            "marks": [
+              {
+                "at": 50,
+                "type": "filled"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 30,
+            "max": 70,
+            "step": 10,
+            "marks": [
+              {
+                "at": 50,
+                "type": "filled"
+              }
+            ],
+            "ray": "right"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 30,
+            "max": 70,
+            "step": 10,
+            "marks": [
+              {
+                "at": 50,
+                "type": "hollow"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 30,
+            "max": 70,
+            "step": 10,
+            "marks": [
+              {
+                "at": 50,
+                "type": "hollow"
+              }
+            ],
+            "ray": "right"
+          }
+        }
+      ],
+      "answer": "나",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n50 이상인 수를 바르게 나타낸 것은 나입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "164를 반올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "160",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 4이므로 버려서 160입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 68,
+          "max": 77,
+          "step": 1,
+          "marks": [
+            {
+              "at": 70,
+              "type": "filled"
+            },
+            {
+              "at": 75,
+              "type": "filled"
+            }
+          ]
+        }
+      },
+      "choices": [
+        "70 이상 75 미만인 수",
+        "70 초과 75 이하인 수",
+        "70 초과 75 미만인 수",
+        "70 이상 75 이하인 수"
+      ],
+      "answer": "70 이상 75 이하인 수",
+      "explanation": "70 쪽 점은 ●라서 포함합니다(이상). 75 쪽 점은 ●라서 포함합니다(이하).\n따라서 70 이상 75 이하인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "상자 포장",
+        "ask": "값까지",
+        "post": "없음",
+        "method": "버림"
+      },
+      "difficulty": 2,
+      "prompt": "사탕 102개를 한 상자에 10개씩 담아 팔려고 합니다.\n팔 수 있는 상자는 최대 몇 상자인가요?",
+      "answer": "10",
+      "explanation": "10개가 안 되면 한 상자로 팔 수 없으므로 남는 것은 버립니다. 그래서 버림입니다.\n102 ÷ 10 = 10상자 하고 2개가 남습니다. 남는 것으로는 상자를 채울 수 없으므로 10상자입니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "백",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 버림하여 백의 자리까지 나타냈더니 1300이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "1399",
+      "explanation": "1300이 되려면 1300부터 1399까지여야 합니다. 1400부터는 버림해도 1400이 됩니다.\n따라서 가장 큰 수는 1399입니다.",
+      "standard": "6수01-02·03",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "인구 추산",
+        "ask": "값까지",
+        "post": "없음",
+        "method": "반올림"
+      },
+      "difficulty": 2,
+      "prompt": "어느 마을의 인구는 70382명입니다.\n반올림하여 만의 자리까지 나타내면 몇 명인가요?",
+      "answer": "70000",
+      "explanation": "실제 수에 가장 가깝게 나타내야 하므로 반올림입니다.\n만의 자리 바로 아래 자리 숫자를 보고 반올림하면 70000명입니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "역산"
+      },
+      "difficulty": 3,
+      "prompt": "44 이상 ☐ 이하인 자연수가 4개입니다.\n☐에 알맞은 자연수를 구하세요.",
+      "answer": "47",
+      "explanation": "44 이상이므로 44부터 시작합니다. 4개이면 44부터 47까지입니다.\n47가 마지막이 되려면 ☐는 47여야 합니다(47 이하).",
+      "standard": "6수01-02",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "버림↔반올림",
+        "format": "같은 것",
+        "place": "백"
+      },
+      "difficulty": 3,
+      "prompt": "다음 수를 백의 자리까지 나타내려고 합니다.\n버림한 결과와 반올림한 결과가 같은 수는 어느 것인가요?",
+      "choices": [
+        "2993",
+        "3161",
+        "2988",
+        "3344"
+      ],
+      "answer": "3344",
+      "explanation": "3344는 버림 3300, 반올림 3300입니다.\n백의 자리 바로 아래 자리 숫자가 4이라서 반올림하면 내려갑니다. 버림도 내려가므로 결과가 같습니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-6": [
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "25 이상인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 15,
+            "max": 35,
+            "step": 5,
+            "marks": [
+              {
+                "at": 25,
+                "type": "filled"
+              }
+            ],
+            "ray": "right"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 15,
+            "max": 35,
+            "step": 5,
+            "marks": [
+              {
+                "at": 25,
+                "type": "filled"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 15,
+            "max": 35,
+            "step": 5,
+            "marks": [
+              {
+                "at": 25,
+                "type": "hollow"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 15,
+            "max": 35,
+            "step": 5,
+            "marks": [
+              {
+                "at": 25,
+                "type": "hollow"
+              }
+            ],
+            "ray": "right"
+          }
+        }
+      ],
+      "answer": "가",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n25 이상인 수를 바르게 나타낸 것은 가입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 2,
+          "max": 6,
+          "step": 1,
+          "marks": [
+            {
+              "at": 4,
+              "type": "hollow"
+            }
+          ],
+          "ray": "left"
+        }
+      },
+      "choices": [
+        "4 미만인 수",
+        "4 초과인 수",
+        "4 이상인 수",
+        "4 이하인 수"
+      ],
+      "answer": "4 미만인 수",
+      "explanation": "점이 4에 색칠되지 않아(○) 있으므로 4를 포함하지 않고, 선이 왼쪽으로 뻗어 있습니다.\n따라서 4 미만인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "백",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "2559를 반올림하여 백의 자리까지 나타내면 얼마인가요?",
+      "answer": "2600",
+      "explanation": "백의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 5이므로 올려서 2600입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "소수",
+        "bounds": "이상·미만",
+        "extra": "없음"
+      },
+      "difficulty": 2,
+      "prompt": "4.2 이상 4.6 미만인 소수 한 자리 수는 모두 몇 개인가요?",
+      "answer": "4",
+      "explanation": "4.2부터 4.6까지 0.1씩 뛰어 세면서, 4.2는 포함하고 4.6는 포함하지 않습니다.\n그래서 4개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 백의 자리까지 나타냈더니 2900이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "2801",
+      "explanation": "2900이 되려면 2801부터 2900까지여야 합니다. 2800은 올림하면 2800이 되어 버립니다.\n따라서 가장 작은 수는 2801입니다.",
+      "standard": "6수01-02·03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "미만",
+        "context": "기록",
+        "format": "표",
+        "numberType": "소수"
+      },
+      "difficulty": 2,
+      "prompt": "표를 보고 기록이 11.5초 미만인 학생을 모두 고르세요.",
+      "visual": {
+        "kind": "table",
+        "spec": {
+          "caption": "우리 모둠 기록",
+          "headers": [
+            "이름",
+            "기록(초)"
+          ],
+          "rows": [
+            [
+              "소율",
+              "9.1"
+            ],
+            [
+              "민준",
+              "10.2"
+            ],
+            [
+              "수아",
+              "11.5"
+            ],
+            [
+              "예은",
+              "12.9"
+            ],
+            [
+              "하준",
+              "13.6"
+            ]
+          ]
+        }
+      },
+      "choices": [
+        "소율",
+        "민준",
+        "수아",
+        "예은",
+        "하준"
+      ],
+      "answer": [
+        "소율",
+        "민준"
+      ],
+      "explanation": "11.5초 미만인 수는 11.5보다 작은 수입니다. 11.5는 포함하지 않습니다.\n표에서 찾으면 소율(9.1초), 민준(10.2초) 입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "자연수",
+        "place": "천",
+        "format": "단답형"
+      },
+      "difficulty": 2,
+      "prompt": "77172를 버림하여 천의 자리까지 나타내면 얼마인가요?",
+      "answer": "77000",
+      "explanation": "천의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 77000입니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "백",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 버림하여 백의 자리까지 나타냈더니 1400이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "1499",
+      "explanation": "1400이 되려면 1400부터 1499까지여야 합니다. 1500부터는 버림해도 1500이 됩니다.\n따라서 가장 큰 수는 1499입니다.",
+      "standard": "6수01-02·03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "다른 것",
+        "place": "백"
+      },
+      "difficulty": 3,
+      "prompt": "다음 수를 백의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 다른 수는 어느 것인가요?",
+      "choices": [
+        "1345",
+        "1400",
+        "1556",
+        "1295"
+      ],
+      "answer": "1345",
+      "explanation": "1345는 올림 1400, 반올림 1300입니다.\n백의 자리 바로 아래 자리 숫자가 4이라서 반올림하면 내려가지만, 올림은 무조건 올라가므로 결과가 달라집니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-7": [
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "없음"
+      },
+      "difficulty": 1,
+      "prompt": "55 이상 62 이하인 자연수는 모두 몇 개인가요?",
+      "answer": "8",
+      "explanation": "55 이상이므로 55부터, 62 이하이므로 62까지입니다.\n55부터 62까지는 8개입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "10 이상인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 6,
+            "max": 14,
+            "step": 2,
+            "marks": [
+              {
+                "at": 10,
+                "type": "filled"
+              }
+            ],
+            "ray": "right"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 6,
+            "max": 14,
+            "step": 2,
+            "marks": [
+              {
+                "at": 10,
+                "type": "filled"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 6,
+            "max": 14,
+            "step": 2,
+            "marks": [
+              {
+                "at": 10,
+                "type": "hollow"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 6,
+            "max": 14,
+            "step": 2,
+            "marks": [
+              {
+                "at": 10,
+                "type": "hollow"
+              }
+            ],
+            "ray": "right"
+          }
+        }
+      ],
+      "answer": "가",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n10 이상인 수를 바르게 나타낸 것은 가입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "327을 버림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "320",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 320입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이상",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "소수"
+      },
+      "difficulty": 2,
+      "prompt": "다음 중 31.7 이상인 수를 모두 고르세요.",
+      "choices": [
+        "31.3",
+        "30.7",
+        "32.1",
+        "31.7",
+        "32.5",
+        "31.5"
+      ],
+      "answer": [
+        "32.1",
+        "31.7",
+        "32.5"
+      ],
+      "explanation": "31.7 이상인 수는 31.7과 같거나 31.7보다 큰 수입니다. 31.7도 포함합니다.\n그래서 32.1, 31.7, 32.5 입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "버림",
+        "numberType": "소수",
+        "place": "소수 첫째",
+        "format": "선택형"
+      },
+      "difficulty": 2,
+      "prompt": "6.55를 버림하여 소수 첫째 자리까지 나타내면 얼마인가요?",
+      "answer": "6.5",
+      "explanation": "소수 첫째 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리를 모두 버려서 6.5입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "6.6",
+        "6",
+        "6.5",
+        "6.4"
+      ],
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 백의 자리까지 나타냈더니 3900이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "3801",
+      "explanation": "3900이 되려면 3801부터 3900까지여야 합니다. 3800은 올림하면 3800이 되어 버립니다.\n따라서 가장 작은 수는 3801입니다.",
+      "standard": "6수01-02·03",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "반올림",
+        "place": "십",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 반올림하여 십의 자리까지 나타냈더니 790이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "794",
+      "explanation": "790이 되려면 785부터 794까지여야 합니다. 784는 내려가고, 795는 올라갑니다.\n따라서 가장 큰 수는 794입니다.",
+      "standard": "6수01-02·03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "두 범위",
+        "extra": "교집합"
+      },
+      "difficulty": 3,
+      "prompt": "가 상자에는 9 초과 24 미만인 수, 나 상자에는 14 초과 25 이하인 수를 넣습니다.\n두 상자에 모두 넣을 수 있는 자연수는 몇 개인가요?",
+      "answer": "9",
+      "explanation": "가 상자에 들어가는 자연수는 10부터 23까지,\n나 상자는 15부터 25까지입니다. 겹치는 수는 15부터 23까지 9개입니다.",
+      "standard": "6수01-02",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "상자 포장",
+        "ask": "값까지",
+        "post": "나머지",
+        "method": "버림"
+      },
+      "difficulty": 3,
+      "prompt": "쿠키 102개를 한 상자에 10개씩 담아 팔려고 합니다.\n상자에 담고 남는 쿠키은 몇 개인가요?",
+      "answer": "2",
+      "explanation": "10개가 안 되면 한 상자로 팔 수 없으므로 남는 것은 버립니다. 그래서 버림입니다.\n102 ÷ 10 = 10상자 하고 2개가 남습니다. 남는 쿠키은 2개입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-8": [
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "marks": [
+            {
+              "at": 3,
+              "type": "hollow"
+            }
+          ],
+          "ray": "right"
+        }
+      },
+      "choices": [
+        "3 초과인 수",
+        "3 이하인 수",
+        "3 미만인 수",
+        "3 이상인 수"
+      ],
+      "answer": "3 초과인 수",
+      "explanation": "점이 3에 색칠되지 않아(○) 있으므로 3을 포함하지 않고, 선이 오른쪽으로 뻗어 있습니다.\n따라서 3 초과인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이상",
+        "context": "요금",
+        "format": "OX"
+      },
+      "difficulty": 1,
+      "prompt": "3600원 이상인 물건은 할인을 받을 수 있습니다.\n3700원짜리 물건은 할인을 받을 수 있을까요?",
+      "choices": [
+        "받을 수 있다",
+        "받을 수 없다"
+      ],
+      "answer": "받을 수 있다",
+      "explanation": "3600 이상인 수는 3600과 같거나 3600보다 큰 수입니다. 3600도 포함합니다.\n3700은 여기에 속하므로 할인을 받을 수 있습니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "선택형"
+      },
+      "difficulty": 1,
+      "prompt": "633을 올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "640",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리에 0이 아닌 수가 있으므로 올려서 640입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "700",
+        "640",
+        "650",
+        "630"
+      ],
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "소수",
+        "bounds": "이상·미만",
+        "extra": "없음"
+      },
+      "difficulty": 2,
+      "prompt": "10.4 이상 10.9 미만인 소수 한 자리 수는 모두 몇 개인가요?",
+      "answer": "5",
+      "explanation": "10.4부터 10.9까지 0.1씩 뛰어 세면서, 10.4는 포함하고 10.9는 포함하지 않습니다.\n그래서 5개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "같은 것",
+        "place": "백"
+      },
+      "difficulty": 2,
+      "prompt": "다음 수를 백의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 같은 수는 어느 것인가요?",
+      "choices": [
+        "5655",
+        "5815",
+        "5715",
+        "5418"
+      ],
+      "answer": "5655",
+      "explanation": "5655는 올림 5700, 반올림 5700입니다.\n백의 자리 바로 아래 자리 숫자가 5이라서 반올림하면 올라갑니다. 올림도 올라가므로 결과가 같습니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "110 이상 114 이하인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 108,
+            "max": 116,
+            "step": 1,
+            "marks": [
+              {
+                "at": 110,
+                "type": "hollow"
+              },
+              {
+                "at": 114,
+                "type": "hollow"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 108,
+            "max": 116,
+            "step": 1,
+            "marks": [
+              {
+                "at": 110,
+                "type": "filled"
+              },
+              {
+                "at": 114,
+                "type": "hollow"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 108,
+            "max": 116,
+            "step": 1,
+            "marks": [
+              {
+                "at": 110,
+                "type": "filled"
+              },
+              {
+                "at": 114,
+                "type": "filled"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 108,
+            "max": 116,
+            "step": 1,
+            "marks": [
+              {
+                "at": 110,
+                "type": "hollow"
+              },
+              {
+                "at": 114,
+                "type": "filled"
+              }
+            ]
+          }
+        }
+      ],
+      "answer": "다",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n110 이상 114 이하인 수를 바르게 나타낸 것은 다입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "세 방법 전부",
+        "format": "같은 것",
+        "place": "백"
+      },
+      "difficulty": 2,
+      "prompt": "다음 수를 백의 자리까지 나타내려고 합니다.\n올림, 버림, 반올림한 결과가 모두 같은 수는 어느 것인가요?",
+      "choices": [
+        "7338",
+        "7360",
+        "7100",
+        "7265"
+      ],
+      "answer": "7100",
+      "explanation": "7100은 백의 자리 아래가 모두 0입니다.\n어림할 것이 없으므로 어떤 방법으로 어림해도 7100 그대로입니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 올림하여 백의 자리까지 나타냈더니 7900이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "7801",
+      "explanation": "7900이 되려면 7801부터 7900까지여야 합니다. 7800은 올림하면 7800이 되어 버립니다.\n따라서 가장 작은 수는 7801입니다.",
+      "standard": "6수01-02·03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "반올림",
+        "place": "천",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 반올림하여 천의 자리까지 나타냈더니 80000이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "79500",
+      "explanation": "80000이 되려면 79500부터 80499까지여야 합니다. 79499는 내려가고, 80500은 올라갑니다.\n따라서 가장 작은 수는 79500입니다.",
+      "standard": "6수01-02·03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-9": [
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "미만",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "자연수"
+      },
+      "difficulty": 1,
+      "prompt": "다음 중 800 미만인 수를 모두 고르세요.",
+      "choices": [
+        "800",
+        "740",
+        "920",
+        "880",
+        "760",
+        "680"
+      ],
+      "answer": [
+        "740",
+        "760",
+        "680"
+      ],
+      "explanation": "800 미만인 수는 800보다 작은 수입니다. 800은 포함하지 않습니다.\n그래서 740, 760, 680 입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "말→수직선",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "65 초과인 수를 수직선에 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라"
+      ],
+      "choiceVisuals": [
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 55,
+            "max": 75,
+            "step": 5,
+            "marks": [
+              {
+                "at": 65,
+                "type": "filled"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 55,
+            "max": 75,
+            "step": 5,
+            "marks": [
+              {
+                "at": 65,
+                "type": "hollow"
+              }
+            ],
+            "ray": "left"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 55,
+            "max": 75,
+            "step": 5,
+            "marks": [
+              {
+                "at": 65,
+                "type": "hollow"
+              }
+            ],
+            "ray": "right"
+          }
+        },
+        {
+          "kind": "numberline",
+          "spec": {
+            "min": 55,
+            "max": 75,
+            "step": 5,
+            "marks": [
+              {
+                "at": 65,
+                "type": "filled"
+              }
+            ],
+            "ray": "right"
+          }
+        }
+      ],
+      "answer": "다",
+      "explanation": "포함하는 수에는 색칠한 점(●), 포함하지 않는 수에는 색칠하지 않은 점(○)을 찍습니다.\n65 초과인 수를 바르게 나타낸 것은 다입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "단답형"
+      },
+      "difficulty": 1,
+      "prompt": "556을 반올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "560",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 6이므로 올려서 560입니다.",
+      "standard": "6수01-03",
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "소수",
+        "bounds": "이상·미만",
+        "extra": "없음"
+      },
+      "difficulty": 2,
+      "prompt": "9.3 이상 10 미만인 소수 한 자리 수는 모두 몇 개인가요?",
+      "answer": "7",
+      "explanation": "9.3부터 10까지 0.1씩 뛰어 세면서, 9.3는 포함하고 10는 포함하지 않습니다.\n그래서 7개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "올림",
+        "place": "백",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 올림하여 백의 자리까지 나타냈더니 7600이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "7600",
+      "explanation": "7600이 되려면 7501부터 7600까지여야 합니다. 7500은 올림하면 7500이 되어 버립니다.\n따라서 가장 큰 수는 7600입니다.",
+      "standard": "6수01-02·03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "배수",
+        "multiple": "5"
+      },
+      "difficulty": 2,
+      "prompt": "31 이상 38 이하인 자연수 중 5의 배수는 모두 몇 개인가요?",
+      "answer": "1",
+      "explanation": "31 이상이므로 31부터, 38 이하이므로 38까지입니다.\n31부터 38까지 중 그중 5의 배수만 세면 1개입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T7",
+      "params": {
+        "pair": "올림↔반올림",
+        "format": "같은 것",
+        "place": "십"
+      },
+      "difficulty": 2,
+      "prompt": "다음 수를 십의 자리까지 나타내려고 합니다.\n올림한 결과와 반올림한 결과가 같은 수는 어느 것인가요?",
+      "choices": [
+        "377",
+        "384",
+        "361",
+        "381"
+      ],
+      "answer": "377",
+      "explanation": "377은 올림 380, 반올림 380입니다.\n십의 자리 바로 아래 자리 숫자가 7이라서 반올림하면 올라갑니다. 올림도 올라가므로 결과가 같습니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "천",
+        "ask": "범위",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 버림하여 천의 자리까지 나타냈더니 46000이 되었습니다.\n어떤 수가 될 수 있는 범위를 바르게 나타낸 것은 어느 것인가요?",
+      "choices": [
+        "46000 이상 47000 이하",
+        "46000 이상 47000 미만",
+        "46000 초과 47000 이하",
+        "46001 이상 47001 미만"
+      ],
+      "answer": "46000 이상 47000 미만",
+      "explanation": "46000이 되려면 46000부터 46999까지여야 합니다. 47000부터는 버림해도 47000이 됩니다.\n이를 이상과 미만으로 쓰면 46000 이상 47000 미만입니다.",
+      "standard": "6수01-02·03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "버스 대수",
+        "ask": "값까지",
+        "post": "합산후어림",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "남학생 57명과 여학생 70명이 함께 버스를 타고 갑니다.\n버스 한 대에 35명씩 탈 때, 버스는 최소 몇 대 필요한가요?",
+      "answer": "4",
+      "explanation": "남는 학생도 버스를 타야 하므로 남는 사람이 생기면 한 대를 더 준비해야 합니다. 그래서 올림입니다.\n57 + 70 = 127(명), 127 ÷ 35 = 3대 하고 22명이 남습니다. 남는 22명도 타야 하므로 4대가 필요합니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-10": [
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "없음"
+      },
+      "difficulty": 1,
+      "prompt": "15 이상 22 이하인 자연수는 모두 몇 개인가요?",
+      "answer": "8",
+      "explanation": "15 이상이므로 15부터, 22 이하이므로 22까지입니다.\n15부터 22까지는 8개입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이상",
+        "context": "요금",
+        "format": "OX"
+      },
+      "difficulty": 1,
+      "prompt": "1200원 이상인 물건은 할인을 받을 수 있습니다.\n1300원짜리 물건은 할인을 받을 수 있을까요?",
+      "choices": [
+        "받을 수 없다",
+        "받을 수 있다"
+      ],
+      "answer": "받을 수 있다",
+      "explanation": "1200 이상인 수는 1200과 같거나 1200보다 큰 수입니다. 1200도 포함합니다.\n1300은 여기에 속하므로 할인을 받을 수 있습니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "선택형"
+      },
+      "difficulty": 1,
+      "prompt": "828을 올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "830",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리에 0이 아닌 수가 있으므로 올려서 830입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "840",
+        "820",
+        "830",
+        "900"
+      ],
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "양쪽"
+      },
+      "difficulty": 2,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 3,
+          "max": 10,
+          "step": 1,
+          "marks": [
+            {
+              "at": 5,
+              "type": "hollow"
+            },
+            {
+              "at": 8,
+              "type": "filled"
+            }
+          ]
+        }
+      },
+      "choices": [
+        "5 이상 8 이하인 수",
+        "5 초과 8 이하인 수",
+        "5 이상 8 미만인 수",
+        "5 초과 8 미만인 수"
+      ],
+      "answer": "5 초과 8 이하인 수",
+      "explanation": "5 쪽 점은 ○라서 포함하지 않습니다(초과). 8 쪽 점은 ●라서 포함합니다(이하).\n따라서 5 초과 8 이하인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "반올림",
+        "numberType": "자연수",
+        "place": "백",
+        "format": "단답형"
+      },
+      "difficulty": 2,
+      "prompt": "4751을 반올림하여 백의 자리까지 나타내면 얼마인가요?",
+      "answer": "4800",
+      "explanation": "백의 자리까지 나타내려면 그 아래 자리를 봅니다.\n바로 아래 자리 숫자가 5이므로 올려서 4800입니다.",
+      "standard": "6수01-03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "이하",
+        "context": "순수",
+        "format": "다중선택",
+        "numberType": "소수"
+      },
+      "difficulty": 2,
+      "prompt": "다음 중 85.1 이하인 수를 모두 고르세요.",
+      "choices": [
+        "85.5",
+        "85.3",
+        "84.9",
+        "86.1",
+        "85.1",
+        "84.7"
+      ],
+      "answer": [
+        "84.9",
+        "85.1",
+        "84.7"
+      ],
+      "explanation": "85.1 이하인 수는 85.1과 같거나 85.1보다 작은 수입니다. 85.1도 포함합니다.\n그래서 84.9, 85.1, 84.7 입니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "반올림",
+        "place": "백",
+        "ask": "최솟값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 반올림하여 백의 자리까지 나타냈더니 7900이 되었습니다.\n어떤 수가 될 수 있는 가장 작은 자연수를 구하세요.",
+      "answer": "7850",
+      "explanation": "7900이 되려면 7850부터 7949까지여야 합니다. 7849는 내려가고, 7950은 올라갑니다.\n따라서 가장 작은 수는 7850입니다.",
+      "standard": "6수01-02·03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "두 범위",
+        "extra": "교집합"
+      },
+      "difficulty": 3,
+      "prompt": "가 상자에는 25 이상 40 미만인 수, 나 상자에는 33 이상 45 이하인 수를 넣습니다.\n두 상자에 모두 넣을 수 있는 자연수는 몇 개인가요?",
+      "answer": "7",
+      "explanation": "가 상자에 들어가는 자연수는 25부터 39까지,\n나 상자는 33부터 45까지입니다. 겹치는 수는 33부터 39까지 7개입니다.",
+      "standard": "6수01-02",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "묶음 구매",
+        "ask": "값까지",
+        "post": "묶음수×단가",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "스티커 428장이 필요합니다. 스티커는 25장씩 한 묶음에 700원입니다.\n스티커를 사려면 최소 얼마가 필요한가요?",
+      "answer": "12600",
+      "explanation": "25장이 안 되는 만큼도 사려면 한 묶음을 더 사야 합니다. 그래서 올림입니다.\n428 ÷ 25 = 17묶음 하고 3장이 남으므로 18묶음이 필요합니다.\n18 × 700 = 12600(원)입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ],
+  "golden-11": [
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "이상·이하",
+        "extra": "없음"
+      },
+      "difficulty": 1,
+      "prompt": "13 이상 19 이하인 자연수는 모두 몇 개인가요?",
+      "answer": "7",
+      "explanation": "13 이상이므로 13부터, 19 이하이므로 19까지입니다.\n13부터 19까지는 7개입니다.",
+      "standard": "6수01-02",
+      "id": "q1",
+      "points": 1
+    },
+    {
+      "templateId": "T2",
+      "params": {
+        "direction": "수직선→말",
+        "boundary": "한쪽"
+      },
+      "difficulty": 1,
+      "prompt": "수직선에 나타낸 수의 범위를 바르게 말한 것은 어느 것인가요?",
+      "visual": {
+        "kind": "numberline",
+        "spec": {
+          "min": 35,
+          "max": 55,
+          "step": 5,
+          "marks": [
+            {
+              "at": 45,
+              "type": "hollow"
+            }
+          ],
+          "ray": "left"
+        }
+      },
+      "choices": [
+        "45 초과인 수",
+        "45 이하인 수",
+        "45 미만인 수",
+        "45 이상인 수"
+      ],
+      "answer": "45 미만인 수",
+      "explanation": "점이 45에 색칠되지 않아(○) 있으므로 45를 포함하지 않고, 선이 왼쪽으로 뻗어 있습니다.\n따라서 45 미만인 수입니다.",
+      "standard": "6수01-02",
+      "id": "q2",
+      "points": 1
+    },
+    {
+      "templateId": "T4",
+      "params": {
+        "method": "올림",
+        "numberType": "자연수",
+        "place": "십",
+        "format": "선택형"
+      },
+      "difficulty": 1,
+      "prompt": "904를 올림하여 십의 자리까지 나타내면 얼마인가요?",
+      "answer": "910",
+      "explanation": "십의 자리까지 나타내려면 그 아래 자리를 봅니다.\n아래 자리에 0이 아닌 수가 있으므로 올려서 910입니다.",
+      "standard": "6수01-03",
+      "choices": [
+        "900",
+        "1000",
+        "920",
+        "910"
+      ],
+      "id": "q3",
+      "points": 1
+    },
+    {
+      "templateId": "T3",
+      "params": {
+        "numberType": "자연수",
+        "bounds": "초과·이하",
+        "extra": "홀짝",
+        "parity": "홀수"
+      },
+      "difficulty": 2,
+      "prompt": "30 초과 46 이하인 자연수 중 홀수는 모두 몇 개인가요?",
+      "answer": "8",
+      "explanation": "30 초과이므로 31부터, 46 이하이므로 46까지입니다.\n31부터 46까지 중 그중 홀수만 세면 8개입니다.",
+      "standard": "6수01-02",
+      "id": "q4",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "백",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 2,
+      "prompt": "어떤 자연수를 버림하여 백의 자리까지 나타냈더니 7400이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "7499",
+      "explanation": "7400이 되려면 7400부터 7499까지여야 합니다. 7500부터는 버림해도 7500이 됩니다.\n따라서 가장 큰 수는 7499입니다.",
+      "standard": "6수01-02·03",
+      "id": "q5",
+      "points": 2
+    },
+    {
+      "templateId": "T1",
+      "params": {
+        "term": "초과",
+        "context": "요금",
+        "format": "OX"
+      },
+      "difficulty": 2,
+      "prompt": "1300원 초과인 물건은 할인을 받을 수 있습니다.\n1300원짜리 물건은 할인을 받을 수 있을까요?",
+      "choices": [
+        "받을 수 없다",
+        "받을 수 있다"
+      ],
+      "answer": "받을 수 없다",
+      "explanation": "1300 초과인 수는 1300보다 큰 수입니다. 1300은 포함하지 않습니다.\n1300은 여기에 속하지 않으므로 할인을 받을 수 없습니다.",
+      "standard": "6수01-02",
+      "id": "q6",
+      "points": 2
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "상자 포장",
+        "ask": "값까지",
+        "post": "없음",
+        "method": "버림"
+      },
+      "difficulty": 2,
+      "prompt": "사탕 335개를 한 상자에 20개씩 담아 팔려고 합니다.\n팔 수 있는 상자는 최대 몇 상자인가요?",
+      "answer": "16",
+      "explanation": "20개가 안 되면 한 상자로 팔 수 없으므로 남는 것은 버립니다. 그래서 버림입니다.\n335 ÷ 20 = 16상자 하고 15개가 남습니다. 남는 것으로는 상자를 채울 수 없으므로 16상자입니다.",
+      "standard": "6수01-03",
+      "id": "q7",
+      "points": 2
+    },
+    {
+      "templateId": "T5",
+      "params": {
+        "method": "버림",
+        "place": "천",
+        "ask": "최댓값",
+        "numberType": "자연수"
+      },
+      "difficulty": 3,
+      "prompt": "어떤 자연수를 버림하여 천의 자리까지 나타냈더니 38000이 되었습니다.\n어떤 수가 될 수 있는 가장 큰 자연수를 구하세요.",
+      "answer": "38999",
+      "explanation": "38000이 되려면 38000부터 38999까지여야 합니다. 39000부터는 버림해도 39000이 됩니다.\n따라서 가장 큰 수는 38999입니다.",
+      "standard": "6수01-02·03",
+      "id": "q8",
+      "points": 3
+    },
+    {
+      "templateId": "T6",
+      "params": {
+        "scenario": "묶음 구매",
+        "ask": "값까지",
+        "post": "묶음수×단가",
+        "method": "올림"
+      },
+      "difficulty": 3,
+      "prompt": "도화지 271장이 필요합니다. 도화지는 20장씩 한 묶음에 700원입니다.\n도화지를 사려면 최소 얼마가 필요한가요?",
+      "answer": "9800",
+      "explanation": "20장이 안 되는 만큼도 사려면 한 묶음을 더 사야 합니다. 그래서 올림입니다.\n271 ÷ 20 = 13묶음 하고 11장이 남으므로 14묶음이 필요합니다.\n14 × 700 = 9800(원)입니다.",
+      "standard": "6수01-03",
+      "id": "q9",
+      "points": 3
+    }
+  ]
+}

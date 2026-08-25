@@ -33,12 +33,21 @@ export type MatchResult = {
   winner: StudentId | null
   /** 끊김으로 진 경우 */
   byDisconnect?: boolean
+  /**
+   * 이 판에서 응원단장이 걸어 준 참가자들.
+   * 세션 레이어는 "누가 누구한테 걸었나"만 알려주고,
+   * **그게 점수로 얼마가 되는지는 게임 모듈이 정한다.**
+   */
+  bettedOn?: StudentId[]
 }
 
 export type TeamScore = {
   teamId: TeamId
-  /** 팀 승수 합계 */
-  wins: number
+  /**
+   * 팀 점수 합계. **승수가 아니다** — 배팅이 맞으면 한 판이 2점이 될 수 있다.
+   * 화면에도 "승" 이 아니라 "점" 으로 쓴다.
+   */
+  points: number
   /** 보드 뷰에 띄울 한 줄 요약 */
   summary?: string
 }

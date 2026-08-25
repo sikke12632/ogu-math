@@ -182,7 +182,7 @@ export function BoardView() {
 
   // result
   const ranked = [...teams].sort(
-    (a, b) => (scores.find((s) => s.teamId === b.id)?.wins ?? 0) - (scores.find((s) => s.teamId === a.id)?.wins ?? 0),
+    (a, b) => (scores.find((s) => s.teamId === b.id)?.points ?? 0) - (scores.find((s) => s.teamId === a.id)?.points ?? 0),
   )
   return (
     <div className="board">
@@ -194,7 +194,7 @@ export function BoardView() {
             <li key={t.id}>
               <span className="board-rank-no">{i + 1}</span>
               <span className="board-rank-name">{t.name}팀</span>
-              <span className="board-rank-wins">{scores.find((s) => s.teamId === t.id)?.wins ?? 0}승</span>
+              <span className="board-rank-wins">{scores.find((s) => s.teamId === t.id)?.points ?? 0}점</span>
               <span className="board-rank-mvp">{mvp ? `MVP ${nameOf(session, mvp)}` : ''}</span>
             </li>
           )

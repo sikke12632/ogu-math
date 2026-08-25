@@ -111,6 +111,11 @@ a.ghost { text-decoration: none; display: inline-block; background: var(--card);
 .cheerbtn span { font-size: 11px; color: var(--mark); font-weight: 700; }
 .cheerbtn.sent { background: var(--mark); color: #fff; border-color: var(--mark); }
 .cheerbtn.sent span { color: #fff; }
+.cheerbtn:disabled { opacity: .4; }
+
+/* 배팅 — 응원단장 화면 */
+.betstate { margin: 6px 0 0; font-size: 15px; line-height: 1.5; }
+.betmark { color: var(--mark); font-size: 12px; }
 
 /* ── 보드 뷰 (전자칠판) ─────────────────────── */
 
@@ -338,6 +343,12 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
   font-size: 13px; color: var(--warn); background: #fff7ed;
   border: 1px solid #fed7aa; padding: 3px 10px; border-radius: 999px;
 }
+/* 응원단장이 나한테 걸었을 때 뜨는 띠 */
+.duel-bet {
+  margin: 0; padding: 9px 14px; border-radius: 10px; font-size: 15px;
+  background: #fdf3d6; border: 1px solid #f2c14e; color: #5b4408;
+}
+.duel-bet b { font-size: 17px; margin-right: 8px; }
 .duel-vs { text-align: center; font-size: 13px; color: var(--ink-soft); margin: -4px 0; letter-spacing: .2em; }
 
 .duel-score { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 15px; }

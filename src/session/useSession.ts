@@ -124,6 +124,25 @@ export function isCheerleader(session: Session | null, round: number, me: Studen
   return (r?.cheerleaders ?? []).includes(me)
 }
 
+/** 이번 판에 내가(응원단장이) 건 친구. 아직 안 걸었으면 null */
+export function myBet(session: Session | null, round: number, me: StudentId): StudentId | null {
+  return session?.game?.bets?.[String(round)]?.[me] ?? null
+}
+
+/**
+ * 이번 판에 나한테 건 사람이 있나.
+ * **누가 걸었는지는 알려주지 않는다** — 지면 누구 때문에 날린 건지 서로 알게 된다.
+ */
+export function isBetOn(session: Session | null, round: number, me: StudentId): boolean {
+  const bets = session?.game?.bets?.[String(round)] ?? {}
+  return Object.values(bets).includes(me)
+}
+
+/** 이번 판에 응원단장들이 건 사람 전부 */
+function bettedInRound(session: Session | null, round: number): StudentId[] {
+  return Object.values(session?.game?.bets?.[String(round)] ?? {})
+}
+
 /** 팀 점수. 게임 모듈의 resolve() 를 통해 나온다 */
 export function useTeamScores(session: Session | null): TeamScore[] {
   return useMemo(() => {
@@ -131,18 +150,22 @@ export function useTeamScores(session: Session | null): TeamScore[] {
     if (teams.length === 0) return []
     const results: MatchResult[] = allMatches(session)
       .filter((m) => m.winner)
-      .map((m) => ({
-        matchId: m.id,
-        round: m.round,
-        participants: [...m.players],
-        winner: m.winner === 'draw' ? null : (m.winner as StudentId),
-        byDisconnect: Boolean(m.forfeit),
-      }))
+      .map((m) => {
+        const backed = bettedInRound(session, m.round)
+        return {
+          matchId: m.id,
+          round: m.round,
+          participants: [...m.players],
+          winner: m.winner === 'draw' ? null : (m.winner as StudentId),
+          byDisconnect: Boolean(m.forfeit),
+          bettedOn: m.players.filter((p) => backed.includes(p)),
+        }
+      })
     try {
       const game = getGame(session?.meta.gameId ?? 'draw-duel')
       return game.resolve(results, teams)
     } catch {
-      return tallyTeamWins(teams, allMatches(session)).map((t) => ({ teamId: t.teamId, wins: t.wins }))
+      return tallyTeamWins(teams, allMatches(session)).map((t) => ({ teamId: t.teamId, points: t.wins }))
     }
   }, [session])
 }

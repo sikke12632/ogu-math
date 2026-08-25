@@ -27,8 +27,11 @@ type Props = {
   onChoose: (turn: number, choice: 'draw' | 'stop') => void
   onResult: (winner: StudentId | 'draw') => void
   onForfeit: (loser: StudentId, winner: StudentId) => void
-  /** 응원단장이 보낸 응원 */
-  cheerAt?: number
+  /**
+   * 이번 판에 응원단장이 나한테 걸었나.
+   * **누가 걸었는지는 넘기지 않는다** — 지면 누구 돈을 날렸는지 서로 알게 된다.
+   */
+  betOn?: boolean
   roundLabel: string
 }
 
@@ -44,7 +47,7 @@ export function DrawDuel(props: Props) {
   const reportedRef = useRef(false)
   const [deadline, setDeadline] = useState<{ key: string; at: number } | null>(null)
   const [now, setNow] = useState(Date.now())
-  const [cheer, setCheer] = useState(false)
+  const [betPop, setBetPop] = useState(false)
 
   const opp = useMemo(() => opponentOf({ players: match.players } as GameState, me), [match.players, me])
   const state = useMemo(
@@ -191,14 +194,16 @@ export function DrawDuel(props: Props) {
     onResult(state.winner)
   }, [state.over, state.winner, match.winner, match.players, me, onResult])
 
-  /* ── 응원 ─────────────────────────────────────── */
+  /* ── 배팅 ─────────────────────────────────────── */
 
+  // 배팅은 판마다 따로 저장되므로, 여기 true 면 반드시 '이번 판' 것이다.
+  // 새로고침해서 다시 들어와도 지난 판 배팅이 유령처럼 뜨지 않는다.
   useEffect(() => {
-    if (!props.cheerAt) return
-    setCheer(true)
-    const t = setTimeout(() => setCheer(false), 1800)
+    if (!props.betOn) return
+    setBetPop(true)
+    const t = setTimeout(() => setBetPop(false), 2600)
     return () => clearTimeout(t)
-  }, [props.cheerAt])
+  }, [props.betOn])
 
   /* ── 그리기 ───────────────────────────────────── */
 
@@ -225,13 +230,13 @@ export function DrawDuel(props: Props) {
     : null
 
   return (
-    <div className={`duel${cheer ? ' cheered' : ''}`}>
+    <div className={`duel${props.betOn ? ' cheered' : ''}`}>
       {/* 왼쪽은 통, 오른쪽은 점수와 버튼.
           크롬북은 가로가 넓고 세로가 짧다. 위아래로 쌓으면 글씨를 키울 수가 없다 */}
       <div className="duel-grid">
         <div className="duel-stage">
           <canvas ref={canvasRef} />
-          {cheer && <div className="cheer-pop">응원이 왔어! 힘내!</div>}
+          {betPop && <div className="cheer-pop">누가 너한테 걸었어! 힘내!</div>}
         </div>
 
         <div className="duel-side">
@@ -239,6 +244,12 @@ export function DrawDuel(props: Props) {
             {props.roundLabel}
             {!opponentConnected && !state.over && <span className="duel-warn">상대 연결 확인 중</span>}
           </p>
+
+          {props.betOn && (
+            <p className="duel-bet">
+              <b>이 판은 2점</b> 응원단장이 나한테 걸었다
+            </p>
+          )}
 
           <Score
             label={nameOf(opp)}

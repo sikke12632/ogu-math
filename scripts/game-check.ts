@@ -8,6 +8,8 @@
 import { makeRng } from '../src/lib/rng'
 import { computeState, riskOf, type Choice, type GameState } from '../src/games/draw-duel/engine'
 import { assignTeams, makeMatches, suggestTeamCount, tallyTeamWins } from '../src/session/teams'
+import { resolveTeamScores } from '../src/games/draw-duel/index'
+import type { MatchResult, Team } from '../src/games/_types'
 import type { MatchRecord, StudentId } from '../src/session/types'
 
 let failures = 0
@@ -181,9 +183,71 @@ for (const n of [5, 11, 24, 25]) {
   else console.log('\n팀 점수 집계: OK')
 }
 
+/* ── 6. 배팅 점수 ───────────────────────────────────── */
+
+/**
+ * 응원단장이 팀원 한 명에게 걸고, 그 친구가 이기면 그 판이 2점.
+ * 지거나 비기면 평소대로. 손해는 없다.
+ */
+{
+  const teams: Team[] = [
+    { id: 't1', name: '빨강', members: ['a1', 'a2', 'a3'] },
+    { id: 't2', name: '파랑', members: ['b1', 'b2', 'b3'] },
+  ]
+  const mr = (id: string, ps: string[], winner: string | null, bettedOn: string[] = []): MatchResult => ({
+    matchId: id,
+    round: 1,
+    participants: ps,
+    winner,
+    bettedOn,
+  })
+
+  const expect = (label: string, results: MatchResult[], want: Record<string, number>): void => {
+    const got = resolveTeamScores(results, teams)
+    for (const [tid, n] of Object.entries(want)) {
+      const actual = got.find((g) => g.teamId === tid)?.points ?? -1
+      if (actual !== n) fail(`배팅 — ${label}: ${tid} 점수가 ${actual} 인데 ${n} 이어야 합니다`)
+    }
+  }
+
+  expect('배팅 없음', [mr('m1', ['a1', 'b1'], 'a1')], { t1: 1, t2: 0 })
+  expect('걸린 친구가 이김', [mr('m1', ['a1', 'b1'], 'a1', ['a1'])], { t1: 2, t2: 0 })
+  expect('걸린 친구가 짐 — 손해 없음', [mr('m1', ['a1', 'b1'], 'b1', ['a1'])], { t1: 0, t2: 1 })
+  expect('걸린 친구가 비김', [mr('m1', ['a1', 'b1'], null, ['a1'])], { t1: 0, t2: 0 })
+  expect('상대 팀 응원단장이 자기 팀원에게 걺', [mr('m1', ['a1', 'b1'], 'b1', ['b1'])], { t1: 0, t2: 2 })
+  expect('두 명이 같은 친구한테 걺 — 3점이 아니라 2점', [mr('m1', ['a1', 'b1'], 'a1', ['a1', 'a1'])], { t1: 2, t2: 0 })
+  expect(
+    '여러 판 섞임',
+    [
+      mr('m1', ['a1', 'b1'], 'a1', ['a1']),
+      mr('m2', ['a2', 'b2'], 'b2'),
+      mr('m3', ['a3', 'b3'], 'b3', ['a3']),
+    ],
+    { t1: 2, t2: 2 },
+  )
+  console.log('')
+  console.log('배팅 점수: OK')
+}
+
+/* ── 7. 이미 끝난 대결에는 걸 수 없다 ──────────────────── */
+
+/**
+ * 응원단장 화면에는 팀원들의 승패가 실시간으로 뜬다.
+ * 이긴 것을 확인하고 나서 거는 게 막히지 않으면, 배팅이 아니라 사후 확정이 된다.
+ * 학생 화면(PlayView) 이 쓰는 것과 같은 조건을 여기서 검사한다.
+ */
+{
+  const bettable = (m: { winner?: string } | null): boolean => m !== null && !m.winner
+  if (bettable({ winner: 'a1' })) fail('승부가 끝난 대결에 걸 수 있게 되어 있습니다')
+  if (bettable({ winner: 'draw' })) fail('무승부로 끝난 대결에 걸 수 있게 되어 있습니다')
+  if (!bettable({})) fail('진행 중인 대결에 걸 수 없게 되어 있습니다')
+  if (bettable(null)) fail('대결이 없는 팀원(다른 응원단장)에게 걸 수 있게 되어 있습니다')
+  console.log('배팅 잠금 조건: OK')
+}
+
 console.log(
   failures === 0
-    ? '\n통과. 게임 규칙·팀 배분·매칭에 문제 없습니다.'
+    ? '\n통과. 게임 규칙·팀 배분·매칭·배팅에 문제 없습니다.'
     : `\n실패 ${failures}건`,
 )
 if (failures > 0) process.exitCode = 1

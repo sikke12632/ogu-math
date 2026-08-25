@@ -420,7 +420,7 @@ export function TeacherConsole() {
             <ul className="scorelist">
               {teams.map((t) => (
                 <li key={t.id}>
-                  <b>{t.name}팀</b> {scores.find((s) => s.teamId === t.id)?.wins ?? 0}승
+                  <b>{t.name}팀</b> {scores.find((s) => s.teamId === t.id)?.points ?? 0}점
                   <span className="dim"> · MVP {mvpOf(t, session.game?.mvp ?? {}) ? realNameOf(session, mvpOf(t, session.game?.mvp ?? {})!) : '없음'}</span>
                 </li>
               ))}
