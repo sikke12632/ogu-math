@@ -7,13 +7,26 @@ import type { Problem, Visual } from '../units/_types'
 
 export type Answer = string | string[] | null
 
+/**
+ * 답 뒤에 붙는 단위. **아이들은 거의 다 단위를 쓴다.**
+ * "15" 만 정답으로 두면 "15분" 이라고 쓴 아이가 맞게 풀고도 틀린다.
+ *
+ * **긴 것을 먼저 적는다.** 정규식은 앞에서부터 맞는 것을 쓰므로,
+ * `m` 을 `mL` 보다 앞에 두면 "1000mL" 에서 `L` 만 떼고 "1000m" 이 남는다.
+ */
+const UNITS = [
+  '상자', '묶음', '시간', 'mL', 'cm', 'km', 'kg',
+  '개', '명', '대', '장', '원', '권', '분', '초', '쪽', '마리', '자루', '송이',
+  'L', 'm', 'g',
+].join('|')
+
 /** 단답형 비교용 정리. 공백·쉼표·단위를 떼고, 숫자면 숫자로 견준다 */
 function normalize(s: string): string {
   const t = s
     .trim()
     .replace(/\s+/g, '')
     .replace(/,/g, '')
-    .replace(/(개|명|대|장|상자|원|권|묶음|cm|kg|km|초)$/u, '')
+    .replace(new RegExp(`(${UNITS})$`, 'u'), '')
   const n = Number(t)
   return Number.isFinite(n) && t !== '' ? String(n) : t
 }
