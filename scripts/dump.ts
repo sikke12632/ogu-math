@@ -28,7 +28,17 @@ const UNIT = UNITS[UNIT_ID]!
 const TEMPLATES = UNIT.templates
 import type { Difficulty, Draft, NumberLineSpec, TableSpec, Visual } from '../src/units/_types'
 
-const TARGET = 100
+/**
+ * 유형마다 몇 개까지 뽑을지 — `npm run dump -- 5-2-2 3 2`
+ *
+ * 100문항을 통째로 보면 같은 유형이 열 번씩 나와서 훑기가 힘들다.
+ * 유형별 두세 개면 "이 유형이 어떤 문제인가" 를 보기에 충분하다.
+ */
+const PER: number | null = Number.isInteger(Number(process.argv[4])) && Number(process.argv[4]) > 0
+  ? Number(process.argv[4])
+  : null
+
+const TARGET = PER ? 400 : 100
 
 /* ── 파라미터 조합을 고루 덮게 모은다 ─────────────────── */
 
@@ -36,6 +46,8 @@ type Row = Draft & { seq: number }
 
 const seen = new Set<string>()
 const picked: Draft[] = []
+/** 유형별로 몇 개 담았는지 (PER 제한용) */
+const count: Record<string, number> = {}
 /**
  * 난이도를 지정해 뽑을 수 있다 — `npm run dump -- 5-2-2 3`
  * 상 난이도만 몰아 보고 싶을 때가 있다. 심화 유형은 상만 지원하므로
@@ -66,14 +78,27 @@ for (let i = 0; i < 6000 && picked.length < TARGET; i++) {
     continue
   }
   if (!d) continue
-  const key = `${d.templateId}|${d.difficulty}|${Object.values(d.params).join('|')}`
+  /*
+   * 평소에는 **파라미터 조합**으로 중복을 거른다 — 조합을 고루 덮는 것이 목적이라서다.
+   * 유형별 제한이 걸리면 목적이 달라진다. 조합이 하나뿐인 유형(T12 같은)도
+   * 두 개는 봐야 하므로 그때는 **발문**으로만 거른다.
+   */
+  // 발문만으로는 안 된다 — T9 는 발문이 늘 '계산이 잘못된 것은?' 하나뿐이라
+  // 발문으로 거르면 한 개밖에 안 담긴다. 보기까지 붙여서 본다
+  const key = PER
+    ? `${d.prompt}|${(d.choices ?? []).join('|')}`
+    : `${d.templateId}|${d.difficulty}|${Object.values(d.params).join('|')}`
   if (seen.has(key)) continue
+  if (PER && (count[d.templateId] ?? 0) >= PER) continue
   seen.add(key)
+  count[d.templateId] = (count[d.templateId] ?? 0) + 1
   picked.push(d)
+  // 유형마다 PER 개씩 다 찼으면 그만 돈다
+  if (PER && TEMPLATES.every((t) => !slots.some((sl) => sl.t.id === t.id) || (count[t.id] ?? 0) >= PER)) break
 }
 
-// 2차: 100개가 안 차면 조합 중복을 허용해 채운다
-for (let i = 0; i < 6000 && picked.length < TARGET; i++) {
+// 2차: 100개가 안 차면 조합 중복을 허용해 채운다. 유형별 제한이 있으면 건너뛴다
+for (let i = 0; !PER && i < 6000 && picked.length < TARGET; i++) {
   const slot = slots[i % slots.length]!
   const rng = makeRng(`dump2|${slot.t.id}|${slot.d}|${i}`)
   try {
