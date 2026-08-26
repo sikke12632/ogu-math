@@ -130,7 +130,18 @@ export async function createSession(o: CreateOptions): Promise<{ sessionId: stri
   // 한 번에 쓴다. 중간에 끊겨서 반쪽짜리 세션이 남는 일을 막는다
   const batch = writeBatch(db)
   batch.set(doc(db, SESSIONS, sessionId), { meta, teams: {}, game: null })
-  batch.set(doc(db, SESSIONS, sessionId, 'parts', 'problems'), { problems: o.problems })
+  // **문항은 글자 한 덩어리로 저장한다.**
+  //
+  // Firestore 는 **배열 안에 배열**을 못 넣는다. 1단원 표 문항의 `rows: string[][]`
+  // 가 딱 그 모양이라, 표가 뽑힌 세트를 만들면 통째로 거부당한다.
+  // 2026-08-25 수업 중에 실제로 터졌다 — 표가 안 뽑힌 날에는 멀쩡했다.
+  //
+  // 표 하나만 고쳐도 되지만, 앞으로 어떤 단원이 어떤 모양을 넣을지 알 수 없다.
+  // 문항은 만들 때 한 번 쓰고 통째로 읽기만 하므로, 글자로 담아 두면
+  // **모양이 무엇이든 안전하다.** 9문항이면 20KB 안쪽이라 크기도 문제없다.
+  batch.set(doc(db, SESSIONS, sessionId, 'parts', 'problems'), {
+    problemsJson: JSON.stringify(o.problems),
+  })
 
   // 명단은 이름을 그대로 키로 쓰지 않는다. 동명이인과 특수문자 때문에 번호를 붙인다
   o.names.forEach((name, i) => {
@@ -249,7 +260,17 @@ export function watchSession(
       )
       stops.push(
         onSnapshot(doc(db, SESSIONS, sessionId, 'parts', 'problems'), (d) => {
-          parts.problems = d.exists() ? ((d.data() as { problems: Problem[] }).problems ?? []) : []
+          // 글자로 담은 것을 먼저 본다. 예전 세션은 배열로 들어 있으므로 그것도 받는다
+          const v = d.exists() ? (d.data() as { problemsJson?: string; problems?: Problem[] }) : null
+          if (v?.problemsJson) {
+            try {
+              parts.problems = JSON.parse(v.problemsJson) as Problem[]
+            } catch {
+              parts.problems = []
+            }
+          } else {
+            parts.problems = v?.problems ?? []
+          }
           emit()
         }, fail),
       )
