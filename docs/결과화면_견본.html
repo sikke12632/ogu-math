@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>결과 화면 견본</title>
+<!--
+  전자칠판 결과 화면이 어떻게 보일지 미리 보는 견본이다.
+  실제 앱과 같은 CSS 를 그대로 붙여 넣었다.
+  새로고침하면 색종이가 다시 뿌려진다.
+-->
+<style>
+body { margin:0; background:#0e141c; color:#e9eef5; font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif; }
+.board { padding: 24px; }
+.board-sub { color:#8ba2bd; font-size: clamp(14px,1.4vw,20px); }
+.board-pad { padding: 0 24px; }
+.board-rank { list-style:none; margin:0; padding:0; display:grid; gap:14px; }
+.board-rank li { display:grid; align-items:baseline; gap:18px; background:#18212d; border-radius:14px; padding:18px 24px; }
+.board-rank-name { font-size:40px; }
+.board-rank-wins { font-size:30px; font-family:ui-monospace,monospace; }
+.board-rank-mvp { color:#ffd76a; font-size:22px; }
+.board-corner { position:fixed; right:22px; bottom:18px; margin:0; font-size:clamp(15px,1.5vw,22px); color:rgba(255,255,255,.55); }
+.board-corner b { color:#fff; font-size:1.5em; font-weight:900; margin-left:8px; letter-spacing:.12em; font-family:ui-monospace,monospace; }
+/* ── 결과 화면 — 우승 팀 ──────────────────────────────
+   등수만 죽 늘어놓으면 아이들이 아무 반응을 안 한다.
+   우승 팀을 크게 세우고 이름이 하나씩 튀어나오게 한다.
+   **개인 점수·등수는 여기에 안 띄운다.** 팀 이름·팀 점수·명단·MVP 까지만. */
+
+.board-result { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+/* 색종이는 화면 전체에 깔되 글자를 가리지 않는다 */
+.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+
+.win { position: relative; z-index: 3; text-align: center; }
+.win-eyebrow { font-size: clamp(16px, 1.6vw, 24px); letter-spacing: .3em; color: #8ba2bd; margin: 0 0 6px; }
+.win-trophy { font-size: clamp(56px, 8vw, 120px); margin: 0; line-height: 1; animation: trophy .9s cubic-bezier(.2,1.5,.4,1) both; }
+.win-name { font-size: clamp(48px, 9vw, 140px); font-weight: 900; margin: 4px 0 0; line-height: 1.05; animation: winpop .7s cubic-bezier(.2,1.4,.4,1) .15s both; }
+.win-score { font-size: clamp(28px, 4vw, 60px); font-weight: 800; color: #e9eef5; margin: 2px 0 18px; font-family: ui-monospace, monospace; animation: winpop .6s ease .3s both; }
+
+.win-members { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center; max-width: 900px; }
+.win-members li {
+  font-size: clamp(20px, 2.4vw, 36px); font-weight: 700; color: #fff;
+  background: rgba(255,255,255,.09); border-radius: 999px; padding: 8px 20px;
+  animation: winpop .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+.win-mvp { font-size: clamp(18px, 2vw, 30px); color: #ffd76a; margin: 0; }
+.win-mvp b { letter-spacing: .16em; margin-right: 10px; }
+
+/* 나머지 팀은 작게 한 줄씩. 우승이 묻히면 안 된다 */
+.board-rank.rest { position: relative; z-index: 3; margin-top: 26px; gap: 8px; opacity: .78; }
+.board-rank.rest li { grid-template-columns: 1fr 120px 1fr; padding: 10px 20px; }
+.board-rank.rest .board-rank-name { font-size: clamp(20px, 2vw, 28px); }
+.board-rank.rest .board-rank-wins { font-size: clamp(18px, 1.8vw, 26px); }
+
+@keyframes trophy {
+  from { transform: translateY(-60px) scale(.4) rotate(-18deg); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
+@keyframes winpop {
+  from { transform: scale(.7); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .win-trophy, .win-name, .win-score, .win-members li { animation: none }
+}
+
+</style></head>
+<body>
+<div class="board board-result">
+  <canvas class="confetti" id="cf"></canvas>
+  <div class="win">
+    <p class="win-eyebrow">오늘의 우승</p>
+    <p class="win-trophy">🏆</p>
+    <h1 class="win-name" style="color:#ef5350">빨강팀</h1>
+    <p class="win-score">12점</p>
+    <ul class="win-members">
+      <li style="animation-delay:.35s">🦊 여우</li>
+      <li style="animation-delay:.47s">🐻 곰돌이</li>
+      <li style="animation-delay:.59s">지민</li>
+      <li style="animation-delay:.71s">🚀 로켓</li>
+      <li style="animation-delay:.83s">🐧 펭귄</li>
+      <li style="animation-delay:.95s">서준</li>
+    </ul>
+    <p class="win-mvp"><b>MVP</b> 🦊 여우</p>
+  </div>
+  <ol class="board-rank rest" start="2">
+    <li><span class="board-rank-name">파랑팀</span><span class="board-rank-wins">9점</span><span class="board-rank-mvp">MVP 🐼 판다</span></li>
+    <li><span class="board-rank-name">노랑팀</span><span class="board-rank-wins">7점</span><span class="board-rank-mvp"></span></li>
+    <li><span class="board-rank-name">초록팀</span><span class="board-rank-wins">5점</span><span class="board-rank-mvp">MVP 하준</span></li>
+  </ol>
+  <p class="board-sub board-pad">틀린 문제는 각자 기기에서 확인하세요</p>
+  <p class="board-corner">다시 들어오려면 <b>4QCQ25</b></p>
+</div>
+<script>
+const COLORS = ['#ef5350', '#42a5f5', '#ffca28', '#66bb6a', '#ab47bc', '#ffa726']
+
+
+const cv = document.getElementById('cf')
+const ctx = cv.getContext('2d')
+const dpr = Math.min(window.devicePixelRatio || 1, 2)
+function resize(){ cv.width = Math.round(cv.clientWidth*dpr); cv.height = Math.round(cv.clientHeight*dpr) }
+resize(); addEventListener('resize', resize)
+const accent = '#ef5350'
+const palette = [accent, accent, ...COLORS]
+const w = () => cv.clientWidth, h = () => cv.clientHeight
+const pieces = Array.from({length:160}, () => ({
+  x: Math.random()*w(), y: -Math.random()*h()*0.8-20,
+  vx:(Math.random()-0.5)*1.6, vy:1.6+Math.random()*2.6,
+  rot: Math.random()*Math.PI*2, vr:(Math.random()-0.5)*0.22,
+  w:7+Math.random()*9, h:10+Math.random()*12,
+  color: palette[Math.floor(Math.random()*palette.length)],
+}))
+const started = Date.now(), LIFE = 6500
+;(function tick(){
+  const age = Date.now()-started
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w(),h())
+  ctx.globalAlpha = age > LIFE-1200 ? Math.max(0,(LIFE-age)/1200) : 1
+  let alive=false
+  for (const p of pieces) {
+    p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.012
+    if (p.y < h()+40) alive = true
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot)
+    ctx.fillStyle=p.color; ctx.scale(1, Math.abs(Math.cos(p.rot))*0.8+0.2)
+    ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore()
+  }
+  if (alive && age < LIFE) requestAnimationFrame(tick); else ctx.clearRect(0,0,w(),h())
+})()
+</script>
+</body></html>

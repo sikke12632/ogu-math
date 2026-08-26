@@ -517,3 +517,45 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
   color: #fff; font-size: 1.5em; font-weight: 900; margin-left: 8px;
   letter-spacing: .12em; font-family: ui-monospace, 'IBM Plex Mono', monospace;
 }
+
+/* ── 결과 화면 — 우승 팀 ──────────────────────────────
+   등수만 죽 늘어놓으면 아이들이 아무 반응을 안 한다.
+   우승 팀을 크게 세우고 이름이 하나씩 튀어나오게 한다.
+   **개인 점수·등수는 여기에 안 띄운다.** 팀 이름·팀 점수·명단·MVP 까지만. */
+
+.board-result { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+/* 색종이는 화면 전체에 깔되 글자를 가리지 않는다 */
+.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+
+.win { position: relative; z-index: 3; text-align: center; }
+.win-eyebrow { font-size: clamp(16px, 1.6vw, 24px); letter-spacing: .3em; color: #8ba2bd; margin: 0 0 6px; }
+.win-trophy { font-size: clamp(56px, 8vw, 120px); margin: 0; line-height: 1; animation: trophy .9s cubic-bezier(.2,1.5,.4,1) both; }
+.win-name { font-size: clamp(48px, 9vw, 140px); font-weight: 900; margin: 4px 0 0; line-height: 1.05; animation: winpop .7s cubic-bezier(.2,1.4,.4,1) .15s both; }
+.win-score { font-size: clamp(28px, 4vw, 60px); font-weight: 800; color: #e9eef5; margin: 2px 0 18px; font-family: ui-monospace, monospace; animation: winpop .6s ease .3s both; }
+
+.win-members { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center; max-width: 900px; }
+.win-members li {
+  font-size: clamp(20px, 2.4vw, 36px); font-weight: 700; color: #fff;
+  background: rgba(255,255,255,.09); border-radius: 999px; padding: 8px 20px;
+  animation: winpop .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+.win-mvp { font-size: clamp(18px, 2vw, 30px); color: #ffd76a; margin: 0; }
+.win-mvp b { letter-spacing: .16em; margin-right: 10px; }
+
+/* 나머지 팀은 작게 한 줄씩. 우승이 묻히면 안 된다 */
+.board-rank.rest { position: relative; z-index: 3; margin-top: 26px; gap: 8px; opacity: .78; }
+.board-rank.rest li { grid-template-columns: 1fr 120px 1fr; padding: 10px 20px; }
+.board-rank.rest .board-rank-name { font-size: clamp(20px, 2vw, 28px); }
+.board-rank.rest .board-rank-wins { font-size: clamp(18px, 1.8vw, 26px); }
+
+@keyframes trophy {
+  from { transform: translateY(-60px) scale(.4) rotate(-18deg); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
+@keyframes winpop {
+  from { transform: scale(.7); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .win-trophy, .win-name, .win-score, .win-members li { animation: none }
+}

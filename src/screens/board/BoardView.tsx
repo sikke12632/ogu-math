@@ -14,6 +14,10 @@ import { Qr } from '../../components/Qr'
 import { getGame } from '../../games'
 import { codeToSessionId } from '../../session/api'
 import { mvpOf } from '../../session/teams'
+import { Confetti } from './Confetti'
+
+/** 칠판 팀 색. styles-session.css 의 .board-team.t1~ 과 같은 순서여야 한다 */
+const TEAM_COLORS = ['#ef5350', '#42a5f5', '#ffca28', '#66bb6a', '#ab47bc', '#ffa726']
 import {
   fmtClock, nameOf, quizTimeLeft, readableError, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
@@ -206,22 +210,66 @@ export function BoardView() {
   const ranked = [...teams].sort(
     (a, b) => (scores.find((s) => s.teamId === b.id)?.points ?? 0) - (scores.find((s) => s.teamId === a.id)?.points ?? 0),
   )
+  /*
+   * 우승 팀을 크게 세운다. 등수만 죽 늘어놓으면 아이들이 아무 반응을 안 한다.
+   *
+   * **개인 점수와 등수는 여기에 절대 안 띄운다** (설계 원칙).
+   * 팀 이름·팀 점수·팀원 명단·MVP 까지만 나온다. 명단은 별명으로 보인다.
+   */
+  const top = scores.find((s) => s.teamId === ranked[0]?.id)?.points ?? 0
+  // 공동 우승이면 모두 세운다
+  const champs = ranked.filter((t) => (scores.find((s) => s.teamId === t.id)?.points ?? 0) === top)
+  const rest = ranked.filter((t) => !champs.includes(t))
+  const champColor = TEAM_COLORS[teams.findIndex((t) => t.id === champs[0]?.id) % TEAM_COLORS.length]
+
   return (
-    <div className="board">
-      <p className="board-eyebrow board-pad">오늘 결과</p>
-      <ol className="board-rank">
-        {ranked.map((t, i) => {
+    <div className="board board-result">
+      <Confetti accent={champColor} />
+
+      <div className="win">
+        <p className="win-eyebrow">오늘의 우승</p>
+        <p className="win-trophy" aria-hidden="true">🏆</p>
+        <h1 className="win-name" style={{ color: champColor }}>
+          {champs.map((t) => `${t.name}팀`).join(' · ')}
+        </h1>
+        <p className="win-score">{top}점</p>
+
+        <ul className="win-members">
+          {champs
+            .flatMap((t) => t.members)
+            .map((m, i) => (
+              // 이름이 하나씩 튀어나온다. 아이들이 자기 이름을 찾는다
+              <li key={m} style={{ animationDelay: `${0.35 + i * 0.12}s` }}>
+                {nameOf(session, m)}
+              </li>
+            ))}
+        </ul>
+
+        {champs.map((t) => {
           const mvp = mvpOf(t, session.game?.mvp ?? {})
-          return (
-            <li key={t.id}>
-              <span className="board-rank-no">{i + 1}</span>
-              <span className="board-rank-name">{t.name}팀</span>
-              <span className="board-rank-wins">{scores.find((s) => s.teamId === t.id)?.points ?? 0}점</span>
-              <span className="board-rank-mvp">{mvp ? `MVP ${nameOf(session, mvp)}` : ''}</span>
-            </li>
-          )
+          return mvp ? (
+            <p key={t.id} className="win-mvp">
+              <b>MVP</b> {nameOf(session, mvp)}
+            </p>
+          ) : null
         })}
-      </ol>
+      </div>
+
+      {rest.length > 0 && (
+        <ol className="board-rank rest" start={champs.length + 1}>
+          {rest.map((t) => {
+            const mvp = mvpOf(t, session.game?.mvp ?? {})
+            return (
+              <li key={t.id}>
+                <span className="board-rank-name">{t.name}팀</span>
+                <span className="board-rank-wins">{scores.find((s) => s.teamId === t.id)?.points ?? 0}점</span>
+                <span className="board-rank-mvp">{mvp ? `MVP ${nameOf(session, mvp)}` : ''}</span>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+
       <p className="board-sub board-pad">틀린 문제는 각자 기기에서 확인하세요</p>
       <CodeCorner code={session.meta.code} />
     </div>
