@@ -224,65 +224,72 @@ export const T14: Template = {
 /* ── T15 계산 없이 크기 판단 ────────────────────────── */
 
 /**
- * "계산하지 않고" 원래 수보다 큰지 작은지 고른다.
+ * "67 × ? × ? 의 결과가 67보다 큰 것은?"
  *
- * 1보다 작은 수를 곱하면 작아지고, 1보다 큰 수를 곱하면 커진다.
- * 익힘책에도 비슷한 문항이 있지만(계산 결과가 4보다 작은 것 찾기),
- * 여기서는 **계산을 막아** 원리로만 판단하게 한다.
+ * ── 왜 두 번 곱하게 바꿨나 ─────────────────────────
+ * 처음에는 곱하는 수가 하나였다. `67 × [12/11]` 처럼.
+ * 그러면 **분자가 분모보다 큰 것 하나를 찾으면 끝난다.** 한눈에 보인다.
+ * 원리를 아는지 묻는 게 아니라 분수를 볼 줄 아는지 묻는 문항이 되어 버렸다.
+ *
+ * 그래서 곱하는 수를 둘로 만든다. **하나는 1보다 크고 하나는 1보다 작게** —
+ * 넷 다 같은 모양이라 눈으로는 아무것도 못 고른다.
+ * 커지는지 작아지는지는 **두 분수를 곱한 것이 1보다 큰가**로 정해지고,
+ * 그건 분자끼리·분모끼리 곱해 견주어야 알 수 있다.
+ * 계산은 두 자리 곱셈 한 번, 생각은 두 단계다.
+ *
+ * 곱한 값이 1에 바짝 붙어 있어야 한다. 30 대 28 처럼 아슬아슬해야
+ * 눈대중이 안 통하고 실제로 견주게 된다.
  */
 function judgeSize(rng: Rng): Draft | null {
-  // 곱하는 수를 **모두 1에 가깝게** 만든다.
-  // 1/2 과 2와1/3 처럼 벌어져 있으면 눈대중으로 끝나고,
-  // 곱수가 크면 아이들이 그냥 다 계산해 버린다.
-  // 19/20 · 1과1/15 처럼 붙여 두면 손으로 네 번 곱하는 게 훨씬 귀찮아서
-  // "1보다 큰가 작은가" 를 보는 쪽이 실제로 빠른 길이 된다.
   const base = rng.int(24, 96)
-  const items: { text: string; v: number }[] = []
+
+  type Item = { text: string; big: boolean }
+  const items: Item[] = []
   const seen = new Set<string>()
-  for (let i = 0; i < 60 && items.length < 4; i++) {
-    const d = rng.pick([9, 10, 11, 12, 15, 16, 18, 20] as const)
-    let text: string
-    let v: number
-    if (rng.bool(0.5)) {
-      /*
-       * 1보다 조금 큰 수. **대분수로 쓰면 안 된다.**
-       * 대분수는 그 자체로 1보다 크다는 게 보여서, 진분수 셋 사이에
-       * 대분수 하나가 끼면 원리를 몰라도 모양만 보고 답이 찍힌다.
-       * 가분수로 써야 넷이 다 같은 모양이 되고, 분자와 분모를
-       * 견주는 일 — 즉 이 문항이 묻는 것 — 을 실제로 하게 된다.
-       */
-      const n = rng.int(1, Math.max(1, Math.round(d / 8)))
-      // 약분되는 것은 버린다. [21/18] 처럼 안 줄인 분수를 내보내면 안 된다
-      if (gcd(n, d) !== 1) continue
-      text = `[${d + n}/${d}]`
-      v = (d + n) / d
-    } else {
-      // 1보다 조금 작은 진분수
-      const n = d - rng.int(1, Math.max(1, Math.round(d / 8)))
-      /*
-       * 여기서도 약분을 막는다. [9/12] 는 줄이면 [3/4] 로 나오는데,
-       * 그건 1에서 한참 떨어져 보여서 눈대중으로 걸러진다.
-       * 넷이 다 1 언저리에 모여 있어야 이 문항이 성립한다.
-       */
-      if (gcd(n, d) !== 1) continue
-      text = `[${n}/${d}]`
-      v = n / d
-    }
+
+  for (let i = 0; i < 200 && items.length < 4; i++) {
+    // 1보다 큰 쪽 — 가분수로 적는다. 대분수로 적으면 그것만 튀어 보인다
+    const d1 = rng.int(3, 9)
+    const n1 = d1 + rng.int(1, 3)
+    if (gcd(n1, d1) !== 1) continue
+    // 1보다 작은 쪽
+    const d2 = rng.int(4, 9)
+    const n2 = d2 - rng.int(1, 3)
+    if (n2 < 1 || gcd(n2, d2) !== 1) continue
+
+    const top = n1 * n2
+    const bottom = d1 * d2
+    if (top === bottom) continue // 결과가 그대로면 크지도 작지도 않다
+    // 1 에서 멀어지면 눈대중으로 끝난다
+    if (Math.abs(top / bottom - 1) > 0.18) continue
+
+    const text = `${base} × [${n1}/${d1}] × [${n2}/${d2}]`
     if (seen.has(text)) continue
     seen.add(text)
-    items.push({ text, v })
+    items.push({ text, big: top > bottom })
   }
   if (items.length < 4) return null
 
-  const smaller = items.filter((x) => x.v < 1)
-  const bigger = items.filter((x) => x.v > 1)
+  const bigger = items.filter((x) => x.big)
+  const smaller = items.filter((x) => !x.big)
   // 답이 하나여야 한다 (G6)
   const askSmaller = smaller.length === 1
   if (!askSmaller && bigger.length !== 1) return null
   const target = askSmaller ? smaller[0]! : bigger[0]!
 
-  const choices = items.map((x) => `${base} × ${x.text}`)
+  const choices = items.map((x) => x.text)
   if (new Set(choices).size !== 4) return null
+
+  const explainOne = (x: Item): string => {
+    const m = /\[(\d+)\/(\d+)\] × \[(\d+)\/(\d+)\]/.exec(x.text)!
+    const [n1, d1, n2, d2] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])]
+    const top = n1 * n2
+    const bottom = d1 * d2
+    return (
+      `[${n1}/${d1}] × [${n2}/${d2}] → 분자 ${n1} × ${n2} = ${top}, 분모 ${d1} × ${d2} = ${bottom}` +
+      ` → ${top} ${top > bottom ? '>' : '<'} ${bottom} 이므로 1보다 ${top > bottom ? '큽니다' : '작습니다'}`
+    )
+  }
 
   return {
     templateId: 'T15',
@@ -292,14 +299,13 @@ function judgeSize(rng: Rng): Draft | null {
     // 시험 문제에서 지킬 수도 확인할 수도 없는 말이라 아이들이 웃는다.
     // 문구로 막는 대신 **계산이 귀찮게** 만들어서 원리를 쓰게 한다.
     prompt: `계산 결과가 ${base}보다 ${askSmaller ? '작은' : '큰'} 것은 어느 것인가요?`,
-    choices,
-    answer: `${base} × ${target.text}`,
+    choices: rng.shuffle(choices),
+    answer: target.text,
     explanation:
-      `1보다 작은 수를 곱하면 원래 수보다 작아지고, 1보다 큰 수를 곱하면 커집니다.\n` +
-      items
-        .map((x) => `${x.text} 은(는) 1보다 ${x.v < 1 ? '작다' : '크다'}`)
-        .join('\n') +
-      `\n그러므로 ${base} × ${target.text} 하나만 ${base}보다 ${askSmaller ? '작습니다' : '큽니다'}.`,
+      `곱하는 두 수를 먼저 곱해 1과 견줍니다.\n` +
+      `1보다 큰 수를 곱하면 커지고, 1보다 작은 수를 곱하면 작아집니다.\n` +
+      items.map(explainOne).join('\n') +
+      `\n그러므로 ${target.text} 하나만 ${base}보다 ${askSmaller ? '작습니다' : '큽니다'}.`,
     standard: STANDARD,
   }
 }
