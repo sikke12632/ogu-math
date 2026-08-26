@@ -167,12 +167,18 @@ export const T13: Template = {
  * 곱셈 단원 안에서 다른 단원 개념이 필요한 첫 문항이라 진짜 심화다.
  */
 function makeWhole(rng: Rng): Draft | null {
-  const d = rng.pick([4, 6, 8, 9, 10, 12] as const)
+  const d = rng.pick([12, 14, 15, 16, 18, 20, 24] as const)
   const n = rng.int(1, d - 1)
   const f = reduce({ n, d })
   if (f.d === 1) return null
   const ans = f.d // 기약분수의 분모가 답이다
-  if (ans < 2) return null
+
+  // **약분을 반드시 거쳐야 풀리게 한다.**
+  // 3/6 처럼 한눈에 1/2 로 보이면 답 2 가 그냥 보여서 생각할 거리가 없다.
+  // 약분 전 분모(d)와 답(ans)이 충분히 달라야 "약분 먼저" 라는 판단이 필요해진다.
+  if (gcd(n, d) === 1) return null // 약분할 게 없으면 그냥 분모를 답하면 된다
+  if (ans < 5) return null // 답이 2·3·4 면 눈으로 보인다
+  if (d - ans < 4) return null // 약분 전후가 비슷하면 헷갈릴 일이 없다
 
   // 오답 — 약분을 안 하거나, 분자를 답하거나, 분모+분자
   const cands = [d, f.n, n, ans + 1, ans - 1, 2 * ans]
@@ -225,22 +231,26 @@ export const T14: Template = {
  * 여기서는 **계산을 막아** 원리로만 판단하게 한다.
  */
 function judgeSize(rng: Rng): Draft | null {
-  const base = rng.int(3, 12)
+  // 곱하는 수를 **모두 1에 가깝게** 만든다.
+  // 1/2 과 2와1/3 처럼 벌어져 있으면 눈대중으로 끝나고,
+  // 곱수가 크면 아이들이 그냥 다 계산해 버린다.
+  // 19/20 · 1과1/15 처럼 붙여 두면 손으로 네 번 곱하는 게 훨씬 귀찮아서
+  // "1보다 큰가 작은가" 를 보는 쪽이 실제로 빠른 길이 된다.
+  const base = rng.int(24, 96)
   const items: { text: string; v: number }[] = []
   const seen = new Set<string>()
-  for (let i = 0; i < 40 && items.length < 4; i++) {
-    const useMixed = rng.bool(0.5)
+  for (let i = 0; i < 60 && items.length < 4; i++) {
+    const d = rng.pick([9, 10, 11, 12, 15, 16, 18, 20] as const)
     let text: string
     let v: number
-    if (useMixed) {
-      const d = rng.pick([2, 3, 4, 5, 6] as const)
-      const w = rng.int(1, 2)
-      const n = rng.int(1, d - 1)
-      text = showMixed(w, n, d)
-      v = (w * d + n) / d
+    if (rng.bool(0.5)) {
+      // 1보다 조금 큰 대분수
+      const n = rng.int(1, Math.max(1, Math.floor(d / 4)))
+      text = showMixed(1, n, d)
+      v = (d + n) / d
     } else {
-      const d = rng.pick([2, 3, 4, 5, 6, 8] as const)
-      const n = rng.int(1, d - 1)
+      // 1보다 조금 작은 진분수
+      const n = d - rng.int(1, Math.max(1, Math.floor(d / 4)))
       text = show({ n, d })
       v = n / d
     }
@@ -264,9 +274,10 @@ function judgeSize(rng: Rng): Draft | null {
     templateId: 'T15',
     params: { kind: 'judge-size', want: askSmaller ? 'small' : 'big' },
     difficulty: 3,
-    prompt:
-      `계산하지 않고 답해 보세요.\n` +
-      `계산 결과가 ${base}보다 ${askSmaller ? '작은' : '큰'} 것은 어느 것인가요?`,
+    // "계산하지 않고 답해 보세요" 는 뺐다.
+    // 시험 문제에서 지킬 수도 확인할 수도 없는 말이라 아이들이 웃는다.
+    // 문구로 막는 대신 **계산이 귀찮게** 만들어서 원리를 쓰게 한다.
+    prompt: `계산 결과가 ${base}보다 ${askSmaller ? '작은' : '큰'} 것은 어느 것인가요?`,
     choices,
     answer: `${base} × ${target.text}`,
     explanation:
