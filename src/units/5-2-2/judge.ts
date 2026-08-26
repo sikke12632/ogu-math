@@ -6,7 +6,7 @@
 
 import type { Rng } from '../../lib/rng'
 import type { Difficulty, Draft, Template } from '../_types'
-import { improper, mul, reduce, show, showMixed, value, type Frac } from './frac'
+import { gcd, improper, mul, reduce, show, showMixed, value, type Frac } from './frac'
 import { STANDARD } from './calc'
 
 /* ── T9 잘못 계산한 것 찾기 ─────────────────────────── */
@@ -122,6 +122,13 @@ function cards(rng: Rng, difficulty: Difficulty): Draft | null {
         for (const d of pool) {
           if (w === n || n === d || w === d) continue
           if (n >= d) continue
+          /*
+           * **약분되면 안 된다.** showMixed 는 분수 부분을 약분해서 그리므로
+           * 카드 6·8 로 만든 `5와 6/8` 이 화면에는 `5와 3/4` 로 나온다.
+           * 그러면 "카드를 한 번씩만 썼다" 는 말과 식이 어긋나서,
+           * 카드에 없는 3 이 식에 들어가 있는 문제가 되어 버린다.
+           */
+          if (gcd(n, d) !== 1) continue
           const rest = pool.filter((x) => x !== w && x !== n && x !== d)
           for (const k of rest) {
             cand.push({

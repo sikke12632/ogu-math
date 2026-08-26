@@ -21,11 +21,13 @@ import { STANDARD } from './calc'
  *   whole 전체 → a 그 일부 → b 그 안의 일부 → (삼중이면) ask 그 안의 일부
  */
 const NESTED = [
-  { whole: '전교생', a: '여학생', b: '야구를 좋아하는 학생', ask: '야구를 좋아하는 여학생' },
+  // 세 겹이 진짜 부분집합으로 좁혀져야 한다.
+  // 예전 '야구를 좋아하는 학생 → 야구를 좋아하는 여학생' 은 같은 것을 두 번 부르는 꼴이었다
+  { whole: '전교생', a: '여학생', b: '운동을 좋아하는 여학생', ask: '야구를 좋아하는 여학생' },
   { whole: '전체 헝겊', a: '바느질에 쓴 헝겊', b: '실제로 꿰맨 부분', ask: '무늬를 넣은 부분' },
   { whole: '학교 텃밭', a: '5학년 텃밭', b: '채소를 심은 곳', ask: '토마토를 심은 곳' },
   { whole: '색종이 묶음', a: '오늘 쓴 색종이', b: '노란색 색종이', ask: '접기에 쓴 노란색 색종이' },
-  { whole: '도서관 책', a: '동화책', b: '그림이 있는 책', ask: '그림이 있는 동화책 중 새 책' },
+  { whole: '도서관 책', a: '동화책', b: '그림이 있는 동화책', ask: '새로 들어온 책' },
 ] as const
 
 /** 분모가 작은 진분수. 중첩하면 분모가 금세 커진다 (G7) */
@@ -38,8 +40,12 @@ function nested(rng: Rng, difficulty: Difficulty): Draft | null {
   const s = rng.pick(NESTED)
   const a = smallFrac(rng)
   const b = smallFrac(rng)
-  // 삼중은 상 난이도에서만. 익힘책의 텃밭 문제가 이 얼개다
-  const triple = difficulty === 3 && rng.bool(0.45)
+  /*
+   * 삼중은 상 난이도에서만. 익힘책의 텃밭 문제가 이 얼개다.
+   * **상이면 반드시 삼중이다.** 이중 중첩은 곱셈 두 번이라 중과 다를 게 없는데,
+   * 예전에는 상에서도 절반쯤 이중이 나와서 "상 문제가 쉽다" 는 말이 나왔다.
+   */
+  const triple = difficulty === 3
   const c = triple ? smallFrac(rng) : null
 
   let ans = mul(a, b)
@@ -188,7 +194,14 @@ export const T8: Template = {
 /* ── T11 도형 공식 안에서 ───────────────────────────── */
 
 function figure(rng: Rng, difficulty: Difficulty): Draft | null {
-  const shape = rng.pick(['square', 'rect', 'para', 'triangle'] as const)
+  /*
+   * 상에서는 정사각형을 빼고 삼각형에 무게를 둔다.
+   * 정사각형 둘레는 `한 변 × 4` 한 번이라 하 난이도와 다를 게 없는데
+   * 상 자리에 그게 나오고 있었다. 삼각형은 곱셈 두 번에 ÷2 가 더 붙는다.
+   */
+  const shape = difficulty === 3
+    ? rng.pick(['triangle', 'triangle', 'rect', 'para'] as const)
+    : rng.pick(['square', 'rect', 'para', 'triangle'] as const)
   const mk = (): { text: string; f: Frac } => {
     if (rng.bool(0.5)) {
       const m = { w: rng.int(1, 3), d: rng.pick([2, 3, 4, 5, 6] as const), n: 0 }

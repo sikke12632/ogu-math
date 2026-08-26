@@ -244,14 +244,28 @@ function judgeSize(rng: Rng): Draft | null {
     let text: string
     let v: number
     if (rng.bool(0.5)) {
-      // 1보다 조금 큰 대분수
-      const n = rng.int(1, Math.max(1, Math.floor(d / 4)))
-      text = showMixed(1, n, d)
+      /*
+       * 1보다 조금 큰 수. **대분수로 쓰면 안 된다.**
+       * 대분수는 그 자체로 1보다 크다는 게 보여서, 진분수 셋 사이에
+       * 대분수 하나가 끼면 원리를 몰라도 모양만 보고 답이 찍힌다.
+       * 가분수로 써야 넷이 다 같은 모양이 되고, 분자와 분모를
+       * 견주는 일 — 즉 이 문항이 묻는 것 — 을 실제로 하게 된다.
+       */
+      const n = rng.int(1, Math.max(1, Math.round(d / 8)))
+      // 약분되는 것은 버린다. [21/18] 처럼 안 줄인 분수를 내보내면 안 된다
+      if (gcd(n, d) !== 1) continue
+      text = `[${d + n}/${d}]`
       v = (d + n) / d
     } else {
       // 1보다 조금 작은 진분수
-      const n = d - rng.int(1, Math.max(1, Math.floor(d / 4)))
-      text = show({ n, d })
+      const n = d - rng.int(1, Math.max(1, Math.round(d / 8)))
+      /*
+       * 여기서도 약분을 막는다. [9/12] 는 줄이면 [3/4] 로 나오는데,
+       * 그건 1에서 한참 떨어져 보여서 눈대중으로 걸러진다.
+       * 넷이 다 1 언저리에 모여 있어야 이 문항이 성립한다.
+       */
+      if (gcd(n, d) !== 1) continue
+      text = `[${n}/${d}]`
       v = n / d
     }
     if (seen.has(text)) continue

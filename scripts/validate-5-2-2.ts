@@ -86,6 +86,11 @@ function checkCalcAnswer(p: Problem): void {
   }
 }
 
+/** 검산용 최대공약수. frac.ts 를 안 쓰는 게 이 파일의 요점이라 여기서 다시 적는다 */
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b)
+}
+
 /** 분수 표기가 성한지 — 분모 0, 분자 0, 가분수 표기가 새어 나오면 안 된다 */
 function checkFractionText(p: Problem): void {
   const texts = [p.prompt, p.explanation, ...(p.choices ?? []), String(p.answer)]
@@ -94,7 +99,15 @@ function checkFractionText(p: Problem): void {
       const n = Number(m[2]), d = Number(m[3])
       if (d === 0) fail(`분모가 0: "${m[0]}"`)
       if (n === 0) fail(`분자가 0: "${m[0]}"`)
-      if (n >= d) fail(`진분수 자리에 가분수가 들어감: "${m[0]}" (${p.templateId})`)
+      /*
+       * T15 만 가분수를 일부러 쓴다. 1보다 큰 수를 대분수로 적으면
+       * 모양만 보고 답이 찍히기 때문이다 (hard.ts 의 judgeSize 주석).
+       * 나머지 자리에 가분수가 새어 나오는 것은 여전히 잘못이다.
+       */
+      if (n >= d && p.templateId !== 'T15') {
+        fail(`진분수 자리에 가분수가 들어감: "${m[0]}" (${p.templateId})`)
+      }
+      if (n >= d && gcd(n, d) !== 1) fail(`약분이 안 된 가분수: "${m[0]}" (${p.templateId})`)
       // 48 — 익힘책에 [3/28], [1/42] 가 나온다. 그보다 크면 약분이 두 번 겹친다
       if (d > 48) fail(`분모가 너무 큼: "${m[0]}" (${p.templateId})`)
     }
