@@ -559,3 +559,43 @@ fieldset.pick legend { font-size: 13px; font-weight: 600; color: var(--ink-soft)
 @media (prefers-reduced-motion: reduce) {
   .win-trophy, .win-name, .win-score, .win-members li { animation: none }
 }
+
+/*
+ * 문항별 오답 펼치기 — 교사 화면.
+ * 정답률 막대만 보고는 다시 설명할 수가 없다. 문제 전문과
+ * 누가 뭐라고 답했는지가 같이 보여야 한다. **여기는 실명이다.**
+ */
+.ratelist li { display: block; }
+.ratelist summary {
+  display: grid; grid-template-columns: 22px 1fr 42px 30px;
+  align-items: center; gap: 8px; font-size: 12px;
+  cursor: pointer; list-style: none; padding: 3px 0;
+}
+.ratelist summary::-webkit-details-marker { display: none; }
+.ratelist details[open] summary { border-bottom: 1px solid var(--rule); }
+.qdetail { padding: 10px 0 14px 30px; font-size: 13px; }
+.qtext { margin: 0 0 8px; line-height: 1.9; }
+.qchoices { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 4px; color: var(--ink-soft); }
+.qchoices li.right { color: var(--ink); font-weight: 600; }
+.qchoices b { margin-left: 8px; font-size: 11px; color: var(--mark); font-weight: 600; }
+.qans { margin: 0 0 8px; color: var(--ink-soft); }
+.qans b { color: var(--ink); }
+.qnone { margin: 0; color: var(--ink-soft); }
+.qwrong { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.qwrong li { display: grid; grid-template-columns: 90px 1fr; gap: 10px; align-items: baseline; }
+.qwrong .who { font-weight: 600; }
+.qwrong .said { color: var(--bad); }
+.qwrong .said i { color: var(--ink-soft); font-style: normal; }
+
+/*
+ * 게임 중 팀 명단. 점수판 아래에 붙는다.
+ * 교실 뒤에서도 자기 이름을 찾을 수 있게 크게, 그러나 점수보다는 조용하게.
+ */
+.board-roster {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: 26px; margin-top: 34px; width: 100%; max-width: 1400px;
+}
+.board-roster-team { text-align: center; }
+.board-roster-team h3 { font-size: 26px; margin: 0 0 10px; }
+.board-roster-team ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.board-roster-team li { font-size: 24px; color: #cfd8e3; }

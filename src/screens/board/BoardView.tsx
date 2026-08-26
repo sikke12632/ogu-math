@@ -25,6 +25,37 @@ import {
 const CHEER = ['좋아, 침착하게', '천천히 읽어도 돼', '거의 다 왔어', '끝까지 해 보자']
 
 /**
+ * 게임 중에 늘 띄워 두는 팀 명단.
+ *
+ * 팀 배정 화면에서 한 번 보여 주고 넘어가면 아이들이 자기 팀을 잊는다.
+ * 판이 시작되면 "저 어느 팀이에요?" 하고 손을 든다 — 그때마다 진행이 멈춘다.
+ * 점수 밑에 계속 붙여 두면 고개만 들면 확인된다.
+ *
+ * 별명으로 보인다 (칠판 규칙). 개인 점수는 여기 없다.
+ */
+function TeamRoster({
+  teams, label,
+}: {
+  teams: { id: string; name: string; members: string[] }[]
+  label: (id: string) => string
+}) {
+  return (
+    <div className="board-roster">
+      {teams.map((t, ti) => (
+        <div key={t.id} className="board-roster-team">
+          <h3 style={{ color: TEAM_COLORS[ti % TEAM_COLORS.length] }}>{t.name}팀</h3>
+          <ul>
+            {t.members.map((m) => (
+              <li key={m}>{label(m)}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
  * 칠판 구석에 늘 붙어 있는 방 코드.
  *
  * 대기실에는 QR 과 함께 코드가 크게 뜨지만 문제를 풀기 시작하면 사라졌다.
@@ -201,6 +232,10 @@ export function BoardView() {
           {round} / {session.meta.rounds}판
           {cheerleaders.length > 0 && ` · 응원단장 ${cheerleaders.map((c) => nameOf(session, c)).join(', ')}`}
         </p>
+        <TeamRoster
+          teams={teams.map((t) => ({ id: t.id, name: t.name, members: t.members }))}
+          label={(m) => nameOf(session, m)}
+        />
         <CodeCorner code={session.meta.code} />
       </div>
     )

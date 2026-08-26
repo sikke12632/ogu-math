@@ -13,6 +13,7 @@ import {
   addTime, archive, clearNickname, releaseSeat, saveRound, saveScores, saveTeams, setPaused, setPhase,
   writeForfeit, writeMatchResult,
 } from '../../session/api'
+import { MathText } from '../../components/MathText'
 import { grade } from '../../session/grade'
 import { assignTeams, makeMatches, moveMember, mvpOf, suggestTeamCount } from '../../session/teams'
 import { PHASE_LABEL, PHASE_ORDER, type ArchiveEntry, type Phase, type StudentId, type TeamRecord } from '../../session/types'
@@ -317,20 +318,85 @@ export function TeacherConsole() {
             <h2>문항별 정답률 <span className="dim">교사만 봅니다</span></h2>
             <ul className="ratelist">
               {session.problems.map((p, i) => {
-                const rows = joined.map(([sid]) => grade([p], session.quiz?.[sid]?.answers ?? {}))
-                const ok = rows.filter((r) => r.correctCount === 1).length
-                const pct = rows.length ? Math.round((ok / rows.length) * 100) : 0
+                // 아이마다 이 문항을 맞았는지, 뭐라고 답했는지 모은다
+                const marked = joined.map(([sid]) => {
+                  const given = session.quiz?.[sid]?.answers?.[p.id] ?? null
+                  const r = grade([p], { [p.id]: given })
+                  return {
+                    sid,
+                    name: realNameOf(session, sid),
+                    correct: r.correctCount === 1,
+                    given,
+                  }
+                })
+                const ok = marked.filter((m) => m.correct).length
+                const pct = marked.length ? Math.round((ok / marked.length) * 100) : 0
+                const wrong = marked.filter((m) => !m.correct)
+                const answerText = Array.isArray(p.answer) ? p.answer.join(', ') : p.answer
+
                 return (
                   <li key={p.id}>
-                    <span className="qn">{i + 1}</span>
-                    <span className="bar"><span className="fill" style={{ width: `${pct}%` }} /></span>
-                    <span className="pct">{pct}%</span>
-                    <span className="tid">{p.templateId}</span>
+                    {/*
+                      눌러야 펼쳐진다. 아홉 문항이 전부 펼쳐져 있으면 화면이 넘쳐
+                      정작 정답률을 훑을 수가 없다.
+                      **교사 화면이므로 실명으로 보여 준다** (설계 원칙).
+                    */}
+                    <details>
+                      <summary>
+                        <span className="qn">{i + 1}</span>
+                        <span className="bar"><span className="fill" style={{ width: `${pct}%` }} /></span>
+                        <span className="pct">{pct}%</span>
+                        <span className="tid">{p.templateId}</span>
+                      </summary>
+
+                      <div className="qdetail">
+                        <p className="qtext"><MathText text={p.prompt} /></p>
+                        {p.choices && (
+                          <ol className="qchoices">
+                            {p.choices.map((c) => {
+                              const isAns = Array.isArray(p.answer)
+                                ? p.answer.includes(c)
+                                : p.answer === c
+                              // 이 보기를 고른 아이가 몇 명인지 — 어디로 쏠렸는지가 보인다
+                              const picked = marked.filter((m) =>
+                                Array.isArray(m.given) ? m.given.includes(c) : m.given === c,
+                              ).length
+                              return (
+                                <li key={c} className={isAns ? 'right' : ''}>
+                                  <MathText text={c} />
+                                  {picked > 0 && <b>{picked}명</b>}
+                                </li>
+                              )
+                            })}
+                          </ol>
+                        )}
+                        <p className="qans">정답 <b><MathText text={answerText} /></b></p>
+
+                        {wrong.length === 0 ? (
+                          <p className="qnone">모두 맞았습니다.</p>
+                        ) : (
+                          <ul className="qwrong">
+                            {wrong.map((m) => (
+                              <li key={m.sid}>
+                                <span className="who">{m.name}</span>
+                                <span className="said">
+                                  {m.given === null ? (
+                                    <i>안 씀</i>
+                                  ) : (
+                                    <MathText text={Array.isArray(m.given) ? m.given.join(', ') : m.given} />
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </details>
                   </li>
                 )
               })}
             </ul>
-            <p className="hint">정답률이 낮은 문항을 다시 설명하세요.</p>
+            <p className="hint">문항을 눌러 펼치면 문제와 틀린 학생이 보입니다. 정답률이 낮은 문항을 다시 설명하세요.</p>
           </section>
         )}
 
