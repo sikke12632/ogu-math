@@ -232,7 +232,14 @@ export const T14: Template = {
  * 원리를 아는지 묻는 게 아니라 분수를 볼 줄 아는지 묻는 문항이 되어 버렸다.
  *
  * 그래서 곱하는 수를 둘로 만든다. **하나는 1보다 크고 하나는 1보다 작게** —
- * 넷 다 같은 모양이라 눈으로는 아무것도 못 고른다.
+ * 넷 다 `대분수 × 진분수` 라 눈으로는 아무것도 못 고른다.
+ * 1보다 큰 쪽이 대분수라 그것만은 한눈에 보이지만, 그건 상관없다.
+ * `1과[3/4] × [5/8]` 이 1보다 큰지는 여전히 곱해 봐야 알기 때문이다.
+ *
+ * 세 수를 곱하는 것은 범위 안이다 — 익힘책 상 문항이 이미
+ * `텃밭의 [1/6] → 그중 [2/3] → 그중 [3/4]` 로 삼중을 낸다
+ * (`docs/2단원_유형분석.md` 발견 3). 다만 익힘책은 문장제로만 내고,
+ * 곱수를 **가분수로 적지는 않는다.** 그래서 대분수로 쓴다.
  * 커지는지 작아지는지는 **두 분수를 곱한 것이 1보다 큰가**로 정해지고,
  * 그건 분자끼리·분모끼리 곱해 견주어야 알 수 있다.
  * 계산은 두 자리 곱셈 한 번, 생각은 두 단계다.
@@ -248,7 +255,7 @@ function judgeSize(rng: Rng): Draft | null {
   const seen = new Set<string>()
 
   for (let i = 0; i < 200 && items.length < 4; i++) {
-    // 1보다 큰 쪽 — 가분수로 적는다. 대분수로 적으면 그것만 튀어 보인다
+    // 1보다 큰 쪽 — 대분수로 적는다. 교과서가 쓰는 표기다
     const d1 = rng.int(3, 9)
     const n1 = d1 + rng.int(1, 3)
     if (gcd(n1, d1) !== 1) continue
@@ -263,7 +270,7 @@ function judgeSize(rng: Rng): Draft | null {
     // 1 에서 멀어지면 눈대중으로 끝난다
     if (Math.abs(top / bottom - 1) > 0.18) continue
 
-    const text = `${base} × [${n1}/${d1}] × [${n2}/${d2}]`
+    const text = `${base} × ${showMixed(1, n1 - d1, d1)} × ${show({ n: n2, d: d2 })}`
     if (seen.has(text)) continue
     seen.add(text)
     items.push({ text, big: top > bottom })
@@ -281,12 +288,17 @@ function judgeSize(rng: Rng): Draft | null {
   if (new Set(choices).size !== 4) return null
 
   const explainOne = (x: Item): string => {
-    const m = /\[(\d+)\/(\d+)\] × \[(\d+)\/(\d+)\]/.exec(x.text)!
-    const [n1, d1, n2, d2] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])]
+    // 대분수를 가분수로 바꿔 분자끼리·분모끼리 곱한다 — 교과서가 가르치는 그 방법이다
+    const m = /\[1_(\d+)\/(\d+)\] × \[(\d+)\/(\d+)\]/.exec(x.text)!
+    const [w, d1, n2, d2] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])]
+    const n1 = d1 + w
     const top = n1 * n2
     const bottom = d1 * d2
     return (
-      `[${n1}/${d1}] × [${n2}/${d2}] → 분자 ${n1} × ${n2} = ${top}, 분모 ${d1} × ${d2} = ${bottom}` +
+      `${showMixed(1, w, d1)} × ${show({ n: n2, d: d2 })} → ` +
+      `${showMixed(1, w, d1)} 을 가분수로 바꾸면 분자 ${n1}, 분모 ${d1}
+` +
+      `  분자 ${n1} × ${n2} = ${top}, 분모 ${d1} × ${d2} = ${bottom}` +
       ` → ${top} ${top > bottom ? '>' : '<'} ${bottom} 이므로 1보다 ${top > bottom ? '큽니다' : '작습니다'}`
     )
   }
