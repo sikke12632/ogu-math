@@ -18,26 +18,51 @@ type Wrong = { expr: string; shown: Frac; right: Frac; why: string }
  * 틀린 것은 반드시 아이들이 실제로 하는 실수여야 한다 (발견 5).
  * 아무 수나 어긋나게 하면 "숫자가 이상한 것" 을 찾는 문제가 되어 버린다.
  */
+/**
+ * 분모 5~9 의 기약 진분수, 분자 2 이상. 기약이 아니면 다시 뽑는다.
+ *
+ * **맞는 보기 셋도 이 수로 만든다.** 틀린 것 하나만 어렵게 하고 나머지가
+ * `[1/2] × [1/2] = [1/4]` 면, 쉬운 셋을 확인하고 남은 하나를 찍는다 —
+ * 계산 없이 소거법으로 풀리는 문항이 된다.
+ */
+function judgeFrac(rng: Rng): Frac {
+  for (;;) {
+    const d = rng.pick([5, 6, 7, 8, 9] as const)
+    const n = rng.int(2, d - 1)
+    if (gcd(n, d) === 1) return { n, d }
+  }
+}
+
 function makeItem(rng: Rng, makeWrong: boolean): Wrong | null {
   const style = rng.pick(['proper-nat', 'mixed-nat', 'proper-proper'] as const)
 
   if (style === 'proper-nat') {
-    const d = rng.pick([3, 4, 5, 6, 7, 8, 9] as const)
-    const f = { n: rng.int(1, d - 1), d }
-    const k = rng.int(2, 8)
+    const f = judgeFrac(rng)
+    const k = rng.int(3, 9)
     const right = mul(f, { n: k, d: 1 })
     if (!makeWrong) return { expr: `${show(f)} × ${k}`, shown: right, right, why: '' }
-    // 분모에도 곱하는 실수
-    const bad = reduce({ n: f.n * k, d: f.d * k })
+    /*
+     * 예전에는 "분모에도 곱하는 실수" 를 썼는데, 약분해서 그리면 원래 분수가 그대로 나온다 —
+     * `[1/4] × 6 = [1/4]` 은 계산 없이도 보여서 상 문항이 아니었다.
+     * 대신 **분자와 자연수를 약분해 버리는 실수**를 쓴다. `[3/4] × 6` 에서 3 과 6 을
+     * 지워 `[1/4] × 2 = [1/2]` 로 가는 것인데, 약분을 막 배운 아이들이 실제로 한다.
+     * 값이 그럴듯한 크기라 곱해 봐야 잡힌다. 분자가 자연수를 나눌 때만 성립한다.
+     */
+    if (k % f.n !== 0) return null
+    const bad = reduce({ n: k / f.n, d: f.d })
     if (value(bad) === value(right)) return null
-    return { expr: `${show(f)} × ${k}`, shown: bad, right, why: '분모에는 곱하지 않습니다. 분자에만 곱합니다.' }
+    return {
+      expr: `${show(f)} × ${k}`,
+      shown: bad,
+      right,
+      why: '분자와 곱하는 수는 약분하지 않습니다. 약분은 분자와 분모 사이에서만 합니다.',
+    }
   }
 
   if (style === 'mixed-nat') {
-    const d = rng.pick([2, 3, 4, 5, 6] as const)
-    const w = rng.int(1, 3)
-    const n = rng.int(1, d - 1)
-    const k = rng.int(2, 5)
+    const { n, d } = judgeFrac(rng)
+    const w = rng.int(2, 4)
+    const k = rng.int(3, 6)
     const right = mul(improper(w, n, d), { n: k, d: 1 })
     const expr = `${showMixed(w, n, d)} × ${k}`
     if (!makeWrong) return { expr, shown: right, right, why: '' }
@@ -47,18 +72,37 @@ function makeItem(rng: Rng, makeWrong: boolean): Wrong | null {
     return { expr, shown: bad, right, why: '자연수만 곱하면 안 됩니다. 대분수를 가분수로 바꿔 계산합니다.' }
   }
 
-  const da = rng.pick([2, 3, 4, 5, 6] as const)
-  const db = rng.pick([2, 3, 4, 5, 7] as const)
-  const a = { n: rng.int(1, da - 1), d: da }
-  const b = { n: rng.int(1, db - 1), d: db }
+  const a = judgeFrac(rng)
+  const b = judgeFrac(rng)
+  // 분모가 같으면 분모를 더하는 실수가 성립하지 않고, 약분 없이 분자끼리만 곱하면 된다
+  if (a.d === b.d) return null
   const right = mul(a, b)
+  // [7/8] × [5/9] = [35/72] — 분모 48 을 넘으면 표기 규칙에 걸린다
+  if (right.d > 48) return null
   const expr = `${show(a)} × ${show(b)}`
   if (!makeWrong) return { expr, shown: right, right, why: '' }
-  // 분모를 더해 버리는 실수
-  if (a.d === b.d) return null
-  const bad = reduce({ n: a.n * b.n, d: a.d + b.d })
-  if (value(bad) === value(right)) return null
-  return { expr, shown: bad, right, why: '분모도 곱해야 합니다. 더하면 안 됩니다.' }
+
+  /*
+   * 틀린 것은 두 가지 실수 중 성립하는 것에서 고른다.
+   *   - 분모를 더함: `[2/3] × [4/5] = [8/8]` 처럼 1 이상이 되면 진분수 곱이 커졌다고
+   *     바로 보이므로 1 보다 작을 때만 쓴다
+   *   - 분자끼리 약분함: `[2/5] × [4/7]` 에서 2 와 4 를 지워 `[1/5] × [2/7]` 로 감.
+   *     약분을 막 배운 아이들이 실제로 한다. 분자끼리 공약수가 있을 때만 성립한다
+   */
+  const options: { bad: Frac; why: string }[] = []
+  const addDen = reduce({ n: a.n * b.n, d: a.d + b.d })
+  if (value(addDen) < 1) options.push({ bad: addDen, why: '분모도 곱해야 합니다. 더하면 안 됩니다.' })
+  const g = gcd(a.n, b.n)
+  if (g > 1) {
+    options.push({
+      bad: reduce({ n: (a.n / g) * (b.n / g), d: a.d * b.d }),
+      why: '분자끼리는 약분하지 않습니다. 약분은 분자와 분모 사이에서만 합니다.',
+    })
+  }
+  const live = options.filter((o) => value(o.bad) !== value(right))
+  if (live.length === 0) return null
+  const pick = rng.pick(live)
+  return { expr, shown: pick.bad, right, why: pick.why }
 }
 
 function findWrong(rng: Rng): Draft | null {

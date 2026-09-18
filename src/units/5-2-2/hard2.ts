@@ -22,7 +22,7 @@
 
 import type { Rng } from '../../lib/rng'
 import type { Draft, Template } from '../_types'
-import { improper, josa, josaAfter, mul, show, showMixed, value, type Frac } from './frac'
+import { gcd, improper, josa, josaAfter, mul, show, showMixed, value, type Frac } from './frac'
 import { STANDARD } from './calc'
 
 /* ── T16 역산 + 중첩 ───────────────────────────────── */
@@ -50,20 +50,30 @@ const WHO = [
  */
 function backward(rng: Rng): Draft | null {
   const s = rng.pick(WHO)
-  const ad = rng.pick([2, 3, 4, 5, 6] as const)
-  const bd = rng.pick([2, 3, 4, 5, 6] as const)
-  const a: Frac = { n: rng.int(1, ad - 1), d: ad }
-  const b: Frac = { n: rng.int(1, bd - 1), d: bd }
+  /*
+   * 두 비율 다 **분자 2 이상, 분모 3~9**.
+   * `[1/2] 의 [1/2] 이 5명` 은 "5 × 4" 로 끝나는 암산이었다.
+   * `[3/5] 의 [4/7] 이 24명` 이어야 겹친 비율 [12/35] 를 만들고 한 묶음을 찾게 된다.
+   */
+  const ad = rng.pick([3, 4, 5, 6, 7, 8, 9] as const)
+  const bd = rng.pick([3, 4, 5, 6, 7, 8, 9] as const)
+  const a: Frac = { n: rng.int(2, ad - 1), d: ad }
+  const b: Frac = { n: rng.int(2, bd - 1), d: bd }
+  if (gcd(a.n, a.d) !== 1 || gcd(b.n, b.d) !== 1) return null
+  // 같은 비율이 두 번이면([2/3] 의 [2/3]) "제곱" 지름길이 생긴다
+  if (a.n === b.n && a.d === b.d) return null
   const both = mul(a, b)
 
-  // 겹친 비율이 너무 단순하면(1/2, 1/4 같은 것) 암산으로 끝난다
-  if (both.d < 4) return null
+  // 겹친 비율이 약분되어 단순해지면([2/3] × [3/4] = [1/2]) 암산으로 끝난다
+  if (both.d < 8) return null
+  // [7/9] × [5/8] = [35/72] — 분모 48 을 넘으면 표기 규칙에 걸린다
+  if (both.d > 48) return null
   // 전체 = 안쪽 값 ÷ 겹친 비율. 전체가 자연수여야 사람 수가 된다
-  const times = rng.int(2, 5)
+  const times = rng.int(2, 6)
   const whole = both.d * times
   if (whole > 200) return null
   const inner = (whole * both.n) / both.d
-  if (!Number.isInteger(inner) || inner < 4) return null
+  if (!Number.isInteger(inner) || inner < 6) return null
   // 안쪽 값이 전체와 같으면 문제가 안 된다
   if (inner === whole) return null
 
@@ -79,15 +89,15 @@ function backward(rng: Rng): Draft | null {
   const seen = new Set<number>([whole])
   const wrong: number[] = []
   for (const v of slips) {
-    // 1명·2명 같은 답은 아이들이 보자마자 지운다. 오답도 그럴듯해야 한다
-    if (v < 4 || v > 400 || seen.has(v)) continue
+    // 전체가 안쪽 값보다 작으면("안경 쓴 남학생 16명, 전교생 9명") 보자마자 지운다
+    if (v <= inner || v > 400 || seen.has(v)) continue
     seen.add(v)
     wrong.push(v)
   }
   // 모자라면 가까운 수로 채운다
   for (let k = 1; wrong.length < 3 && k < 20; k++) {
     for (const v of [whole + k * both.d, whole - k * both.d]) {
-      if (wrong.length >= 3 || v < 4 || seen.has(v)) continue
+      if (wrong.length >= 3 || v <= inner || seen.has(v)) continue
       seen.add(v)
       wrong.push(v)
     }
@@ -139,17 +149,25 @@ export const T16: Template = {
  */
 function howManyInts(rng: Rng): Draft | null {
   const mk = (): { text: string; v: number } | null => {
-    const d = rng.pick([2, 3, 4, 5, 6, 8] as const)
+    /*
+     * 분모 3~8, 분수 부분의 분자 2 이상.
+     * `[1/2] × 4 < □ < [1/2] × 21` 은 양 끝이 2 와 10.5 로 암산이었다.
+     * `[2_3/4] × 6 < □ < [5/7] × 28` 이어야 곱셈이 실제로 일어난다.
+     */
+    const d = rng.pick([3, 4, 5, 6, 7, 8] as const)
     /*
      * 분모로 나누어떨어지면 show 가 자연수로 그린다 — `2 × 7` 이 되어 버려서
      * 분수 곱셈 문제가 아니게 된다. 버리지 말고 **처음부터 안 나오게** 만든다:
-     * 진분수(n < d) 를 뽑고, 절반은 거기에 분모를 한 번 더해 대분수로 올린다.
+     * 진분수(n < d) 를 뽑고, 절반은 거기에 분모를 한두 번 더해 대분수로 올린다.
      */
-    const n = rng.int(1, d - 1) + (rng.bool() ? d : 0)
-    const k = rng.int(4, 24)
+    // 기약이 아니면 다시 뽑는다. 버리면 분모 4·6·8 에서 절반이 날아간다
+    let p = rng.int(2, d - 1)
+    while (gcd(p, d) !== 1) p = rng.int(2, d - 1)
+    const n = p + (rng.bool() ? d * rng.int(1, 2) : 0)
+    const k = rng.int(4, 20)
     const f: Frac = { n, d }
     const r = mul(f, { n: k, d: 1 })
-    if (value(r) > 40) return null
+    if (value(r) > 60) return null
     // 가분수는 대분수로 그린다 — show 가 알아서 한다
     return { text: `${show(f)} × ${k}`, v: value(r) }
   }
@@ -161,13 +179,16 @@ function howManyInts(rng: Rng): Draft | null {
   const lo = x.v <= y.v ? x : y
   const hi = x.v <= y.v ? y : x
   if (hi.v - lo.v < 1.2) return null // 답이 0 이나 1 이면 셀 것이 없다
-  if (hi.v - lo.v > 12) return null // 너무 벌어지면 그냥 세기만 하는 문제가 된다
+  if (hi.v - lo.v > 10) return null // 너무 벌어지면 그냥 세기만 하는 문제가 된다
+  // 양 끝이 둘 다 자연수로 떨어지면 "사이를 센다" 만 남는다. 적어도 한쪽은 분수여야 한다
+  if (Number.isInteger(lo.v) && Number.isInteger(hi.v)) return null
 
   // lo < □ < hi 를 만족하는 자연수 개수 (양 끝은 넣지 않는다)
   const first = Math.floor(lo.v) + 1
   const last = Math.ceil(hi.v) - 1
   const count = last - first + 1
-  if (count < 2 || count > 11) return null
+  // 개수가 많으면 세는 문제가 된다. 2~8개
+  if (count < 2 || count > 8) return null
 
   const list = []
   for (let i = first; i <= last; i++) list.push(i)
@@ -225,18 +246,25 @@ const BOUNCE = ['공', '고무공', '탱탱볼'] as const
  */
 function bounce(rng: Rng): Draft | null {
   const thing = rng.pick(BOUNCE)
-  const d = rng.pick([2, 3, 4, 5] as const)
-  const n = rng.int(1, d - 1)
+  /*
+   * 비율은 **분자 2 이상, 분모 3~8**. `[1/2]·[1/4]` 는 반으로 접기라 암산이고,
+   * 두 번 곱하면 `16 → 1 m` 처럼 답이 너무 작아져 숫자 감각으로도 찍힌다.
+   * `[3/5]` 를 두 번 곱하면 `75 → 45 → 27` 이라 매번 곱셈을 해야 한다.
+   */
+  const d = rng.pick([3, 4, 5, 6, 8] as const)
+  const n = rng.int(2, d - 1)
+  if (gcd(n, d) !== 1) return null
   const ratio: Frac = { n, d }
   const times = rng.pick([2, 2, 3] as const)
 
   // 답이 자연수가 되게 시작 높이를 고른다. 분수 높이는 크롬북에서 못 친다
   const need = Math.pow(d, times)
-  const base = need * rng.int(1, Math.floor(96 / need) || 1)
+  if (need > 100) return null
+  const base = need * rng.int(1, Math.floor(100 / need))
   // 공을 떨어뜨리는 높이다. 128 m 짜리 공놀이는 없다
-  if (base < 8 || base > 96) return null
+  if (base < 20 || base > 100) return null
   const answer = (base * Math.pow(n, times)) / need
-  if (!Number.isInteger(answer) || answer < 1) return null
+  if (!Number.isInteger(answer) || answer < 4) return null
   if (answer === base) return null
 
   const seen = new Set<number>([answer])
@@ -334,9 +362,16 @@ function speed(rng: Rng): Draft | null {
   type Run = { name: string; rate: number; hours: string; dist: number }
 
   const mk = (m: (typeof MOVER)[number]): Run | null => {
-    const d = rng.pick([2, 3, 4, 5, 6] as const)
+    /*
+     * 시간의 분모에 2 를 넣지 않는다. `[1_1/2]시간` 은 "반 더" 라 암산인데
+     * 실제로 뽑아 보니 절반 넘게 [1_1/2] 이었다. [2_2/3]·[1_3/4]·[1_5/6] 이어야
+     * 가분수로 바꿔 곱하고 약분하는 과정이 생긴다.
+     */
+    const d = rng.pick([3, 4, 5, 6, 8] as const)
     const w = rng.int(1, 2)
-    const n = rng.int(1, d - 1)
+    // 기약이 아니면 다시 뽑는다. 버리면 세 대를 뽑는 쪽이 거의 못 만들어진다
+    let n = rng.int(1, d - 1)
+    while (gcd(n, d) !== 1) n = rng.int(1, d - 1)
     // 거리가 자연수여야 크롬북으로 칠 수 있고, 견주기도 깔끔하다
     const loK = Math.ceil(m.lo / d)
     const hiK = Math.floor(m.hi / d)
@@ -368,8 +403,8 @@ function speed(rng: Rng): Draft | null {
     // 한눈에 승부가 나면 곱셈을 안 한다. 두 거리가 비슷할 때만 낸다
     if (diff > near.dist / 2) return null
     if (diff < 2) return null
-    // 속력과 시간이 둘 다 같으면 견줄 것이 없다
-    if (a.rate === b.rate && a.hours === b.hours) return null
+    // 시간이 같으면 속력 차이에 시간만 곱하면 끝난다. 시간이 서로 달라야 각각 곱한다
+    if (a.hours === b.hours) return null
 
     const seen = new Set<number>([diff])
     const wrong: number[] = []
@@ -406,6 +441,8 @@ function speed(rng: Rng): Draft | null {
   const runs = picked.map((m) => mk(m))
   if (runs.some((r) => !r)) return null
   const rs = runs as Run[]
+  // 셋의 시간이 다 같으면 속력만 견주면 된다. 적어도 두 가지 시간이어야 한다
+  if (new Set(rs.map((r) => r.hours)).size < 2) return null
   const dists = rs.map((r) => r.dist)
   const best = Math.max(...dists)
   // 1등이 둘이면 답이 하나가 아니다

@@ -9,7 +9,7 @@
 
 import type { Rng } from '../../lib/rng'
 import type { Difficulty, Draft, Template } from '../_types'
-import { distractors, improper, josa, josaAfter, mul, reduce, show, showMixed, value, type Frac } from './frac'
+import { distractors, gcd, improper, josa, josaAfter, mul, reduce, show, showMixed, value, type Frac } from './frac'
 import { STANDARD } from './calc'
 
 /* ── T7 중첩 비율 ───────────────────────────────────── */
@@ -36,22 +36,42 @@ function smallFrac(rng: Rng): Frac {
   return { n: rng.int(1, d - 1), d }
 }
 
+/**
+ * 상 난이도용 진분수. **[1/2]·[1/3]·[1/4] 를 뽑지 않는다.**
+ * 그 셋이 나오면 삼중이라도 `[1/2] × [1/2] × [1/3]` 이 되어 암산으로 끝난다.
+ * 분모 3~9, 분자는 2 이상 — 약분할 것이 있어야 손을 움직인다.
+ */
+function hardFrac(rng: Rng): Frac | null {
+  const d = rng.pick([3, 4, 5, 6, 7, 8, 9] as const)
+  const n = rng.int(2, d - 1)
+  // [2/4] 는 화면에 [1/2] 로 나간다. 기약이 아니면 버린다
+  return gcd(n, d) === 1 ? { n, d } : null
+}
+
 function nested(rng: Rng, difficulty: Difficulty): Draft | null {
   const s = rng.pick(NESTED)
-  const a = smallFrac(rng)
-  const b = smallFrac(rng)
   /*
    * 삼중은 상 난이도에서만. 익힘책의 텃밭 문제가 이 얼개다.
    * **상이면 반드시 삼중이다.** 이중 중첩은 곱셈 두 번이라 중과 다를 게 없는데,
    * 예전에는 상에서도 절반쯤 이중이 나와서 "상 문제가 쉽다" 는 말이 나왔다.
    */
   const triple = difficulty === 3
-  const c = triple ? smallFrac(rng) : null
+  const a = triple ? hardFrac(rng) : smallFrac(rng)
+  const b = triple ? hardFrac(rng) : smallFrac(rng)
+  const c = triple ? hardFrac(rng) : null
+  if (!a || !b || (triple && !c)) return null
 
   let ans = mul(a, b)
   if (c) ans = mul(ans, c)
   // G7 — 최종 분모가 24 를 넘으면 5학년 손계산을 벗어난다
   if (ans.d > 24 || ans.n <= 0) return null
+  if (triple) {
+    // 세 분수가 다 약분되어 [1/5] 처럼 떨어지면 결국 암산이다. 답의 분모가 커야 한다
+    if (ans.d < 8) return null
+    // 같은 분수가 두 번 나오면 "곱하면 제곱" 으로 지름길이 생긴다
+    const keys = [a, b, c!].map((f) => `${reduce(f).n}/${reduce(f).d}`)
+    if (new Set(keys).size < 3) return null
+  }
 
   const step = c
     ? `${show(a)} × ${show(b)} × ${show(c)}`
@@ -114,10 +134,21 @@ const UNITS = [
   { one: '1분', total: 60, unit: '초', batchim: false },
 ] as const
 
+/**
+ * 상 난이도용 분수. **분자 1 을 뽑지 않는다.**
+ * `1 km의 [1/2]은 500 m` 는 분수 곱셈이 아니라 반 나누기다.
+ * 분자가 2 이상이어야 "한 묶음이 얼마, 그게 몇 묶음" 을 실제로 계산한다.
+ */
+function hardUnitFrac(rng: Rng): { n: number; d: number } {
+  const d = rng.pick([3, 4, 5, 6, 8, 10, 12] as const)
+  return { n: rng.int(2, d - 1), d }
+}
+
 function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
   const u = rng.pick(UNITS)
-  const d = rng.pick([2, 3, 4, 5, 6, 8, 10, 12] as const)
-  const n = rng.int(1, d - 1)
+  const { n, d } = difficulty === 3
+    ? hardUnitFrac(rng)
+    : (() => { const dd = rng.pick([2, 3, 4, 5, 6, 8, 10, 12] as const); return { n: rng.int(1, dd - 1), d: dd } })()
   const exact = (u.total * n) / d
   // 딱 떨어지지 않으면 5학년 문제가 아니다
   if (!Number.isInteger(exact) || exact <= 0) return null
@@ -126,15 +157,16 @@ function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
   // 값만 구하는 변주는 하 난이도와 다를 게 없는데 난이도 표만 상으로 붙어 나갔다.
   // (검수에서 "1 m의 1/2은 몇 cm" 가 상으로 나왔다)
   if (difficulty === 3) {
+    // 약분되는 분수([4/6])는 [2/3] 으로 적어야 하는데 그러면 같은 문항이 두 벌 생긴다. 기약만 쓴다
+    if (gcd(n, d) !== 1) return null
     // 상 — 셋 중 잘못 말한 친구 찾기. 익힘책의 그 문항 얼개다
     const others: { text: string; ok: boolean }[] = []
-    const seen = new Set<string>()
+    const seen = new Set<string>([`${u.one}|${n}/${d}`])
     for (let i = 0; i < 30 && others.length < 2; i++) {
       const v = rng.pick(UNITS)
-      const dd = rng.pick([2, 3, 4, 5, 6, 8, 10] as const)
-      const nn = rng.int(1, dd - 1)
+      const { n: nn, d: dd } = hardUnitFrac(rng)
       const e = (v.total * nn) / dd
-      if (!Number.isInteger(e) || e <= 0) continue
+      if (!Number.isInteger(e) || e <= 0 || gcd(nn, dd) !== 1) continue
       const key = `${v.one}|${nn}/${dd}`
       if (seen.has(key)) continue
       seen.add(key)
@@ -142,9 +174,20 @@ function unitConvert(rng: Rng, difficulty: Difficulty): Draft | null {
     }
     if (others.length < 2) return null // 상인데 판별형을 못 만들면 아예 안 낸다
 
-    // 틀린 사람 하나 — 값을 어긋나게 만든다
-    const off = exact + rng.pick([-1, 1] as const) * Math.max(1, Math.round(exact * rng.pick([0.2, 0.5] as const)))
-    if (off === exact || off <= 0) return null
+    /*
+     * 틀린 사람 하나 — **아이들이 실제로 하는 실수**로 값을 만든다.
+     * 예전에는 정답에 20%·50% 를 더하고 빼서 `72cm` 같은 아무 수가 나왔다.
+     *   - 한 묶음(total ÷ d)만 구하고 분자를 곱하지 않음
+     *   - 쓴 쪽이 아니라 남은 쪽(d − n 묶음)을 답함
+     *   - 묶음 수를 하나 더/덜 셈
+     */
+    const one = u.total / d
+    const slipPool = [one, one * (d - n), one * (n + 1), one * (n - 1)]
+      // 전체와 같은 값([3/4] 이 60초)이나 정답의 반 이하·두 배 이상은 크기만 보고 걸러진다
+      .filter((v) => Number.isInteger(v) && v > 0 && v !== exact && v !== u.total)
+      .filter((v) => v > exact / 2 && v < exact * 2)
+    if (slipPool.length === 0) return null
+    const off = rng.pick(slipPool)
     const wrongLine = `${u.one}의 ${josaAfter(`[${n}/${d}]`, '은는')} ${off}${u.unit}${u.batchim ? '이야' : '야'}.`
 
     const names = rng.shuffle(['소민', '성진', '은별', '재희', '다정'] as const).slice(0, 3)
@@ -202,10 +245,18 @@ function figure(rng: Rng, difficulty: Difficulty): Draft | null {
   const shape = difficulty === 3
     ? rng.pick(['triangle', 'triangle', 'rect', 'para'] as const)
     : rng.pick(['square', 'rect', 'para', 'triangle'] as const)
+  const hard = difficulty === 3
+  /*
+   * 상에서는 **두 변이 다 대분수**고 분모에 2 가 없다.
+   * `[1_1/2] × [1/2] ÷ 2` 는 상 자리에 있었지만 암산이었다.
+   * 대분수 둘을 가분수로 바꿔 곱하면 두 자리 × 두 자리가 되고, 약분까지 해야 한다.
+   */
   const mk = (): { text: string; f: Frac } => {
-    if (rng.bool(0.5)) {
-      const m = { w: rng.int(1, 3), d: rng.pick([2, 3, 4, 5, 6] as const), n: 0 }
-      m.n = rng.int(1, m.d - 1)
+    if (hard || rng.bool(0.5)) {
+      const m = hard
+        ? { w: rng.int(1, 4), d: rng.pick([3, 4, 5, 6, 7, 8] as const), n: 0 }
+        : { w: rng.int(1, 3), d: rng.pick([2, 3, 4, 5, 6] as const), n: 0 }
+      m.n = hard ? rng.int(2, m.d - 1) : rng.int(1, m.d - 1)
       return { text: showMixed(m.w, m.n, m.d), f: improper(m.w, m.n, m.d) }
     }
     const d = rng.pick([2, 3, 4, 5, 6, 8] as const)
@@ -215,6 +266,12 @@ function figure(rng: Rng, difficulty: Difficulty): Draft | null {
 
   const a = mk()
   const b = mk()
+  if (hard) {
+    // [2_2/4] 는 화면에 [2_1/2] 로 나간다 — 분모 2 를 뺀 뜻이 없어진다. 기약일 때만
+    if (gcd(a.f.n, a.f.d) !== 1 || gcd(b.f.n, b.f.d) !== 1) return null
+    // 분모가 같으면([2_3/4] × [1_1/4]) 약분 없이 분자끼리만 곱하면 된다. 서로 달라야 한다
+    if (a.f.d === b.f.d) return null
+  }
   let ans: Frac
   let prompt: string
   let how: string

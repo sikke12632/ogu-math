@@ -32,25 +32,36 @@ import { STANDARD } from './calc'
  * 보기를 주고 고르게 한다 — 넷을 다 곱해 봐야 답이 나온다.
  */
 function inverse(rng: Rng): Draft | null {
-  const d = rng.pick([2, 3, 4, 5, 6, 8] as const)
-  const mult: Frac = { n: rng.int(1, d - 1), d }
+  /*
+   * 곱하는 수는 **분자 2 이상, 분모 4 이상**.
+   * `[1/4] 을 곱했더니 [1/2]` 은 "4 배 하면 되네" 로 끝나는 나눗셈 암산이다.
+   * `[3/8] 을 곱했더니 [2_5/8]` 이어야 보기를 하나씩 곱해 보게 된다.
+   */
+  const d = rng.pick([4, 5, 6, 7, 8, 9] as const)
+  const mult: Frac = { n: rng.int(2, d - 1), d }
+  if (gcd(mult.n, mult.d) !== 1) return null
   // 답이 될 수 (구하는 수). 깔끔한 값이어야 한다
-  const ansD = rng.pick([2, 3, 4, 5, 6] as const)
+  const ansD = rng.pick([3, 4, 5, 6, 7, 8] as const)
   const ans: Frac = rng.bool(0.4)
-    ? { n: rng.int(2, 8), d: 1 }
-    : { n: rng.int(1, ansD * 3), d: ansD }
+    ? { n: rng.int(3, 9), d: 1 }
+    : { n: rng.int(2, ansD * 3), d: ansD }
+  if (ans.d !== 1 && gcd(ans.n, ans.d) !== 1) return null
   const result = mul(ans, mult)
-  if (result.d > 24 || result.n <= 0 || value(result) > 30) return null
+  if (result.d > 48 || result.n <= 0 || value(result) > 30) return null
   // 곱한 값이 원래 수와 같으면 문제가 안 된다
   if (value(result) === value(ans)) return null
   // 답이 1이면 "곱해도 그대로니까 1" 로 바로 보인다. 심화가 아니다
   if (value(ans) === 1) return null
 
+  /*
+   * 오답에 **문제에 적힌 수(곱한 수·결과)를 넣지 않는다.**
+   * 넣으면 아이가 "저건 문제에 있던 거니까 아니지" 하고 둘을 지워 2지선다가 된다.
+   * 한 번 더 곱한 값 하나만 실수에서 뽑고, 나머지는 답 근처 값으로 채워
+   * 넷을 다 곱해 봐야 갈리게 한다.
+   */
   const slips = [
     // 한 번 더 곱해 버리는 실수 — 나눗셈이 필요한 걸 모르면 이렇게 한다
     { why: '거꾸로 가지 않고 한 번 더 곱함', wrong: mul(result, mult) },
-    { why: '곱한 수를 그대로 답함', wrong: mult },
-    { why: '결과를 그대로 답함', wrong: result },
   ]
   const wrong = distractors(ans, slips, () => rng.next())
   if (wrong.length < 3) return null
@@ -83,6 +94,18 @@ export const T12: Template = {
   generate: (rng) => inverse(rng),
 }
 
+/**
+ * 분모 3~8 의 기약 진분수. 기약이 아니면 다시 뽑는다 —
+ * `return null` 로 버리면 분모 4·6·8 에서 절반이 날아가 생성률이 검수 기준 아래로 떨어진다.
+ */
+function reducedFrac(rng: Rng): Frac {
+  for (;;) {
+    const d = rng.pick([3, 4, 5, 6, 7, 8] as const)
+    const n = rng.int(1, d - 1)
+    if (gcd(n, d) === 1) return { n, d }
+  }
+}
+
 /* ── T13 남은 것 구하기 ─────────────────────────────── */
 
 const LEFTOVER = [
@@ -100,29 +123,64 @@ const LEFTOVER = [
  */
 function leftover(rng: Rng): Draft | null {
   const s = rng.pick(LEFTOVER)
-  const w = rng.int(1, 4)
-  const td = rng.pick([2, 3, 4, 5, 6] as const)
-  const total = improper(w, rng.int(1, td - 1), td)
-  const totalText = showMixed(w, total.n - w * td, td)
+  const w = rng.int(2, 5)
+  const td = rng.pick([3, 4, 5, 6, 8] as const)
+  const tn = rng.int(1, td - 1)
+  if (gcd(tn, td) !== 1) return null
+  const total = improper(w, tn, td)
+  const totalText = showMixed(w, tn, td)
 
-  const ad = rng.pick([2, 3, 4, 5, 6, 7] as const)
-  const a: Frac = { n: rng.int(1, ad - 1), d: ad }
-  const bd = rng.pick([2, 3, 4, 5] as const)
-  const b: Frac = { n: rng.int(1, bd - 1), d: bd }
+  /*
+   * 쓰는 비율은 **[1/2] 을 뽑지 않는다.** `[1/2] 쓰고 남은 것의 [1/2]` 은
+   * "반의 반" 으로 끝난다. 분모 3~8 에서 기약분수를 뽑고,
+   * 둘 다 단위분수([1/3] 쓰고 남은 것의 [1/4])면 버린다 — 남은 비율이 한눈에 보인다.
+   */
+  const a = reducedFrac(rng)
+  const b = reducedFrac(rng)
+  // 같은 비율을 두 번 쓰면 "제곱" 지름길이 생긴다
+  if (a.n === b.n && a.d === b.d) return null
+  if (a.n === 1 && b.n === 1) return null
 
   // 처음 쓰고 남은 것
   const rest1 = mul(total, reduce({ n: a.d - a.n, d: a.d }))
   // 남은 것의 b 를 또 쓰고 남은 것
   const rest2 = mul(rest1, reduce({ n: b.d - b.n, d: b.d }))
-  if (rest2.d > 24 || rest2.n <= 0 || value(rest2) > 20) return null
+  // 중간값은 풀이에 그대로 찍힌다. 분모 48 을 넘으면 표기 규칙에 걸린다
+  if (rest1.d > 48) return null
+  // 답의 분모 한도는 24 에서 48(표기 규칙의 최대)로 — 분모 2 를 뺐더니 24 로는 열에 아홉이
+  // 버려졌고, 오답 셋을 실수에서만 뽑게 하자 40 으로도 생성률이 검수 기준(20%) 에 걸렸다
+  if (rest2.d > 48 || rest2.n <= 0 || value(rest2) > 20) return null
   if (value(rest2) === value(rest1)) return null
 
-  const slips = [
-    { why: '두 번째를 처음 양의 비율로 봄', wrong: mul(total, reduce({ n: (a.d - a.n) * (b.d - b.n), d: a.d * b.d })) },
-    { why: '남은 것이 아니라 쓴 것을 답함', wrong: mul(rest1, b) },
-    { why: '한 번만 쓴 것으로 봄', wrong: rest1 },
+  /*
+   * 오답은 **실수에서만** 뽑고, 셋이 안 모이면 문항을 버린다.
+   * 예전에는 `distractors` 에 맡겼는데, 첫 오답의 식이 틀려서(1−a 와 1−b 를 곱한 것 —
+   * 그건 정답이다) 항상 정답과 겹쳤고, 모자란 자리를 분모를 ±1 흔든 `[13/37]` 같은
+   * 값으로 채웠다. 실수처럼 안 보이는 보기는 소거법의 재료가 된다.
+   *
+   *   - 두 번째 비율을 처음 양의 비율로 봄:  처음 × (1 − a − b)
+   *   - 남은 것이 아니라 두 번째 쓴 양을 답함: 남은 것 × b
+   *   - 한 번만 쓴 것으로 봄:                처음 × (1 − a)
+   *   - 쓴 양이 아니라 남은 양의 비율로 곱함:  처음 × a × b
+   */
+  const bothFromStart = a.n * b.d + b.n * a.d < a.d * b.d
+    ? mul(total, reduce({ n: a.d * b.d - a.n * b.d - b.n * a.d, d: a.d * b.d }))
+    : null
+  const slipVals: Frac[] = [
+    ...(bothFromStart ? [bothFromStart] : []),
+    mul(rest1, b),
+    rest1,
+    mul(mul(total, a), b),
   ]
-  const wrong = distractors(rest2, slips, () => rng.next())
+  const wrong: Frac[] = []
+  const seenKey = new Set<string>([`${rest2.n}/${rest2.d}`])
+  for (const f of slipVals) {
+    if (wrong.length >= 3) break
+    const key = `${f.n}/${f.d}`
+    if (seenKey.has(key) || f.n <= 0 || f.d > 48) continue
+    seenKey.add(key)
+    wrong.push(f)
+  }
   if (wrong.length < 3) return null
   const choices = rng.shuffle([show(rest2), ...wrong.map(show)])
 
@@ -167,8 +225,13 @@ export const T13: Template = {
  * 곱셈 단원 안에서 다른 단원 개념이 필요한 첫 문항이라 진짜 심화다.
  */
 function makeWhole(rng: Rng): Draft | null {
-  const d = rng.pick([12, 14, 15, 16, 18, 20, 24] as const)
-  const n = rng.int(1, d - 1)
+  /*
+   * 분모는 24~48. 예전 12~24 에서는 `[4/24]` 가 나와 한눈에 [1/6] 이 보였다.
+   * 약분한 결과가 **단위분수가 아니어야** 한다 — `[4/24] → [1/6]` 은 "24 를 4 로 나누면 6"
+   * 이지만 `[20/48] → [5/12]` 는 최대공약수를 찾고 분모를 그걸로 나눠야 한다.
+   */
+  const d = rng.pick([24, 27, 28, 30, 32, 36, 40, 42, 45, 48] as const)
+  const n = rng.int(2, d - 1)
   const f = reduce({ n, d })
   if (f.d === 1) return null
   const ans = f.d // 기약분수의 분모가 답이다
@@ -177,7 +240,8 @@ function makeWhole(rng: Rng): Draft | null {
   // 3/6 처럼 한눈에 1/2 로 보이면 답 2 가 그냥 보여서 생각할 거리가 없다.
   // 약분 전 분모(d)와 답(ans)이 충분히 달라야 "약분 먼저" 라는 판단이 필요해진다.
   if (gcd(n, d) === 1) return null // 약분할 게 없으면 그냥 분모를 답하면 된다
-  if (ans < 5) return null // 답이 2·3·4 면 눈으로 보인다
+  if (f.n === 1) return null // 단위분수로 떨어지면 "분모 ÷ 분자" 로 바로 보인다
+  if (ans < 7) return null // 답이 한 자리 앞쪽이면 눈으로 보인다
   if (d - ans < 4) return null // 약분 전후가 비슷하면 헷갈릴 일이 없다
 
   // 오답 — 약분을 안 하거나, 분자를 답하거나, 분모+분자
