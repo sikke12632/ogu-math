@@ -5,7 +5,7 @@
  * phase 는 읽기만 한다. 여기서 절대 바꾸지 않는다.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DrawDuel } from '../../games/draw-duel/DrawDuel'
 import {
@@ -14,7 +14,7 @@ import {
 } from '../../session/api'
 import { grade, shuffleChoices, type Answer } from '../../session/grade'
 import { mvpOf } from '../../session/teams'
-import type { StudentId } from '../../session/types'
+import { runOf, type StudentId } from '../../session/types'
 import {
   fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
   roundMatches, teamList, useSession, useTeamScores, useTick,
@@ -70,6 +70,22 @@ export function PlayView() {
     setEditNick(false)
   }, [sessionId])
 
+  /* ── 선생님이 "한 판 더" 를 누르면 풀던 것을 비운다 ────
+     자리·별명은 그대로 두고 답안만 비운다. 문항 id 가 판마다 q1, q2… 로 같아서
+     안 비우면 지난 판 답이 새 문제에 그대로 붙어 나온다 */
+  const run = runOf(session?.meta)
+  const runSuffix = run > 1 ? `|r${run}` : ''
+  const lastRun = useRef(run)
+  useEffect(() => {
+    if (lastRun.current === run) return
+    lastRun.current = run
+    setAnswers({})
+    setSubmitted(false)
+    setCursor(0)
+    setConfirming(false)
+    setShowWrong(false)
+  }, [run])
+
   /* ── 지난번에 앉았던 자리로 바로 복귀 ───────────────── */
   useEffect(() => {
     if (!sessionId || me) return
@@ -92,37 +108,40 @@ export function PlayView() {
   /* ── 답안 복구 — 서버와 로컬 중 최신 것 ─────────────── */
   useEffect(() => {
     if (!sessionId || !me || !session) return
-    const server = session.quiz?.[me]?.answers ?? {}
-    const local = mirroredAnswers(sessionId, me)
+    // 판 번호가 다른 답은 지난 판 것이다. 판이 바뀐 직후에는 지워지기 전의 답이 잠깐 보일 수 있다
+    const entry = session.quiz?.[me]
+    const mine = entry && (entry.run ?? 1) === run ? entry : undefined
+    const server = mine?.answers ?? {}
+    const local = mirroredAnswers(sessionId, me, run)
     const serverCount = Object.values(server).filter((v) => v != null).length
     const localCount = Object.values(local).filter((v) => v != null).length
     setAnswers((cur) => (Object.keys(cur).length > 0 ? cur : localCount > serverCount ? local : server))
-    if (session.quiz?.[me]?.submittedAt) setSubmitted(true)
+    if (mine?.submittedAt) setSubmitted(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, me, Boolean(session)])
+  }, [sessionId, me, Boolean(session), run])
 
   const problems = useMemo(() => {
     if (!session || !me) return []
-    return session.problems.map((p) => shuffleChoices(p, `${session.meta.code}|${me}`))
-  }, [session, me])
+    return session.problems.map((p) => shuffleChoices(p, `${session.meta.code}|${me}${runSuffix}`))
+  }, [session, me, runSuffix])
 
   const setAnswer = useCallback(
     (qid: string, a: Answer) => {
       setAnswers((prev) => {
         const next = { ...prev, [qid]: a }
-        if (sessionId && me) saveAnswers(sessionId, me, next)
+        if (sessionId && me) saveAnswers(sessionId, me, next, run)
         return next
       })
     },
-    [sessionId, me],
+    [sessionId, me, run],
   )
 
   const doSubmit = useCallback(() => {
     if (!sessionId || !me) return
     setConfirming(false)
     setSubmitted(true)
-    void submitQuiz(sessionId, me, answers)
-  }, [sessionId, me, answers])
+    void submitQuiz(sessionId, me, answers, run)
+  }, [sessionId, me, answers, run])
 
   const left = quizTimeLeft(session, now)
 
@@ -293,7 +312,7 @@ export function PlayView() {
             given={answers[p.id] ?? null}
             onChange={(a) => setAnswer(p.id, a)}
           />
-          <Scratchpad id={`${session.meta.code}:${me}:${p.id}`} />
+          <Scratchpad id={`${session.meta.code}:${me}:${p.id}${runSuffix}`} />
         </div>
 
         {/* 번호를 눌러 원하는 문제로 간다. 빈 문제는 한눈에 보이게 색을 달리한다 */}

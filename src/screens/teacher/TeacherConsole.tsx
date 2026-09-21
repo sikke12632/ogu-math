@@ -10,13 +10,14 @@ import { Link, useParams } from 'react-router-dom'
 import { getGame } from '../../games'
 import { josaRo } from '../../units/_helpers'
 import {
-  addTime, archive, clearNickname, releaseSeat, saveRound, saveScores, saveTeams, setPaused, setPhase,
+  addTime, archive, clearNickname, releaseSeat, restartSession, saveRound, saveScores, saveTeams, setPaused, setPhase,
   writeForfeit, writeMatchResult,
 } from '../../session/api'
 import { MathText } from '../../components/MathText'
 import { grade } from '../../session/grade'
 import { assignTeams, makeMatches, moveMember, mvpOf, suggestTeamCount } from '../../session/teams'
-import { PHASE_LABEL, PHASE_ORDER, type ArchiveEntry, type Phase, type StudentId, type TeamRecord } from '../../session/types'
+import { PHASE_LABEL, PHASE_ORDER, runOf, type ArchiveEntry, type Phase, type Session, type StudentId, type TeamRecord } from '../../session/types'
+import { QuizSetupFields, useQuizSetup } from './QuizSetup'
 import {
   fmtClock, quizTimeLeft, realNameOf, roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
@@ -35,6 +36,16 @@ export function TeacherConsole() {
   const teamedRef = useRef(false)
   const builtRef = useRef<Set<number>>(new Set())
   const advancedRef = useRef<Set<number>>(new Set())
+  /** 오답 기록을 저장한 판. "한 판 더" 를 누를 때 아직 저장 안 했으면 알려 준다 */
+  const [archivedRun, setArchivedRun] = useState(0)
+
+  /*
+   * 몇 번째 판인가. "한 판 더" 를 누르면 같은 세션에서 이 값만 오른다.
+   * 팀·매칭을 섞는 씨앗에 넣어야 새 판에서 같은 팀·같은 패가 안 나온다.
+   * 1판은 예전과 똑같은 씨앗을 쓴다 — 진행 중인 수업에 배포되어도 매칭이 안 바뀐다.
+   */
+  const run = runOf(session?.meta)
+  const runSeed = session ? (run > 1 ? `${session.meta.code}|r${run}` : session.meta.code) : ''
 
   const boardUrl = session ? `${location.origin}${location.pathname}#/board/${session.meta.code}` : ''
   const playUrl = session ? `${location.origin}${location.pathname}?c=${session.meta.code}` : ''
@@ -48,6 +59,19 @@ export function TeacherConsole() {
   const left = quizTimeLeft(session, now)
   const teams = teamList(session)
   const scores = useTeamScores(session)
+
+  /* ── 판이 바뀌면 "이미 했음" 표시를 다 지운다 ───────────
+     안 지우면 새 판에서 채점·팀 배분·매칭이 "벌써 했다" 며 안 돈다 */
+  const runRef = useRef(run)
+  useEffect(() => {
+    if (runRef.current === run) return
+    runRef.current = run
+    gradedRef.current = false
+    teamedRef.current = false
+    builtRef.current = new Set()
+    advancedRef.current = new Set()
+    advanceAtRef.current = null
+  }, [run])
 
   /* ── 채점 — grading 에 들어오면. 아직 저장 안 됐으면 다시 시도한다 ── */
   useEffect(() => {
@@ -73,14 +97,14 @@ export function TeacherConsole() {
     const students = joined.map(([sid]) => ({ id: sid, score: session.quiz?.[sid]?.score ?? 0 }))
     if (students.length < 2) return // 아직 아무도 안 들어옴 — 다음 스냅샷에서 다시
     teamedRef.current = true
-    const built = assignTeams(students, suggestTeamCount(students.length), session.meta.code)
+    const built = assignTeams(students, suggestTeamCount(students.length), runSeed)
     const rec: Record<string, TeamRecord> = {}
     for (const t of built) rec[t.id] = t
     saveTeams(id, rec).catch((e) => {
       teamedRef.current = false
       setOpError('팀 배분 저장 실패: ' + (e instanceof Error ? e.message : String(e)))
     })
-  }, [session, id, joined])
+  }, [session, id, joined, runSeed])
 
   /* ── 매 판 매칭 — 판이 바뀌면 새로 짠다 ─────────────── */
   const buildRound = useCallback(
@@ -95,12 +119,14 @@ export function TeacherConsole() {
       for (const r of Object.values(session.game?.rounds ?? {})) {
         for (const c of r.cheerleaders ?? []) rest[c] = (rest[c] ?? 0) + 1
       }
-      const { matches, cheerleaders } = makeMatches(teams, round, session.meta.code, (sid) => conn.has(sid), rest)
+      const { matches, cheerleaders } = makeMatches(
+        teams, round, runSeed, (sid) => conn.has(sid), rest, run > 1 ? `r${run}` : '',
+      )
       const rec: Record<string, typeof matches[number]> = {}
       for (const m of matches) rec[m.id] = m
       saveRound(id, round, rec, cheerleaders).catch((e) => setOpError('매칭 저장 실패: ' + (e instanceof Error ? e.message : String(e))))
     },
-    [session, teams, connected, id],
+    [session, teams, connected, id, run, runSeed],
   )
 
   /* 지금 판의 매칭이 없으면 짠다 */
@@ -196,7 +222,8 @@ export function TeacherConsole() {
     for (const [sid, r] of joined) {
       const answers = session.quiz?.[sid]?.answers ?? {}
       const g = grade(session.problems, answers)
-      entries[`${id}_${sid}`] = {
+      // 판마다 따로 남긴다. 1판은 예전 키 그대로다
+      entries[run > 1 ? `${id}_r${run}_${sid}` : `${id}_${sid}`] = {
         sessionId: id,
         code: session.meta.code,
         unitId: session.meta.unitId,
@@ -218,6 +245,7 @@ export function TeacherConsole() {
       }
     }
     await archive(entries)
+    setArchivedRun(run)
     setBusy(false)
   }
 
@@ -499,15 +527,101 @@ export function TeacherConsole() {
             </div>
             <p className="hint">
               저장하면 학생이 <code>/review</code> 에서 자기 오답을 볼 수 있습니다. 이름과 점수·답안만 저장됩니다.
+              {archivedRun === run && <b> 이번 판은 저장했습니다.</b>}
             </p>
           </section>
         )}
       </div>
 
+      {phase === 'result' && (
+        <Rematch key={run} sessionId={id} session={session} archived={archivedRun === run} onError={setOpError} />
+      )}
+
       <p className="foot">
+        {run > 1 && `${run}번째 판 · `}
         게임: {(() => { try { return getGame(session.meta.gameId).name } catch { return session.meta.gameId } })()}
         {' · '}코드 {session.meta.code}
       </p>
     </div>
+  )
+}
+
+/* ── 한 판 더 ───────────────────────────────────────── */
+
+/**
+ * 시상이 끝난 뒤 같은 아이들과 바로 다시 시작한다.
+ *
+ * 코드·명단·별명·접속은 그대로고, **문항과 설정만** 새로 고른다.
+ * 단원도 범위도 난이도도 다시 만질 수 있다 — 세션 만들기와 같은 폼이다.
+ * 누르면 대기실로 돌아가므로, 아이들이 준비된 것을 보고 "다음 단계로" 를 누르면 된다.
+ */
+function Rematch({ sessionId, session, archived, onError }: {
+  sessionId: string
+  session: Session
+  archived: boolean
+  onError: (msg: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  // 방금 끝난 판의 단원·게임·시간을 이어받는다. 문항 수·난이도·범위는 지난번에 고른 값이 남아 있다
+  const setup = useQuizSetup({
+    unitId: session.meta.unitId,
+    gameId: session.meta.gameId,
+    minutes: Math.round(session.meta.quizSeconds / 60),
+    rounds: session.meta.rounds,
+  })
+
+  const go = async (): Promise<void> => {
+    setBusy(true)
+    onError(null)
+    try {
+      await restartSession(sessionId, {
+        unitId: setup.unitId,
+        gameId: setup.gameId,
+        quizSeconds: setup.minutes * 60,
+        rounds: setup.rounds,
+        problems: setup.build(),
+        run: runOf(session.meta) + 1,
+      })
+    } catch (e) {
+      onError('다시 시작 실패: ' + (e instanceof Error ? e.message : String(e)))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="panel">
+      <h2>한 판 더</h2>
+      {!open ? (
+        <>
+          <p className="hint">
+            아이들은 접속한 채로 그대로 두고 새 문제로 다시 시작합니다. 코드도 명단도 별명도 그대로입니다.
+          </p>
+          <button className="primary" onClick={() => setOpen(true)}>
+            한 판 더 하기
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="form">
+            <QuizSetupFields s={setup} />
+          </div>
+          {!archived && (
+            <p className="notice">
+              이번 판 오답 기록을 아직 저장하지 않았습니다. 다시 시작하면 이번 판 답안은 지워집니다.
+              남기려면 위의 <b>오답 기록 저장하기</b> 를 먼저 누르세요.
+            </p>
+          )}
+          <div className="row">
+            <button className="primary" onClick={() => void go()} disabled={busy || setup.planned === 0}>
+              {busy ? '준비하는 중…' : '이 설정으로 다시 시작 (대기실로)'}
+            </button>
+            <button className="ghost" onClick={() => setOpen(false)} disabled={busy}>
+              취소
+            </button>
+          </div>
+        </>
+      )}
+    </section>
   )
 }

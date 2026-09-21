@@ -5,46 +5,22 @@
  * 나중에 추가할 때 화면을 고칠 일이 없게.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listGames } from '../../games'
 import { isFirebaseConfigured } from '../../lib/firebase'
 import { load, save } from '../../lib/storage'
 import { createSession } from '../../session/api'
-import { getUnit, listUnitsByGrade } from '../../units'
-import { levelsOf, planCounts, scoreOf, totalOf } from '../../units/_plan'
-import { TopicPicker } from './TopicPicker'
+import { QuizSetupFields, useQuizSetup } from './QuizSetup'
 
 const DEFAULT_NAMES = Array.from({ length: 25 }, (_, i) => `${i + 1}번`).join('\n')
 
 export function TeacherHome() {
   const nav = useNavigate()
-  const grades = listUnitsByGrade()
-  const games = listGames()
-
-  const [unitId, setUnitId] = useState('5-2-1')
-  const [gameId, setGameId] = useState(games[0]?.id ?? 'draw-duel')
-  const [minutes, setMinutes] = useState(8)
-  const [rounds, setRounds] = useState(3)
-  const [count, setCount] = useState(9)
-  const [topicIds, setTopicIds] = useState<string[]>([])
+  // 단원·게임·범위·난이도는 "한 판 더" 와 같이 쓰는 폼이다 (QuizSetup.tsx)
+  const setup = useQuizSetup()
   const [roster, setRoster] = useState(() => load<string>('roster', DEFAULT_NAMES))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // 단원이 바뀌면 출제 범위를 그 단원 전체로 되돌린다
-  const topics = useMemo(() => {
-    try {
-      return getUnit(unitId).topics()
-    } catch {
-      return []
-    }
-  }, [unitId])
-  useEffect(() => setTopicIds(topics.map((t) => t.id)), [topics])
-
-  const levels = levelsOf(topics, topicIds)
-  const counts = planCounts(levels, count)
-  const planned = totalOf(counts)
 
   const names = roster
     .split('\n')
@@ -53,10 +29,6 @@ export function TeacherHome() {
 
   const start = async (): Promise<void> => {
     setError(null)
-    if (topicIds.length === 0) {
-      setError('출제 범위를 하나 이상 골라 주세요.')
-      return
-    }
     if (names.length < 2) {
       setError('명단에 이름이 2명 이상 있어야 합니다.')
       return
@@ -68,17 +40,12 @@ export function TeacherHome() {
     setBusy(true)
     try {
       save('roster', roster)
-      const seed = `${unitId}-${Date.now()}`
-      const problems = getUnit(unitId).generate(seed, {
-        unit: unitId,
-        counts,
-        templateIds: topicIds,
-      })
+      const problems = setup.build()
       const { sessionId } = await createSession({
-        unitId,
-        gameId,
-        quizSeconds: minutes * 60,
-        rounds,
+        unitId: setup.unitId,
+        gameId: setup.gameId,
+        quizSeconds: setup.minutes * 60,
+        rounds: setup.rounds,
         problems,
         names,
       })
@@ -112,87 +79,7 @@ export function TeacherHome() {
       {error && <p className="notice error">{error}</p>}
 
       <div className="form">
-        <label>
-          <span>1. 단원</span>
-          <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
-            {grades.map((g) => (
-              <optgroup key={g.grade} label={`${g.grade}학년`}>
-                {g.units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.semester}-{u.unit}. {u.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span>2. 게임</span>
-          <select value={gameId} onChange={(e) => setGameId(e.target.value)}>
-            {games.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="hint">{games.find((g) => g.id === gameId)?.tagline}</p>
-
-        <div className="form-row">
-          <label>
-            <span>풀이 시간</span>
-            <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
-              {[5, 6, 8, 10, 12, 15].map((m) => (
-                <option key={m} value={m}>
-                  {m}분
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>게임 판 수</span>
-            <select value={rounds} onChange={(e) => setRounds(Number(e.target.value))}>
-              {[2, 3, 4].map((r) => (
-                <option key={r} value={r}>
-                  {r}판
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <fieldset className="pick">
-          <legend>3. 출제 범위 — 오늘 배운 것만 고르세요</legend>
-          <TopicPicker unitId={unitId} topics={topics} selected={topicIds} onChange={setTopicIds} />
-        </fieldset>
-
-        <div className="form-row">
-          <label>
-            <span>문항 수</span>
-            <select value={count} onChange={(e) => setCount(Number(e.target.value))}>
-              {[4, 5, 6, 7, 8, 9, 10, 12].map((n) => (
-                <option key={n} value={n}>
-                  {n}문항
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="planbox">
-            <span>이렇게 나옵니다</span>
-            <b>
-              {planned === 0
-                ? '출제 범위를 골라 주세요'
-                : `${planned}문항 · ${scoreOf(counts)}점 만점`}
-            </b>
-            {planned > 0 && (
-              <span className="planmix">
-                하 {counts.easy} · 중 {counts.mid} · 상 {counts.hard}
-                {planned !== count && ' (고른 범위에 맞춰 조정됨)'}
-              </span>
-            )}
-          </div>
-        </div>
+        <QuizSetupFields s={setup} />
 
         <label>
           <span>4. 명단 — 한 줄에 한 명 ({names.length}명)</span>

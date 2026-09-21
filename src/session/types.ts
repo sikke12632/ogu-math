@@ -38,7 +38,17 @@ export type SessionMeta = {
   paused: boolean
   /** 일시정지한 시각 — 다시 시작할 때 그만큼 밀어 준다 */
   pausedAt: number | null
+  /**
+   * 이 세션에서 몇 번째 판인가. 없으면 1.
+   *
+   * "한 판 더" 를 누르면 같은 세션(같은 코드·명단·접속)에서 문항과 게임만 새로 시작하고
+   * 이 값이 하나 오른다. **학생 화면은 이 값이 바뀌는 것을 보고 제 답안을 비운다.**
+   * 문항 id 가 판마다 똑같이 q1, q2… 라서, 이걸 안 보면 지난 판 답이 새 문제에 붙는다.
+   */
+  run?: number
 }
+
+export const runOf = (meta: SessionMeta | undefined | null): number => meta?.run ?? 1
 
 export type RosterEntry = {
   /** 명단에 적힌 실제 이름. 교사 화면과 오답 기록에 쓴다 */
@@ -75,6 +85,8 @@ export type PresenceEntry = {
 }
 
 export type QuizEntry = {
+  /** 어느 판의 답인가. 없으면 1. 판이 바뀐 직후 지난 판 답이 잠깐 남아 보일 수 있어서 적어 둔다 */
+  run?: number
   answers: Record<string, Answer>
   submittedAt: number | null
   score: number | null

@@ -71,6 +71,11 @@ export function makeMatches(
    * 인원이 홀수인 반에서는 이게 없으면 한 명이 세 판을 다 쉴 수 있다.
    */
   restCounts: Record<StudentId, number> = {},
+  /**
+   * 매치 id 앞에 붙일 말. "한 판 더" 에서 `r2` 처럼 판 번호를 넣는다.
+   * 대전의 패는 매치 id 로 섞으므로(engine.ts), 안 붙이면 새 판에서도 지난 판과 똑같은 패가 나온다
+   */
+  idPrefix = '',
 ): { matches: MatchRecord[]; cheerleaders: StudentId[] } {
   const rng = makeRng(`match|${seed}|${round}`)
   // pop() 은 배열 끝에서 꺼낸다 → 많이 쉰 사람을 뒤로 보내면 먼저 짝이 잡힌다
@@ -94,7 +99,7 @@ export function makeMatches(
     const a = pools[order[0]!.i]!.pop()!
     const b = pools[order[1]!.i]!.pop()!
     const players = [a, b].sort() as [StudentId, StudentId]
-    matches.push({ id: `m${round}_${++n}`, round, players })
+    matches.push({ id: `${idPrefix}m${round}_${++n}`, round, players })
   }
 
   // 남은 사람은 응원단장. 부전승보다 낫다 — 쉬는 게 아니라 역할이 생긴다

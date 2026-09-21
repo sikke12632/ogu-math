@@ -12,6 +12,25 @@ import type { Difficulty, TopicInfo } from './_types'
 /** 기본 비율 하3 : 중4 : 상2 (설계보고서 1.5) */
 const WEIGHT: Record<Difficulty, number> = { 1: 3, 2: 4, 3: 2 }
 
+/**
+ * 난이도 구성 — 교사가 세션을 만들 때 고른다.
+ *
+ * 비율이 0 인 난이도는 **아예 안 낸다.** '아주 어렵게' 에 하 문항이 없는 것이 그래서다.
+ * 다만 고른 출제 범위가 그 난이도밖에 못 내면(하만 있는 유형 하나를 골랐을 때)
+ * 0 을 무시하고 낼 수 있는 것으로 채운다 — 빈 세트보다는 낫다.
+ */
+export type Mix = 'easy' | 'normal' | 'hard' | 'hardest'
+
+export const MIXES: { id: Mix; label: string; weight: Record<Difficulty, number> }[] = [
+  { id: 'easy', label: '쉽게', weight: { 1: 5, 2: 3, 3: 1 } },
+  { id: 'normal', label: '보통', weight: WEIGHT },
+  { id: 'hard', label: '어렵게', weight: { 1: 1, 2: 3, 3: 5 } },
+  { id: 'hardest', label: '아주 어렵게 (하 없음)', weight: { 1: 0, 2: 1, 3: 3 } },
+]
+
+export const weightOf = (mix: Mix): Record<Difficulty, number> =>
+  MIXES.find((m) => m.id === mix)?.weight ?? WEIGHT
+
 export type Counts = { easy: number; mid: number; hard: number }
 
 /** 난이도별 배점 — 하 1점, 중 2점, 상 3점 */
@@ -21,8 +40,16 @@ export const POINTS: Record<Difficulty, number> = { 1: 1, 2: 2, 3: 3 }
  * 낼 수 있는 난이도와 총 문항 수로 구성을 정한다.
  * 낼 수 있는 난이도는 최소 1문항씩 넣는다 — 한 난이도만 몰리면 세트가 밋밋해진다.
  */
-export function planCounts(available: Difficulty[], total: number): Counts {
-  const active = ([1, 2, 3] as Difficulty[]).filter((d) => available.includes(d))
+export function planCounts(
+  available: Difficulty[],
+  total: number,
+  weight: Record<Difficulty, number> = WEIGHT,
+): Counts {
+  const can = ([1, 2, 3] as Difficulty[]).filter((d) => available.includes(d))
+  // 비율이 0 인 난이도는 뺀다. 그랬더니 아무것도 안 남으면 낼 수 있는 것을 그대로 쓴다
+  const wanted = can.filter((d) => weight[d] > 0)
+  const active = wanted.length > 0 ? wanted : can
+  const w: Record<Difficulty, number> = wanted.length > 0 ? weight : { 1: 1, 2: 1, 3: 1 }
   const out: Record<Difficulty, number> = { 1: 0, 2: 0, 3: 0 }
   if (active.length === 0 || total <= 0) return { easy: 0, mid: 0, hard: 0 }
 
@@ -35,8 +62,8 @@ export function planCounts(available: Difficulty[], total: number): Counts {
   // 먼저 한 개씩 깔고, 남은 것을 비율대로 나눈다 (최대 잔여법)
   active.forEach((d) => (out[d] = 1))
   const rest = total - active.length
-  const sum = active.reduce((s, d) => s + WEIGHT[d], 0)
-  const exact = active.map((d) => ({ d, v: (rest * WEIGHT[d]) / sum }))
+  const sum = active.reduce((s, d) => s + w[d], 0)
+  const exact = active.map((d) => ({ d, v: (rest * w[d]) / sum }))
   exact.forEach(({ d, v }) => (out[d] += Math.floor(v)))
   let left = rest - exact.reduce((s, { v }) => s + Math.floor(v), 0)
   exact

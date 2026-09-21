@@ -383,6 +383,58 @@ export async function saveRound(
   await batch.commit()
 }
 
+/* ── 한 판 더 ───────────────────────────────────────── */
+
+export type RestartOptions = {
+  unitId: string
+  gameId: string
+  quizSeconds: number
+  rounds: number
+  problems: Problem[]
+  /** 새 판 번호 (지금 판 + 1) */
+  run: number
+}
+
+/**
+ * 같은 세션에서 새 판을 시작한다. **코드·명단·별명·접속은 그대로 둔다** —
+ * 아이들이 코드를 다시 치고 이름을 다시 고르는 데 5분이 간다.
+ *
+ * 지우는 것: 답안, 팀, 매칭, 배팅, MVP. 바꾸는 것: 문항과 설정. 대기실로 돌아간다.
+ *
+ * **한 번에 쓴다.** 나눠 쓰면 "대기실인데 지난 판 팀이 남아 있는" 순간이 생기고,
+ * 교사 콘솔의 자동 처리(팀 배분·매칭)가 그 틈에 지난 판 자료로 돌 수 있다.
+ * 25명 기준 지울 문서는 100개 안팎이라 배치 한도(500) 안이다.
+ *
+ * 그래도 학생 화면은 문서마다 따로 듣고 있어서 **도착 순서는 보장되지 않는다.**
+ * 그래서 답안에 판 번호를 적어 두고(QuizEntry.run) 학생 화면이 번호가 다른 답은 무시한다.
+ */
+export async function restartSession(sessionId: string, o: RestartOptions): Promise<void> {
+  const db = getFs()
+  const batch = writeBatch(db)
+  for (const name of ['quiz', 'rounds', 'matches', 'bets', 'mvp']) {
+    const q = await getDocs(collection(db, SESSIONS, sessionId, name))
+    for (const d of q.docs) batch.delete(d.ref)
+  }
+  batch.set(doc(db, SESSIONS, sessionId, 'parts', 'problems'), {
+    problemsJson: JSON.stringify(o.problems),
+  })
+  batch.update(doc(db, SESSIONS, sessionId), {
+    'meta.unitId': o.unitId,
+    'meta.gameId': o.gameId,
+    'meta.phase': 'lobby',
+    'meta.quizStartedAt': null,
+    'meta.quizSeconds': o.quizSeconds,
+    'meta.rounds': o.rounds,
+    'meta.extraSeconds': 0,
+    'meta.paused': false,
+    'meta.pausedAt': null,
+    'meta.run': o.run,
+    teams: {},
+    game: null,
+  })
+  await batch.commit()
+}
+
 export async function endSession(sessionId: string): Promise<void> {
   await setPhase(sessionId, 'result')
 }
@@ -542,12 +594,17 @@ const pending = new Map<string, ReturnType<typeof setTimeout>>()
 const SAVE_DELAY_MS = 1_500
 
 /** 답을 서버에 저장한다. 화면 반영은 즉시, 서버 쓰기는 잠깐 뒤 */
+/** 1판은 예전 키 그대로 쓴다. 수업 도중에 배포되어도 풀던 답이 안 사라진다 */
+const mirrorKey = (sessionId: string, studentId: StudentId, run: number): string =>
+  `answers:${sessionId}:${studentId}${run > 1 ? `:r${run}` : ''}`
+
 export function saveAnswers(
   sessionId: string,
   studentId: StudentId,
   answers: Record<string, Answer>,
+  run = 1,
 ): void {
-  save(`answers:${sessionId}:${studentId}`, answers)
+  save(mirrorKey(sessionId, studentId, run), answers)
   const key = `${sessionId}/${studentId}`
   const t = pending.get(key)
   if (t) clearTimeout(t)
@@ -557,7 +614,7 @@ export function saveAnswers(
       pending.delete(key)
       void setDoc(
         doc(getFs(), SESSIONS, sessionId, 'quiz', studentId),
-        { answers },
+        { answers, run },
         { merge: true },
       ).catch(() => {
         // 네트워크가 죽어도 풀이는 계속되어야 한다. 다음 저장 때 다시 올라간다
@@ -566,16 +623,18 @@ export function saveAnswers(
   )
 }
 
-export function mirroredAnswers(sessionId: string, studentId: StudentId): Record<string, Answer> {
-  return load<Record<string, Answer>>(`answers:${sessionId}:${studentId}`, {})
+export function mirroredAnswers(sessionId: string, studentId: StudentId, run = 1): Record<string, Answer> {
+  return load<Record<string, Answer>>(mirrorKey(sessionId, studentId, run), {})
 }
 
 export async function submitQuiz(
   sessionId: string,
   studentId: StudentId,
   answers: Record<string, Answer>,
+  run = 1,
 ): Promise<void> {
   await setDoc(doc(getFs(), SESSIONS, sessionId, 'quiz', studentId), {
+    run,
     answers,
     submittedAt: Date.now(),
     score: null,
