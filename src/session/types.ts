@@ -107,6 +107,11 @@ export type MatchRecord = {
   players: [StudentId, StudentId]
   /** 각 턴에 누가 무엇을 골랐는지. 이것만 있으면 판 전체가 재현된다 */
   turns?: Record<string, Record<StudentId, 'draw' | 'stop'>>
+  /**
+   * 2배 버튼 — 누른 사람 → 누른 턴. 하나라도 있으면 이 판은 **누가 이기든** 2배다.
+   * 둘이 같이 눌러도 2배는 한 번이다. 누른 사람은 각자 한 번씩 쓴 것으로 센다.
+   */
+  doubles?: Record<StudentId, number>
   /** 연결이 끊겨 진 사람 */
   forfeit?: StudentId
   /** 무승부면 'draw' */

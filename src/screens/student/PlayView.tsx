@@ -10,13 +10,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DrawDuel } from '../../games/draw-duel/DrawDuel'
 import {
   claimSeat, codeToSessionId, heartbeat, mirroredAnswers, placeBet, rememberedName, rememberedSeat,
-  rememberName, saveAnswers, submitQuiz, voteMvp, writeForfeit, writeMatchResult, writeTurn,
+  rememberName, saveAnswers, submitQuiz, voteMvp, writeDouble, writeForfeit, writeMatchResult, writeTurn,
 } from '../../session/api'
 import { grade, shuffleChoices, type Answer } from '../../session/grade'
+import { allowanceOf, doublesUsed, DOUBLE_MAX } from '../../session/double'
 import { mvpOf } from '../../session/teams'
 import { runOf, type StudentId } from '../../session/types'
 import {
-  fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
+  allMatches, fmtClock, isBetOn, isCheerleader, myBet, myMatch, nameOf, quizTimeLeft, readableError, realNameOf,
   roundMatches, teamList, useSession, useTeamScores, useTick,
 } from '../../session/useSession'
 import { MathText } from '../../components/MathText'
@@ -393,6 +394,17 @@ export function PlayView() {
           <p className="score"><strong>{result.score}</strong> / {result.total}점</p>
           <p className="sub">{result.count}문항 중 {result.correctCount}문항 맞았어요.</p>
         </div>
+        {/* 문제 풀이와 게임을 잇는 자리. 점수가 게임에서 무엇이 되는지 여기서 바로 보여 준다 */}
+        {allowanceOf(session, me) > 0 ? (
+          <p className="doublegain">
+            <b>2배 버튼 {allowanceOf(session, me)}개 획득!</b>
+            대결 중에 누르면 그 판은 누가 이기든 2배예요. 유리해 보일 때 쓰세요.
+          </p>
+        ) : (
+          <p className="sub">
+            틀린 문제가 {DOUBLE_MAX}개보다 적으면 2배 버튼을 받아요. 하나 덜 틀릴 때마다 하나씩 더! 다음 판에 도전!
+          </p>
+        )}
         {myTeam ? (
           <>
             <p className="eyebrow">우리 팀</p>
@@ -495,6 +507,8 @@ function GamePhase({ sessionId, me }: { sessionId: string; me: StudentId }) {
         nameOf={(id) => nameOf(session, id)}
         roundLabel={`${round} / ${session.meta.rounds}판`}
         betOn={isBetOn(session, round, me)}
+        doubleLeft={Math.max(0, allowanceOf(session, me) - doublesUsed(allMatches(session), me))}
+        onDouble={(turn) => void writeDouble(sessionId, round, match.id, me, turn)}
         onChoose={(turn, choice) => void writeTurn(sessionId, round, match.id, turn, me, choice)}
         onResult={(winner) => void writeMatchResult(sessionId, round, match.id, winner)}
         onForfeit={(loser, winner) => void writeForfeit(sessionId, round, match.id, loser, winner)}

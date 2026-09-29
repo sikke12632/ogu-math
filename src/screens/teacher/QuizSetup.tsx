@@ -14,6 +14,13 @@ import { levelsOf, MIXES, planCounts, scoreOf, totalOf, weightOf, type Counts, t
 import type { Problem, TopicInfo } from '../../units/_types'
 import { TopicPicker } from './TopicPicker'
 
+/**
+ * 지난 설정을 담아 두는 곳. **기본값을 바꾸면 이 이름도 바꿔야 한다** —
+ * 저장된 값이 기본값보다 앞서기 때문에, 판 수 기본을 3 에서 5 로 올렸을 때
+ * 이미 3 이 저장된 컴퓨터에서는 계속 3 이 나왔다.
+ */
+const SETUP_KEY = 'setup2'
+
 type Saved = {
   unitId: string
   gameId: string
@@ -43,11 +50,11 @@ export function useQuizSetup(init?: Partial<Saved>): QuizSetupState {
     unitId: '5-2-1',
     gameId: games[0]?.id ?? 'draw-duel',
     minutes: 8,
-    rounds: 3,
+    rounds: 5,
     count: 9,
     mix: 'normal' as Mix,
     topicIds: [],
-    ...load<Partial<Saved>>('setup', {}),
+    ...load<Partial<Saved>>(SETUP_KEY, {}),
     ...init,
   }))
 
@@ -86,7 +93,7 @@ export function useQuizSetup(init?: Partial<Saved>): QuizSetupState {
         counts,
         templateIds: v.topicIds,
       })
-      save('setup', v)
+      save(SETUP_KEY, v)
       return problems
     },
   }
@@ -139,7 +146,7 @@ export function QuizSetupFields({ s }: { s: QuizSetupState }) {
         <label>
           <span>게임 판 수</span>
           <select value={s.rounds} onChange={(e) => s.set('rounds', Number(e.target.value))}>
-            {[2, 3, 4].map((r) => (
+            {[2, 3, 4, 5, 6].map((r) => (
               <option key={r} value={r}>
                 {r}판
               </option>

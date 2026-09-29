@@ -255,6 +255,26 @@ const SLIDES: Slide[] = [
     ),
   },
   {
+    title: '문제를 잘 풀면 2배 버튼',
+    sub: '다 맞히면 5개, 하나 틀릴 때마다 하나씩 줄어요. 대결 중에 쓸 수 있어요.',
+    body: (
+      <div className="rules-cards">
+        <div className="rules-card">
+          <b>누르면 그 판은 2배</b>
+          <p>이기면 1점이 아니라 <b>2점</b>이에요.</p>
+        </div>
+        <div className="rules-card warn">
+          <b>상대가 이겨도 2배예요</b>
+          <p>그러니 <b>유리해 보일 때</b> 눌러야 해요.</p>
+        </div>
+        <div className="rules-card">
+          <b>내 차례에, 시간이 5초 넘게 남았을 때만</b>
+          <p>스탑하고 나면 못 눌러요. 누르려면 스탑하기 전에!</p>
+        </div>
+      </div>
+    ),
+  },
+  {
     title: '정리하면',
     body: (
       <ol className="rules-summary">

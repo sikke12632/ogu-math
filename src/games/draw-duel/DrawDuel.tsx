@@ -17,6 +17,7 @@ import {
   type Card, type GameState,
 } from './engine'
 import { DuelStage, type SlotKey } from './stage'
+import { DOUBLE_LOCK_MS } from '../../session/double'
 
 type Props = {
   match: MatchRecord
@@ -31,6 +32,12 @@ type Props = {
    */
   betOn?: boolean
   roundLabel: string
+  /**
+   * 2배 버튼을 몇 번 더 누를 수 있나. 문제를 잘 푼 학생만 받는다 (session/double.ts).
+   * 안 넘기면 버튼 자체가 안 보인다 — 못 받은 아이 화면에 죽은 버튼을 두지 않는다
+   */
+  doubleLeft?: number
+  onDouble?: (turn: number) => void
   /**
    * 설명용으로 세워 둘 때 켠다 (`#/rules`).
    * 시간 재기·자동 스탑·결과 보고를 모두 멈춘다.
@@ -52,6 +59,7 @@ export function DrawDuel(props: Props) {
   const [deadline, setDeadline] = useState<{ key: string; at: number } | null>(null)
   const [now, setNow] = useState(Date.now())
   const [betPop, setBetPop] = useState(false)
+  const [doublePop, setDoublePop] = useState(false)
 
   const opp = useMemo(() => opponentOf({ players: match.players } as GameState, me), [match.players, me])
   const state = useMemo(
@@ -233,11 +241,34 @@ export function DrawDuel(props: Props) {
     return () => clearTimeout(t)
   }, [props.betOn])
 
+  /* ── 2배 ──────────────────────────────────────── */
+
+  const doubled = Object.keys(match.doubles ?? {}).length > 0
+
+  // 누가 눌렀든 두 사람 화면에 똑같이 뜬다. 상대도 알아야 뽑을지 멈출지 다시 생각한다
+  useEffect(() => {
+    if (!doubled) return
+    setDoublePop(true)
+    const t = setTimeout(() => setDoublePop(false), 2600)
+    return () => clearTimeout(t)
+  }, [doubled, match.id])
+
   /* ── 그리기 ───────────────────────────────────── */
 
   const risk = riskOf(state)
   const left = deadline && deadline.key === turnKey ? Math.max(0, deadline.at - now) : 0
   const timePct = deadline ? (left / (TURN_LIMIT_SEC * 1000)) * 100 : 0
+
+  /*
+   * 2배는 **내 차례이고 턴 시간이 5초 넘게 남았을 때만** 누를 수 있다.
+   * 내 차례에만 받는 이유 — 내가 아직 안 골랐으면 이 판은 절대 안 끝난다.
+   * 그래서 "끝난 판에 2배가 뒤늦게 붙는" 경합이 구조적으로 생기지 않는다.
+   * 스탑한 뒤에는 차례가 다시 안 오므로, 유리해 보이면 **스탑하기 전에** 눌러야 한다.
+   */
+  const doubleLeft = props.doubleLeft ?? 0
+  const tooLate = myTurn && left < DOUBLE_LOCK_MS
+  const canDouble = myTurn && !frozen && !doubled && doubleLeft > 0 && !tooLate
+  const iWin = (props.betOn ? 2 : 1) * (doubled ? 2 : 1)
   // 지금 뭘 해야 하는지 한 줄로. 5학년이 화면만 보고 알 수 있어야 한다
   const message = state.over
     ? state.winner === 'draw'
@@ -258,13 +289,14 @@ export function DrawDuel(props: Props) {
     : null
 
   return (
-    <div className={`duel${props.betOn ? ' cheered' : ''}`}>
+    <div className={`duel${props.betOn ? ' cheered' : ''}${doubled ? ' doubled' : ''}`}>
       {/* 왼쪽은 통, 오른쪽은 점수와 버튼.
           크롬북은 가로가 넓고 세로가 짧다. 위아래로 쌓으면 글씨를 키울 수가 없다 */}
       <div className="duel-grid">
         <div className="duel-stage">
           <canvas ref={canvasRef} />
           {betPop && <div className="cheer-pop">누가 너한테 걸었어! 힘내!</div>}
+          {doublePop && <div className="cheer-pop double-pop">이번 판은 2배!</div>}
         </div>
 
         <div className="duel-side">
@@ -273,9 +305,11 @@ export function DrawDuel(props: Props) {
             {oppLate && !state.over && <span className="duel-warn">상대를 기다리는 중</span>}
           </p>
 
-          {props.betOn && (
-            <p className="duel-bet">
-              <b>이 판은 2점</b> 응원단장이 나한테 걸었다
+          {(props.betOn || doubled) && (
+            <p className={`duel-bet${doubled ? ' doubled' : ''}`}>
+              <b>이기면 {iWin}점</b>
+              {doubled && '2배 판! 누가 이기든 2배 '}
+              {props.betOn && '응원단장이 나한테 걸었다'}
             </p>
           )}
 
@@ -336,6 +370,18 @@ export function DrawDuel(props: Props) {
           스탑
           <em>여기서 그만</em>
         </button>
+        {props.onDouble && (doubleLeft > 0 || match.doubles?.[me] != null) && (
+          <button className="double" onClick={() => props.onDouble?.(state.turn)} disabled={!canDouble}>
+            2배
+            <em>
+              {doubled
+                ? '이 판은 2배!'
+                : tooLate
+                  ? '늦었어 — 다음 차례에'
+                  : `남은 ${doubleLeft}번 · 누가 이기든 2배`}
+            </em>
+          </button>
+        )}
       </div>
     </div>
   )

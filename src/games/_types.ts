@@ -39,6 +39,8 @@ export type MatchResult = {
    * **그게 점수로 얼마가 되는지는 게임 모듈이 정한다.**
    */
   bettedOn?: StudentId[]
+  /** 누군가 2배 버튼을 눌렀나. 눌렀으면 **누가 이기든** 그 판 점수가 2배다 */
+  doubled?: boolean
 }
 
 export type TeamScore = {

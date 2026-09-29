@@ -9,6 +9,7 @@ import { makeRng } from '../src/lib/rng'
 import { computeState, riskOf, type Choice, type GameState } from '../src/games/draw-duel/engine'
 import { assignTeams, makeMatches, suggestTeamCount, tallyTeamWins } from '../src/session/teams'
 import { resolveTeamScores } from '../src/games/draw-duel/index'
+import { doubleAllowance, doublesUsed } from '../src/session/double'
 import type { MatchResult, Team } from '../src/games/_types'
 import type { MatchRecord, StudentId } from '../src/session/types'
 
@@ -225,8 +226,34 @@ for (const n of [5, 11, 24, 25]) {
     ],
     { t1: 2, t2: 2 },
   )
+  // 2배 버튼 — 누가 이기든 2배. 배팅과 겹치면 곱한다
+  const x2 = (r: MatchResult): MatchResult => ({ ...r, doubled: true })
+  expect('2배 판을 누른 쪽이 이김', [x2(mr('m1', ['a1', 'b1'], 'a1'))], { t1: 2, t2: 0 })
+  expect('2배 판을 상대가 이김 — 상대도 2배', [x2(mr('m1', ['a1', 'b1'], 'b1'))], { t1: 0, t2: 2 })
+  expect('2배 판이 비김', [x2(mr('m1', ['a1', 'b1'], null))], { t1: 0, t2: 0 })
+  expect('2배 + 배팅 = 4점', [x2(mr('m1', ['a1', 'b1'], 'a1', ['a1']))], { t1: 4, t2: 0 })
+
+  // 만점 5 · 하나 틀릴 때마다 하나씩 줄어든다. [맞은 수, 문항 수, 받는 횟수]
+  const tiers: [number, number, number][] = [
+    [9, 9, 5], [8, 9, 4], [7, 9, 3], [6, 9, 2], [5, 9, 1], [4, 9, 0], [0, 9, 0],
+    [4, 4, 5], [1, 4, 2], [0, 4, 0], [0, 0, 0],
+  ]
+  for (const [correct, count, want] of tiers) {
+    const got = doubleAllowance(correct, count)
+    if (got !== want) fail(`2배 횟수 — ${count}문항 중 ${correct}개 맞으면 ${want}번이어야 하는데 ${got}번`)
+  }
+  const used = doublesUsed(
+    [
+      { id: 'm1', round: 1, players: ['a1', 'b1'], doubles: { a1: 2 } },
+      { id: 'm2', round: 2, players: ['a1', 'b2'], doubles: { b2: 1 } },
+      { id: 'm3', round: 3, players: ['a1', 'b3'] },
+    ],
+    'a1',
+  )
+  if (used !== 1) fail(`2배 사용 횟수 — 1번이어야 하는데 ${used}번`)
+
   console.log('')
-  console.log('배팅 점수: OK')
+  console.log('배팅·2배 점수: OK')
 }
 
 /* ── 7. 이미 끝난 대결에는 걸 수 없다 ──────────────────── */

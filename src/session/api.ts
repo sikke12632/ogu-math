@@ -659,6 +659,21 @@ export async function writeTurn(
   )
 }
 
+/** 2배 버튼. 턴 기록과 같은 문서에 합쳐 쓴다 — 두 사람이 동시에 눌러도 서로 안 덮어쓴다 */
+export async function writeDouble(
+  sessionId: string,
+  round: number,
+  matchId: string,
+  studentId: StudentId,
+  turn: number,
+): Promise<void> {
+  await setDoc(
+    doc(getFs(), SESSIONS, sessionId, 'matches', matchId),
+    { round, doubles: { [studentId]: turn } },
+    { merge: true },
+  )
+}
+
 export async function writeMatchResult(
   sessionId: string,
   round: number,

@@ -177,6 +177,7 @@ export function useTeamScores(session: Session | null): TeamScore[] {
           winner: m.winner === 'draw' ? null : (m.winner as StudentId),
           byDisconnect: Boolean(m.forfeit),
           bettedOn: m.players.filter((p) => backed.includes(p)),
+          doubled: Object.keys(m.doubles ?? {}).length > 0,
         }
       })
     try {

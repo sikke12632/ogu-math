@@ -13,8 +13,13 @@ import type { Team } from '../_types'
  *   지거나 비기면 = 0점 (배팅했다가 져도 잃는 건 없다)
  *
  * 두 응원단장이 같은 친구한테 걸어도 2점이다. 3점이 되지 않는다.
+ *
+ * 2배 버튼 — 문제를 잘 푼 학생이 받는다. 누르면 그 판은 **누가 이기든** 2배다.
+ * 승률은 그대로고 걸린 점수만 커지므로 대전의 공정함은 안 바뀐다.
+ * 배팅과 겹치면 곱한다: 걸린 친구가 2배 판을 이기면 4점.
  */
 export const BET_MULTIPLIER = 2
+export const DOUBLE_MULTIPLIER = 2
 
 export function resolveTeamScores(results: MatchResult[], teams: Team[]): TeamScore[] {
   const teamOf = new Map<string, string>()
@@ -27,7 +32,8 @@ export function resolveTeamScores(results: MatchResult[], teams: Team[]): TeamSc
     const tid = teamOf.get(r.winner)
     if (!tid) continue
     const backed = (r.bettedOn ?? []).includes(r.winner)
-    points.set(tid, (points.get(tid) ?? 0) + (backed ? BET_MULTIPLIER : 1))
+    const base = backed ? BET_MULTIPLIER : 1
+    points.set(tid, (points.get(tid) ?? 0) + base * (r.doubled ? DOUBLE_MULTIPLIER : 1))
   }
   return teams.map((t) => ({ teamId: t.id, points: points.get(t.id) ?? 0 }))
 }
@@ -65,10 +71,10 @@ function DrawDuelPlaceholder() {
 export const drawDuel: GameModule = {
   id: 'draw-duel',
   name: '번호 뽑기 대전',
-  tagline: '통을 흔들어 번호 공을 뽑는다. 꽝을 뽑으면 그 자리에서 패배. 응원단장은 팀원 한 명에게 건다.',
+  tagline: '통을 흔들어 번호 공을 뽑는다. 꽝을 뽑으면 그 자리에서 패배. 응원단장은 팀원 한 명에게 건다. 문제를 잘 풀면 2배 버튼을 받는다.',
   grouping: 'duel',
   matchSize: 2,
-  rounds: 3,
+  rounds: 5,
   Component: DrawDuelPlaceholder,
   BoardComponent: DrawDuelBoard,
   resolve: resolveTeamScores,

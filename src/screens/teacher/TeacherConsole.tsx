@@ -472,7 +472,10 @@ export function TeacherConsole() {
             <ul className="matchlist">
               {roundMatches(session, session.game?.round ?? 1).map((m) => (
                 <li key={m.id}>
-                  <span>{realNameOf(session, m.players[0])} vs {realNameOf(session, m.players[1])}</span>
+                  <span>
+                    {realNameOf(session, m.players[0])} vs {realNameOf(session, m.players[1])}
+                    {Object.keys(m.doubles ?? {}).length > 0 && <b className="x2"> 2배</b>}
+                  </span>
                   <span className={m.winner ? 'done' : 'playing'}>
                     {m.forfeit
                       ? `${realNameOf(session, m.forfeit)} 끊김`
